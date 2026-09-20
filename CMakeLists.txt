@@ -1,3 +1,4 @@
+# I have never used CMAKE to compile a .s file (TS MIGHT NOT BE GOOD)
 cmake_minimum_required(VERSION 3.20)
 project(Icarus C ASM_NASM)
 
