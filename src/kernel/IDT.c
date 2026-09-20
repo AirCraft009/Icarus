@@ -4,6 +4,7 @@
 // src from: https://wiki.osdev.org/Interrupts_Tutorial
 
 #include <stdint.h>
+#include "IDT.h"
 extern void *isr_table[256];
 
 // same segment that we jumped to in boot.s
@@ -28,7 +29,6 @@ typedef struct {
     uint16_t	limit;
     uint64_t	base;
 } __attribute__((packed)) idtr_t;
-void idt_init(void);
 
 void idt_set_descriptor(uint8_t vector, void* isr, uint8_t flags) {
     idt_entry_t* descriptor = &idt[vector];

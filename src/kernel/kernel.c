@@ -1,5 +1,4 @@
-// rolling main kernel image wo/ .h files. No linking & they will always have to be 100% included anyway (I think)
-#include "IDT.c"
+#include "IDT.h"
 
 void kmain(void) {
     const char *str = "!!ICARUS!!";

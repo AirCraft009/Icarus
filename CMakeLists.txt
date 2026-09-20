@@ -6,6 +6,7 @@ set(CMAKE_C_STANDARD 11)
 set(CMAKE_ASM_NASM_OBJECT_FORMAT elf64)
 
 set_source_files_properties(src/boot/boot.s PROPERTIES LANGUAGE ASM_NASM)
+set_source_files_properties(src/kernel/isr.s PROPERTIES LANGUAGE ASM_NASM)
 
 add_executable(Icarus_kernel
         src/boot/boot.s
@@ -13,6 +14,7 @@ add_executable(Icarus_kernel
         src/kernel/isr.s
         src/kernel/IDT.c
         src/kernel/ISR_handlers.c
+        src/kernel/IDT.h
 )
 
 target_compile_options(Icarus_kernel PRIVATE
