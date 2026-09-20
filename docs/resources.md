@@ -11,3 +11,6 @@ transition from protected to long-mode
 grub 2 multiboot header
 - https://wiki.osdev.org/Multiboot
 - lwk ask an LLM (info out there is cryptic)
+
+IDT
+- https://wiki.osdev.org/Interrupt_Descriptor_Table
