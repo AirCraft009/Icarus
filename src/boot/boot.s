@@ -19,13 +19,13 @@ multiboot2_header_start:
     dd 8
 
     ; Framebuffer request (omit this whole tag if you want BIOS text mode)
-    align 8
-    dw 5
-    dw 1                ; optional
-    dd 20
-    dd 1024
-    dd 768
-    dd 32
+;    align 8
+;    dw 5
+;    dw 1                ; optional
+;    dd 20
+;    dd 1024
+;    dd 768
+;    dd 32
 
     ; End tag
     align 8
