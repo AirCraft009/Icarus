@@ -116,7 +116,7 @@ void mprintf(cursor *cur,  char *format, ...) {
 }
 
 cursor init_shellio(char * starting_text){
-    cursor cur;
+    cursor cur = (cursor) {0,0};
     mprintf( &cur, "Init Shell: %s", starting_text);
     // TODO: loop here after keyboard support is enabled
     return cur;

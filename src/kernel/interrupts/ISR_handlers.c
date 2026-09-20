@@ -21,8 +21,31 @@ _Static_assert(sizeof(struct interrupt_frame) == 184, "asm/C frame mismatch");
 void page_fault_handler(struct interrupt_frame *frame){
     cursor cur = (cursor) {0,0};
 
-    char *error = "#Page Fault detected %i";
+    mprintf(&cur, "#Page Fault detected: %i\nerror: %i", frame->cr2, frame->error_code);
+    //TODO: stop user process
     __asm__ volatile ("cli; hlt"); // Completely hangs the computer
+}
+
+void general_protection_fault_handler(struct interrupt_frame *frame){
+    cursor cur = (cursor) {0,0};
+
+    mprintf(&cur, "#General Fault detected\nsegment: %i\nerror: %i", frame->ss, frame->error_code);
+    //TODO: stop user process
+    __asm__ volatile ("cli; hlt"); // Completely hangs the computer
+}
+
+void undefined_instruction_handler(struct interrupt_frame *frame) {
+    cursor cur = (cursor) {0,0};
+    uint8_t *fault_instr = (uint8_t *)frame->rip;
+
+    mprintf(&cur, "undefined instruction: %i", *fault_instr);
+
+    if (frame->cs == 0) {
+        // ring 0 (kernel mode #UD) is not recoverable (FOR NOW MUHAHAHAHA)
+        __asm__ volatile ("cli; hlt");
+    }
+
+    //TODO: stop user process
 }
 
 void c_isr(
