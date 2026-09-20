@@ -99,11 +99,6 @@ hang:
     hlt
     jmp hang
 
-section .bss
-align 16
-stack_bottom:
-    resb 16384
-stack_top:
 
 section .data
 
@@ -137,3 +132,10 @@ gdt_end:
 gdt_descriptor:
     dw gdt_end - gdt - 1
     dd gdt
+
+
+section .bss
+align 16
+stack_bottom:
+    resb 16384
+stack_top:
