@@ -10,6 +10,9 @@ set_source_files_properties(src/boot/boot.s PROPERTIES LANGUAGE ASM_NASM)
 add_executable(Icarus_kernel
         src/boot/boot.s
         src/kernel/kernel.c
+        src/kernel/isr.s
+        src/kernel/IDT.c
+        src/kernel/ISR_handlers.c
 )
 
 target_compile_options(Icarus_kernel PRIVATE
