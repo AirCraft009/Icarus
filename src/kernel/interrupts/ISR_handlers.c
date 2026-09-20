@@ -18,6 +18,13 @@ struct interrupt_frame {
 _Static_assert(sizeof(struct interrupt_frame) == 184, "asm/C frame mismatch");
 
 
+void page_fault_handler(struct interrupt_frame *frame){
+    cursor cur = (cursor) {0,0};
+
+    char *error = "#Page Fault detected %i";
+    __asm__ volatile ("cli; hlt"); // Completely hangs the computer
+}
+
 void c_isr(
     struct interrupt_frame *frame
 )
@@ -28,7 +35,7 @@ void c_isr(
             break;
 
         case 14:
-            // PageFault
+            page_fault_handler(frame);
             break;
 
         case 32:
@@ -39,12 +46,4 @@ void c_isr(
             // Unhandled interrupt
             break;
     }
-}
-
-void page_fault_handler(struct interrupt_frame *frame){
-    cursor cur = (cursor) {0,0};
-
-    char *error = "#Page Fault detected ";
-    write_str(error, &cur);
-
 }

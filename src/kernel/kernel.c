@@ -4,10 +4,10 @@
 void kmain(void) {
 
 
-    cursor cur = init_shellio("ICARUS");
-
     // initialize the Interrupt Descriptor table
     idt_init();
+
+    cursor cur = init_shellio("ICARUS");
     while (1){}
 }
 

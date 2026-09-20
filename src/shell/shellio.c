@@ -8,9 +8,12 @@
 
 #include "shellio.h"
 
+#include <assert.h>
 #include <stdarg.h>
 #include <stdbool.h>
+#include <stddef.h>
 #include <stdint.h>
+#include <string.h>
 
 
 const uint64_t videoMemStart =  0xB8000;
@@ -50,9 +53,25 @@ void write_str(char *str, cursor *cur) {
     }
 }
 
-// encode numbers w/ max 10 digits
-void sprintf(cursor *cur,  char *format, ...) {
+/**
+ *
+ * very basic printf supporting
+ *
+ * c - char
+ * s - string
+ * i - int/whole number (up to 20 digits)
+ *
+ * @param cur
+ * @param format
+ * @param ...
+ */
+void mprintf(cursor *cur,  char *format, ...) {
+    if (format == NULL) {
+        return;
+    }
+
     va_list args;
+    va_start(args, format);
 
     bool format_next = false;
     while (*format) {
@@ -67,20 +86,38 @@ void sprintf(cursor *cur,  char *format, ...) {
             format_next = false;
             switch (c) {
                 case 'i':
-                    char buf[10];
-                    while (format}
-
+                    char buf[20];
+                    int int_arg = va_arg(args, int);
+                    int len = 0;
+                    while (int_arg > 0) {
+                        buf[len++] = '0' + int_arg % 10;
+                        int_arg /= 10;
+                    }
+                    for (int i = len-1; i >= 0; i--) {
+                        write_c(buf[i], cur);
+                    }
+                    break;
+                case 's':
+                    write_str(va_arg(args, char *), cur);
+                    break;
+                case 'c':
+                    write_c(va_arg(args, int), cur);
+                    break;
+                default:
+                    write_c('%', cur);
+                    write_c(c, cur);
                     break;
             }
+            continue;
         }
-
         write_c(c, cur);
     }
+    va_end(args);
 }
 
 cursor init_shellio(char * starting_text){
     cursor cur;
-    write_str(starting_text, &cur);
+    mprintf( &cur, "Init Shell: %s", starting_text);
     // TODO: loop here after keyboard support is enabled
     return cur;
 }
