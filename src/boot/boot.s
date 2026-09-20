@@ -1,5 +1,45 @@
 bits 32
 
+; multiboot2 header copy-pasted
+
+section .multiboot2
+align 8
+
+multiboot2_header_start:
+    ; 1. Magic Number (Multiboot2)
+    dd 0x15250A3F
+
+    ; 2. Architecture (0 = 32-bit protected mode i386, 1 = 32-bit MIPS, etc.)
+    ; Note: GRUB 2 typically expects 0 (i386) even for x86_64 kernels to initialize execution
+    dd 0
+
+    ; 3. Header Length
+    dd multiboot2_header_end - multiboot2_header_start
+
+    ; 4. Checksum
+    dd -(0x15250A3F + 0 + (multiboot2_header_end - multiboot2_header_start))
+
+    align 8
+    dw 1                        ; Type: Information request
+    dw 0                        ; Flags: None
+    dd 12                       ; Size of this tag
+    dd 6                        ; Request tag 6 (Framebuffer information)
+
+    align 8
+    dw 5                        ; Type: Framebuffer
+    dw 0                        ; Flags: None
+    dd 20                       ; Size of this tag
+    dd 1024                     ; Width
+    dd 768                      ; Height
+    dd 32                       ; Depth (Bits per pixel)
+
+
+    align 8
+    dw 0                        ; Type: 0 (End)
+    dw 0                        ; Flags: None
+    dd 8                        ; Size: 8 bytes
+multiboot2_header_end:
+
 CR0_PG     equ 0x80000000
 CR4_PAE    equ 0x20
 EFER       equ 0xC0000080
