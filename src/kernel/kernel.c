@@ -1,3 +1,14 @@
-//
-// Created by cocon on 20.09.2026.
-//
+void icmain(void) {
+    const char *str = "!!ICARUS!!";
+    char *videoptr = (char*) 0xb80000;
+
+
+    while (*str != '\0') {
+        *videoptr = *str;
+        videoptr++;
+        str++;
+    }
+
+    while (1){}
+}
+
