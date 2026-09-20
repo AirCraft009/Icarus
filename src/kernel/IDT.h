@@ -6,6 +6,7 @@
 #define ICARUS_IDT_H
 #pragma once
 
+
 void idt_init(void);
 
 #endif //ICARUS_IDT_H

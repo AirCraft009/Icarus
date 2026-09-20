@@ -1,15 +1,10 @@
 #include "IDT.h"
+#include "../shell/shellio.h"
 
 void kmain(void) {
-    const char *str = "!!ICARUS!!";
-    char *videoptr = (char*) 0xB8000;
 
 
-    while (*str != '\0') {
-        *videoptr = *str;
-        videoptr+=2;
-        str++;
-    }
+    cursor cur = init_shellio("ICARUS");
 
     // initialize the Interrupt Descriptor table
     idt_init();

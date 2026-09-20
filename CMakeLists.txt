@@ -15,6 +15,8 @@ add_executable(Icarus_kernel
         src/kernel/IDT.c
         src/kernel/ISR_handlers.c
         src/kernel/IDT.h
+        src/shell/shellio.c
+        src/shell/shellio.h
 )
 
 target_compile_options(Icarus_kernel PRIVATE
