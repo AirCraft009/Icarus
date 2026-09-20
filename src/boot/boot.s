@@ -1,5 +1,7 @@
 bits 32
 
+extern kmain
+
 MB2_MAGIC  equ 0xE85250D6
 MB2_ARCH   equ 0                     ; i386 (32-bit protected mode entry)
 
@@ -93,7 +95,7 @@ long_mode:
     mov edi, edi        ; clears edi in 64-bit mode bc of zero-extend (not sure lwk)
     mov esi, esi        ; same for RSI
 
-    call icmain
+    call kmain
 
 hang:
     hlt
