@@ -1,43 +1,37 @@
 bits 32
 
-; multiboot2 header copy-pasted
+MB2_MAGIC  equ 0xE85250D6
+MB2_ARCH   equ 0                     ; i386 (32-bit protected mode entry)
 
-section .multiboot2
-align 8
-
+section .multiboot2 align=8
 multiboot2_header_start:
-    ; 1. Magic Number (Multiboot2)
-    dd 0x15250A3F
-
-    ; 2. Architecture (0 = 32-bit protected mode i386, 1 = 32-bit MIPS, etc.)
-    ; Note: GRUB 2 typically expects 0 (i386) even for x86_64 kernels to initialize execution
-    dd 0
-
-    ; 3. Header Length
+    dd MB2_MAGIC
+    dd MB2_ARCH
     dd multiboot2_header_end - multiboot2_header_start
+    dd 0x100000000 - (MB2_MAGIC + MB2_ARCH + (multiboot2_header_end - multiboot2_header_start))
 
-    ; 4. Checksum
-    dd -(0x15250A3F + 0 + (multiboot2_header_end - multiboot2_header_start))
-
+    ; Information request: memory map (6) and framebuffer info (8), optional
     align 8
-    dw 1                        ; Type: Information request
-    dw 0                        ; Flags: None
-    dd 12                       ; Size of this tag
-    dd 6                        ; Request tag 6 (Framebuffer information)
+    dw 1                ; type
+    dw 1                ; flags: optional
+    dd 16               ; size = 8 header + 2*4 requests
+    dd 6
+    dd 8
 
+    ; Framebuffer request (omit this whole tag if you want BIOS text mode)
     align 8
-    dw 5                        ; Type: Framebuffer
-    dw 0                        ; Flags: None
-    dd 20                       ; Size of this tag
-    dd 1024                     ; Width
-    dd 768                      ; Height
-    dd 32                       ; Depth (Bits per pixel)
+    dw 5
+    dw 1                ; optional
+    dd 20
+    dd 1024
+    dd 768
+    dd 32
 
-
+    ; End tag
     align 8
-    dw 0                        ; Type: 0 (End)
-    dw 0                        ; Flags: None
-    dd 8                        ; Size: 8 bytes
+    dw 0
+    dw 0
+    dd 8
 multiboot2_header_end:
 
 CR0_PG     equ 0x80000000
