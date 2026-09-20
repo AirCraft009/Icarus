@@ -13,5 +13,9 @@ typedef struct Cursor {
 } cursor;
 
 cursor init_shellio(char * starting_text);
+void move_cursor(uint16_t offset, cursor *cur);
+void new_lines(uint16_t count, cursor *cur);
+void write_c(char c, cursor *cur);
+void write_str(char *str, cursor *cur);
 
 #endif //ICARUS_SHELLIO_H

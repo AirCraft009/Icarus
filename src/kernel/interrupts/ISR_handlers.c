@@ -2,6 +2,7 @@
 // Created by cocon on 20.09.2026.
 //
 #include <stdint.h>
+#include "../../shell/shellio.h"
 
 struct interrupt_frame {
     // pushed by isr_common
@@ -27,7 +28,7 @@ void c_isr(
             break;
 
         case 14:
-            // Page fault
+            // PageFault
             break;
 
         case 32:
@@ -38,4 +39,12 @@ void c_isr(
             // Unhandled interrupt
             break;
     }
+}
+
+void page_fault_handler(struct interrupt_frame *frame){
+    cursor cur = (cursor) {0,0};
+
+    char *error = "#Page Fault detected ";
+    write_str(error, &cur);
+
 }

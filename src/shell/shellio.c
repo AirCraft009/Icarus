@@ -7,6 +7,9 @@
 // All text will be in white on black bg
 
 #include "shellio.h"
+
+#include <stdarg.h>
+#include <stdbool.h>
 #include <stdint.h>
 
 
@@ -15,11 +18,6 @@ const uint16_t COLS = 80;
 const uint16_t ROWS= 25;
 
 
-cursor init_shellio(char * starting_text);
-void move_cursor(uint16_t offset, cursor *cur);
-void new_lines(uint16_t count, cursor *cur);
-void write_c(char c, cursor *cur);
-void write_str(char *str, cursor *cur);
 
 void move_cursor(uint16_t offset, cursor *cur) {
     // two bytes bc first is ASCII second is color & bg
@@ -52,8 +50,32 @@ void write_str(char *str, cursor *cur) {
     }
 }
 
-void write_f(char *str,  cursor *cur) {
+// encode numbers w/ max 10 digits
+void sprintf(cursor *cur,  char *format, ...) {
+    va_list args;
 
+    bool format_next = false;
+    while (*format) {
+        char c = *format++;
+
+        if (c == '%') {
+            format_next = true;
+            continue;
+        }
+
+        if (format_next) {
+            format_next = false;
+            switch (c) {
+                case 'i':
+                    char buf[10];
+                    while (format}
+
+                    break;
+            }
+        }
+
+        write_c(c, cur);
+    }
 }
 
 cursor init_shellio(char * starting_text){

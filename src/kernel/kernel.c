@@ -1,4 +1,4 @@
-#include "IDT.h"
+#include "interrupts/IDT.h"
 #include "../shell/shellio.h"
 
 void kmain(void) {
