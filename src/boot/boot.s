@@ -1,7 +1,3 @@
-bits 32
-
-extern kmain
-
 MB2_MAGIC  equ 0xE85250D6
 MB2_ARCH   equ 0                     ; i386 (32-bit protected mode entry)
 
@@ -35,6 +31,10 @@ multiboot2_header_start:
     dw 0
     dd 8
 multiboot2_header_end:
+
+bits 32
+
+extern kmain
 
 CR0_PG     equ 0x80000000
 CR4_PAE    equ 0x20
