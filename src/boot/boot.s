@@ -44,6 +44,8 @@ global _start
 
 _start:
     cli
+    mov edi, eax        ; magic -> RDI (1st arg); GRUB gives the magic in eax but we use eax to set cr3 cr4 etc
+    mov esi, ebx        ; info  -> RSI (2nd arg); GRUB gives us the info we requested in the multiboot2 header but ebx is used
 
     ; Load the GDT
     lgdt [gdt_descriptor]
@@ -86,6 +88,10 @@ long_mode:
     mov rsp, stack_top
     xor ebp, ebp
     cld                 ; required by C
+
+
+    mov edi, edi        ; clears edi in 64-bit mode bc of zero-extend (not sure lwk)
+    mov esi, esi        ; same for RSI
 
     call icmain
 
