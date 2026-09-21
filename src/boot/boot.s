@@ -32,7 +32,6 @@ multiboot2_header_start:
     dd 8
 multiboot2_header_end:
 
-bits 32
 
 extern kmain
 
@@ -41,7 +40,8 @@ CR4_PAE    equ 0x20
 EFER       equ 0xC0000080
 EFER_LME   equ 0x100
 
-section .text
+section .boot.text
+bits 32
 global _start
 
 _start:
@@ -76,7 +76,7 @@ _start:
     ; Jump into 64-bit code segment
     jmp 0x08:long_mode
 
-
+.text
 bits 64
 
 long_mode:
@@ -102,26 +102,27 @@ hang:
     jmp hang
 
 
-section .data
-
+section .boot.data
 align 4096
 pml4:
-    dq pdpt + 0x003
-    times 511 dq 0
+    dq pdpt + 0x003             ; [0]   identity map
+    times 510 dq 0
+    dq pdpt + 0x003             ; [511] higher half
 
 align 4096
 pdpt:
-    dq pd + 0x003
-    times 511 dq 0
+    dq pd + 0x003               ; [0]
+    times 509 dq 0
+    dq pd + 0x003               ; [510]
+    dq 0                        ; [511]
 
 align 4096
 pd:
-    ; Present + writable + 2 MiB page
     dq 0x00000083
     times 511 dq 0
 
 
-section .rodata
+section .boot.rodata
 
 align 8
 gdt:
@@ -135,9 +136,15 @@ gdt_descriptor:
     dw gdt_end - gdt - 1
     dd gdt
 
+.data
+
+.rodata
+
+.boot.bss
 
 section .bss
 align 16
 stack_bottom:
     resb 16384
 stack_top:
+
