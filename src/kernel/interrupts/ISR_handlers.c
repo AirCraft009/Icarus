@@ -18,7 +18,7 @@ struct interrupt_frame {
 _Static_assert(sizeof(struct interrupt_frame) == 184, "asm/C frame mismatch");
 
 
-void page_fault_handler(struct interrupt_frame *frame){
+static void page_fault_handler(struct interrupt_frame *frame){
     cursor cur = (cursor) {0,0};
 
     mprintf(&cur, "#Page Fault detected: %i\nerror: %i", frame->cr2, frame->error_code);
@@ -26,7 +26,7 @@ void page_fault_handler(struct interrupt_frame *frame){
     __asm__ volatile ("cli; hlt"); // Completely hangs the computer
 }
 
-void general_protection_fault_handler(struct interrupt_frame *frame){
+static void general_protection_fault_handler(struct interrupt_frame *frame){
     cursor cur = (cursor) {0,0};
 
     mprintf(&cur, "#General Fault detected\nsegment: %i\nerror: %i", frame->ss, frame->error_code);
@@ -34,7 +34,7 @@ void general_protection_fault_handler(struct interrupt_frame *frame){
     __asm__ volatile ("cli; hlt"); // Completely hangs the computer
 }
 
-void undefined_instruction_handler(struct interrupt_frame *frame) {
+static void undefined_instruction_handler(struct interrupt_frame *frame) {
     cursor cur = (cursor) {0,0};
     uint8_t *fault_instr = (uint8_t *)frame->rip;
 
@@ -48,13 +48,21 @@ void undefined_instruction_handler(struct interrupt_frame *frame) {
     //TODO: stop user process
 }
 
-void c_isr(
+static void c_isr(
     struct interrupt_frame *frame
 )
 {
     switch (frame->vector) {
         case 0:
             // Divide error
+            break;
+
+        case 8:
+            undefined_instruction_handler(frame);
+            break;
+
+        case 13:
+            general_protection_fault_handler(frame);
             break;
 
         case 14:

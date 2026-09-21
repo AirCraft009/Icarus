@@ -21,6 +21,8 @@ add_executable(Icarus_kernel
         src/kernel/MMU/memory_mapping.h
         src/lib/string.c
         src/lib/string.h
+        src/kernel/interrupts/TSS.c
+        src/kernel/interrupts/TSS.h
 )
 
 target_compile_options(Icarus_kernel PRIVATE
@@ -59,6 +61,7 @@ add_custom_command(TARGET Icarus_kernel POST_BUILD
 )
 
 add_custom_target(iso
+        COMMAND ${CMAKE_COMMAND} -E echo "Binary dir:        ${CMAKE_BINARY_DIR}"
         COMMAND grub-mkrescue -o ${CMAKE_BINARY_DIR}/icarus.iso ${CMAKE_BINARY_DIR}/iso
         DEPENDS Icarus_kernel
 )
