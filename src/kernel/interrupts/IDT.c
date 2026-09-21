@@ -45,6 +45,12 @@ void idt_set_descriptor(uint8_t vector, void* isr, uint8_t flags, uint8_t ist) {
 static idtr_t idtr;
 
 
+/**
+ * Initializes the idt (Interrupt Descriptor Table)
+ *  - build the table (fill the 256 entries & set default params)
+ *  - set special settings (like IST (Interrupt Stack Table) index)
+ *  - actually load the idt
+ */
 void idt_init(void) {
     idtr.base  = (uintptr_t)&idt[0];
     idtr.limit = sizeof(idt) - 1;
