@@ -1,4 +1,4 @@
-## Todo-List
+## Roadmap
 
 ### Boot
 - Grub magic
@@ -12,7 +12,8 @@
   - Enable long mode by setting the LME flag (bit 8) in MSR 0xC0000080 (aka EFER)
   - Enable paging
   - enter the main kernel
-- KERNEL TIME
+  
+## KERNEL TIME
   - set up IDT
   - #PF handler
   - #GP handler
@@ -21,6 +22,7 @@
   - Physical memory allocator
   - Dynamic page-table mapper
   - Kernel heap
+## I/O
   - Timer interrupt
   - Keyboard interrupt
   - Basic scheduler
