@@ -35,14 +35,16 @@ void move_cursor(uint16_t offset, cursor *cur) {
 }
 
 void new_lines(uint16_t count, cursor *cur) {
-    move_cursor(count * ROWS, cur);
+    cur->y += count * 2;
+    cur->x = 0;
 }
 
 void write_c(char c, cursor *cur) {
     if (c == '\n') {
         new_lines(1, cur);
+        return;
     }
-    char * vidptr = (char *) videoMemStart + cur->x + cur->y * ROWS;
+    char * vidptr = (char *) videoMemStart + cur->x + cur->y * COLS;
     *vidptr = c;
     move_cursor(1, cur);
 }
