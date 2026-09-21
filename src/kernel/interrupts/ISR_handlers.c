@@ -48,7 +48,7 @@ static void undefined_instruction_handler(struct interrupt_frame *frame) {
     //TODO: stop user process
 }
 
-static void c_isr(
+void c_isr(
     struct interrupt_frame *frame
 )
 {

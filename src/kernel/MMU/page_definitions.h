@@ -1,0 +1,8 @@
+//
+// Created by Mxsxll on 21.09.2026.
+//
+
+#ifndef ICARUS_PAGE_DEFINITIONS_H
+#define ICARUS_PAGE_DEFINITIONS_H
+
+#endif //ICARUS_PAGE_DEFINITIONS_H

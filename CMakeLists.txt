@@ -23,6 +23,8 @@ add_executable(Icarus_kernel
         src/lib/string.h
         src/kernel/interrupts/TSS.c
         src/kernel/interrupts/TSS.h
+        src/kernel/MMU/page_definitions.c
+        src/kernel/MMU/page_definitions.h
 )
 
 target_compile_options(Icarus_kernel PRIVATE
