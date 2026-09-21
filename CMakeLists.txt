@@ -23,8 +23,9 @@ add_executable(Icarus_kernel
         src/lib/string.h
         src/kernel/interrupts/TSS.c
         src/kernel/interrupts/TSS.h
-        src/kernel/MMU/page_definitions.c
         src/kernel/MMU/page_definitions.h
+        src/kernel/multiboot2.c
+        src/kernel/multiboot2.h
 )
 
 target_compile_options(Icarus_kernel PRIVATE
@@ -38,6 +39,7 @@ target_compile_options(Icarus_kernel PRIVATE
         -mno-red-zone
         -mgeneral-regs-only
         -Wall -Wextra
+        -mcmodel=kernel
         >
 )
 
@@ -46,6 +48,9 @@ target_link_options(Icarus_kernel PRIVATE
         -nostdlib
         -static
         -no-pie
+        -no-pic
+        -fno-pie
+        -fno-pic
         -z max-page-size=0x1000
         -T${PROJECT_SOURCE_DIR}/src/linker.ld
 )
