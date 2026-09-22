@@ -41,6 +41,7 @@ SECTIONS {
 
     . = ALIGN(4096);
     _kernel_end = .;
+    _kernel_end_phys = . - KERNEL_VMA;
 
     /DISCARD/ : { *(.comment) *(.eh_frame) *(.note*) }
 }
