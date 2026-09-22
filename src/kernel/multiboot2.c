@@ -36,7 +36,7 @@ bitmap *handle_multiboot2 (uint32_t magic, boot_info *info){
 	mprintf(&cur, "Announced mbi size 0x%d\n", size);
 	for (tag = (struct multiboot_tag *) (addr + 8);
 	tag->type != MULTIBOOT_TAG_TYPE_END;
-	tag = (struct multiboot_tag *) ((multiboot_uint8_t *) tag 
+	tag = (struct multiboot_tag *) ((multiboot_uint8_t *) tag
                                        + ((tag->size + 7) & ~7))) {
 		mprintf(&cur, "Tag 0x%i, Size 0x%i\n", tag->type, tag->size);
 		switch (tag->type)
@@ -67,7 +67,7 @@ bitmap *handle_multiboot2 (uint32_t magic, boot_info *info){
 				((struct multiboot_tag_bootdev *) tag)->part);
 				break;
 			case MULTIBOOT_TAG_TYPE_MMAP:
-				//init_mmap(tag);
+				init_mmap(tag);
 				break;
 
 			case MULTIBOOT_TAG_TYPE_FRAMEBUFFER:

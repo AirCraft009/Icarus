@@ -12,8 +12,8 @@ extern uint64_t *gdt_descriptor;
 
 
 void kmain(uint32_t magic, struct multiboot_info *mboot) {
-    cursor cur = init_shellio("ICARUS\n");
-    mprintf(&cur, "Multiboot magic: %i\n", magic);
+    cursor *cur = init_shellio("ICARUS\n");
+    cons_mprintf("Multiboot magic: %i\n", magic);
 
     //parse the struct given to use from the multiboot2 header
     handle_multiboot2(magic, mboot);
@@ -23,8 +23,6 @@ void kmain(uint32_t magic, struct multiboot_info *mboot) {
     //call lgdt from high addr again
     gdt_init();
 
-    cur.x = 0;
-    cur.y = 0;
-    mprintf(&cur, "KERNEL SETUP COMPLETE");
+    cons_mprintf("KERNEL SETUP COMPLETE");
     while (1){}
 }
