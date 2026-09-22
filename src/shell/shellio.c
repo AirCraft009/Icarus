@@ -98,11 +98,22 @@ void mprintf(cursor *cur,  char *format, ...) {
                     for (int i = len-1; i >= 0; i--) {
                         write_c(buf[i], cur);
                     }
+                case 'h':
+                    char hbuf[20];
+                    int int32_arg = va_arg(args, int);
+                    int hlen = 0;
+                    while (int32_arg > 0) {
+                        hbuf[hlen++] = '0' + int32_arg % 10;
+                        int32_arg /= 10;
+                    }
+                    for (int i = hlen-1; i >= 0; i--) {
+                        write_c(hbuf[i], cur);
+                    }
                 case 'l':
                     char lbuf[20];
                     int long_arg = va_arg(args, int);
                     int llen = 0;
-                    while (int_arg > 0) {
+                    while (long_arg > 0) {
                         lbuf[llen++] = '0' + long_arg % 10;
                         long_arg /= 10;
                     }
