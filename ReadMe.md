@@ -12,7 +12,5 @@ I hope the name is obvious enough
 - (xorriso) - might be needed for grub2
 - gcc
 
-## Usage
-
+## Usage (linux)
 run `./build.sh`
-execute `qemu-system-x86_64 -cdrom build/icarus.iso -boot d -m 2048`
