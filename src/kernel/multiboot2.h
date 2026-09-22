@@ -88,8 +88,8 @@
 #define MULTIBOOT_CONSOLE_FLAGS_EGA_TEXT_SUPPORTED 2
 
 #ifndef ASM_FILE
-
-int handle_multiboot2 ();
+#include "../lib/bitmap.h"
+bitmap *handle_multiboot2 ();
 
 typedef unsigned char           multiboot_uint8_t;
 typedef unsigned short          multiboot_uint16_t;

@@ -1,27 +1,30 @@
 #include "multiboot2.h"
 
+#include <stddef.h>
 #include <stdint.h>
 #include "../shell/shellio.h"
 
 // 20 chars
-
-int handle_multiboot2 (uint32_t magic, struct multiboot_info *info){
+bitmap *handle_multiboot2 (uint32_t magic, struct multiboot_info *info){
+	bitmap *map;
 	unsigned long long addr = (unsigned long long) info;
 	struct multiboot_tag *tag;
 	unsigned long size;
 
 	cursor cur = (cursor) {.x = 0,.y = 0};
 
+	multiboot_memory_map_t *mmap;
+
 	if ((int)magic != MULTIBOOT2_BOOTLOADER_MAGIC)
 	{
 		mprintf(&cur,"Invalid magic number: 0x%i\n", (unsigned) magic);
-		return 0;
+		return NULL;
 	}
 
 	if (addr & 7)
 	{
 		mprintf(&cur, "Unaligned mbi: 0x%i\n", addr);
-		return 0;
+		return NULL;
 	}
 
 	size = *(unsigned *) addr;
@@ -30,6 +33,7 @@ int handle_multiboot2 (uint32_t magic, struct multiboot_info *info){
 	tag->type != MULTIBOOT_TAG_TYPE_END;
 	tag = (struct multiboot_tag *) ((multiboot_uint8_t *) tag 
                                        + ((tag->size + 7) & ~7)))
+
 	{
 		mprintf(&cur, "Tag 0x%i, Size 0x%i\n", tag->type, tag->size);
 		switch (tag->type)
@@ -67,7 +71,8 @@ int handle_multiboot2 (uint32_t magic, struct multiboot_info *info){
       
 				for (mmap = ((struct multiboot_tag_mmap *) tag)->entries;
 				(multiboot_uint8_t *) mmap < (multiboot_uint8_t *) tag + tag->size;
-				mmap = (multiboot_memory_map_t *) ((unsigned long) mmap + 
+
+				mmap = (multiboot_memory_map_t *) ((unsigned long) mmap +
 				((struct multiboot_tag_mmap *) tag)->entry_size))
 				mprintf(&cur, " base_addr = 0x%i%i,"
 				" length = 0x%i%i, type = 0x%i\n",
@@ -91,5 +96,7 @@ int handle_multiboot2 (uint32_t magic, struct multiboot_info *info){
 	mprintf(&cur, "Total mbi size 0x%i\n", (unsigned) tag - addr);
 
 	while(1);
+
+	return map;
 }
 	
