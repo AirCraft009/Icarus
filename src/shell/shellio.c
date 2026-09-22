@@ -19,6 +19,7 @@
 const uint64_t videoMemStart =  0xB8000;
 const uint16_t COLS = 80;
 const uint16_t ROWS= 25;
+static cursor curs;
 
 
 
@@ -30,8 +31,8 @@ void move_cursor(uint16_t offset, cursor *cur) {
     uint16_t rows = offset / ROWS;
     uint16_t cols = offset % ROWS;
 
-    cur->x += cols;
-    cur->y += rows;
+    cur->x = (cur->x + cols);
+    cur->y = (cur->y + rows);
 }
 
 void new_lines(uint16_t count, cursor *cur) {
@@ -67,7 +68,7 @@ void write_str(char *str, cursor *cur) {
  * @param format
  * @param ...
  */
-void mprintf(cursor *cur,  char *format, ...) {
+void mprintf(cursor *cur, char *format, ...) {
     if (format == NULL) {
         return;
     }
@@ -87,41 +88,51 @@ void mprintf(cursor *cur,  char *format, ...) {
         if (format_next) {
             format_next = false;
             switch (c) {
-                case 'i':
-                    char buf[20];
+                case 'i': {
                     int int_arg = va_arg(args, int);
+                    char buf[20];
                     int len = 0;
-                    while (int_arg > 0) {
-                        buf[len++] = '0' + int_arg % 10;
-                        int_arg /= 10;
-                    }
-                    for (int i = len-1; i >= 0; i--) {
+                    bool neg = int_arg < 0;
+                    unsigned int uval = neg ? -(unsigned int)int_arg : (unsigned int)int_arg;
+                    do {
+                        buf[len++] = '0' + uval % 10;
+                        uval /= 10;
+                    } while (uval > 0);
+                    if (neg) write_c('-', cur);
+                    for (int i = len - 1; i >= 0; i--) {
                         write_c(buf[i], cur);
                     }
-                case 'h':
+                    break;
+                }
+                case 'h': {
+                    int int16_arg = va_arg(args, int); /* promoted */
                     char hbuf[20];
-                    int int32_arg = va_arg(args, int);
                     int hlen = 0;
-                    while (int32_arg > 0) {
-                        hbuf[hlen++] = '0' + int32_arg % 10;
-                        int32_arg /= 10;
-                    }
-                    for (int i = hlen-1; i >= 0; i--) {
+                    bool neg = int16_arg < 0;
+                    unsigned int uval = neg ? -(unsigned int)int16_arg : (unsigned int)int16_arg;
+                    do {
+                        hbuf[hlen++] = '0' + uval % 10;
+                        uval /= 10;
+                    } while (uval > 0);
+                    if (neg) write_c('-', cur);
+                    for (int i = hlen - 1; i >= 0; i--) {
                         write_c(hbuf[i], cur);
                     }
-                case 'l':
+                    break;
+                }
+                case 'l': {
+                    uint64_t long_arg = va_arg(args, uint64_t);
                     char lbuf[20];
-                    int long_arg = va_arg(args, int);
                     int llen = 0;
-                    while (long_arg > 0) {
+                    do {
                         lbuf[llen++] = '0' + long_arg % 10;
                         long_arg /= 10;
-                    }
-                    for (int i = llen-1; i >= 0; i--) {
+                    } while (long_arg > 0);
+                    for (int i = llen - 1; i >= 0; i--) {
                         write_c(lbuf[i], cur);
                     }
                     break;
-
+                }
                 case 's':
                     write_str(va_arg(args, char *), cur);
                     break;
@@ -140,9 +151,26 @@ void mprintf(cursor *cur,  char *format, ...) {
     va_end(args);
 }
 
-cursor init_shellio(char * starting_text){
-    cursor cur = (cursor) {0,0};
-    mprintf( &cur, "Init Shell: %s", starting_text);
+void cons_move_cursor(uint16_t offset) {
+    move_cursor(offset, &curs);
+}
+
+void cons_new_lines(uint16_t count) {
+    new_lines(count, &curs);
+}
+void cons_write_c(char c) {
+    write_c(c, &curs);
+}
+void cons_write_str(char *str) {
+    write_str(str, &curs);
+}
+void cons_mprintf(char *format, ...) {
+    mprintf(&curs, format);
+}
+
+cursor *init_shellio(char * starting_text){
+    curs = (cursor) {0,0};
+    mprintf( &curs, "Init Shell: %s", starting_text);
     // TODO: loop here after keyboard support is enabled
-    return cur;
+    return &curs;
 }
