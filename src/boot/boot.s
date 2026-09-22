@@ -112,14 +112,17 @@ pml4:
 align 4096
 pdpt:
     dq pd + 0x003               ; [0]
-    times 509 dq 0
-    dq pd + 0x003               ; [510]
-    dq 0                        ; [511]
+    times 510 dq 0
+    dq pd + 0x003               ; [511]
 
 align 4096
 pd:
     dq 0x00000083
     times 511 dq 0
+
+align 4096
+pt:
+    times 512 dq 0
 
 
 section .boot.rodata
