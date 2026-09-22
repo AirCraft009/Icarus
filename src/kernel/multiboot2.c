@@ -3,10 +3,13 @@
 #include <stddef.h>
 #include <stdint.h>
 #include "../shell/shellio.h"
+#include "MMU/memory_mapping.h"
 
 /**
  * handles parsing the info struct passed by GRUB multiboot2
- *
+ *	- checks for errors in the boot up process
+ *	- prints utility to the screen
+ *	- initiates bitmap
  */
 bitmap *handle_multiboot2 (uint32_t magic, boot_info *info){
 	unsigned long long addr = (unsigned long long) info;
@@ -34,9 +37,7 @@ bitmap *handle_multiboot2 (uint32_t magic, boot_info *info){
 	for (tag = (struct multiboot_tag *) (addr + 8);
 	tag->type != MULTIBOOT_TAG_TYPE_END;
 	tag = (struct multiboot_tag *) ((multiboot_uint8_t *) tag 
-                                       + ((tag->size + 7) & ~7)))
-
-	{
+                                       + ((tag->size + 7) & ~7))) {
 		mprintf(&cur, "Tag 0x%i, Size 0x%i\n", tag->type, tag->size);
 		switch (tag->type)
 		{
@@ -66,37 +67,18 @@ bitmap *handle_multiboot2 (uint32_t magic, boot_info *info){
 				((struct multiboot_tag_bootdev *) tag)->part);
 				break;
 			case MULTIBOOT_TAG_TYPE_MMAP:
-			{
-				multiboot_memory_map_t *mmap;
-
-				mprintf(&cur, "mmap\n");
-      
-				for (mmap = ((struct multiboot_tag_mmap *) tag)->entries;
-				(multiboot_uint8_t *) mmap < (multiboot_uint8_t *) tag + tag->size;
-
-				mmap = (multiboot_memory_map_t *) ((unsigned long) mmap +
-				((struct multiboot_tag_mmap *) tag)->entry_size))
-				mprintf(&cur, " base_addr = 0x%i%i,"
-				" length = 0x%i%i, type = 0x%i\n",
-				(unsigned) (mmap->addr >> 32),
-				(unsigned) (mmap->addr & 0xffffffff),
-				(unsigned) (mmap->len >> 32),
-				(unsigned) (mmap->len & 0xffffffff),
-				(unsigned) mmap->type);
-				}
+				//init_mmap(tag);
 				break;
+
 			case MULTIBOOT_TAG_TYPE_FRAMEBUFFER:
-			{
 				break;
-      }
 			default:
-				break;
+			break;
+			}
 		}
-    }
-	tag = (struct multiboot_tag *) ((multiboot_uint8_t *) tag 
-                                  + ((tag->size + 7) & ~7));
-	mprintf(&cur, "Total mbi size 0x%i\n", (unsigned) tag - addr);
+		tag = (struct multiboot_tag *) ((multiboot_uint8_t *) tag
+									  + ((tag->size + 7) & ~7));
+		mprintf(&cur, "Total mbi size 0x%i\n", (unsigned) tag - addr);
 
-	return NULL;
-}
-	
+		return NULL;
+	}

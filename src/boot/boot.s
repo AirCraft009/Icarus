@@ -112,8 +112,9 @@ pml4:
 align 4096
 pdpt:
     dq pd + 0x003               ; [0]
-    times 510 dq 0
-    dq pd + 0x003               ; [511]
+    times 509 dq 0
+    dq pd + 0x003               ; [510]
+    dq 0                        ; [511]
 
 align 4096
 pd:

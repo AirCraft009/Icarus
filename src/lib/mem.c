@@ -23,3 +23,7 @@ void memcpy(void *dest, const void *src, uint64_t length) {
         dp[i] = sp[i];
     }
 }
+
+static inline uint64_t align_up(uint64_t addr, uint64_t align) {
+    return (addr + align - 1) & ~(align - 1);
+}
