@@ -23,23 +23,26 @@ SECTIONS {
  !!! IT'S ONLY VIRTUALLY (Virtual addr space) LOCATED SOMEWHERE ELSE !!!
  !!! THEN TRANSLATED TO THE PHYSICAL LOW ADDR !!!
  */
-  . = ALIGN(4096);
-  . += KERNEL_VMA;
+    . = ALIGN(4096);
+    . += KERNEL_VMA;
 
-  .text : AT(ADDR(.text) - KERNEL_VMA) { *(.text .text.*) }
-  . = ALIGN(4096);
-  .rodata : AT(ADDR(.rodata) - KERNEL_VMA) { *(.rodata .rodata.*) }
-  . = ALIGN(4096);
-  .data : AT(ADDR(.data) - KERNEL_VMA) { *(.data .data.*) }
-  . = ALIGN(4096);
-  .bss : AT(ADDR(.bss) - KERNEL_VMA) {
+    .text : AT(ADDR(.text) - KERNEL_VMA) { *(.text .text.*) }
+    . = ALIGN(4096);
+    .rodata : AT(ADDR(.rodata) - KERNEL_VMA) { *(.rodata .rodata.*) }
+    . = ALIGN(4096);
+    .data : AT(ADDR(.data) - KERNEL_VMA) { *(.data .data.*) }
+    . = ALIGN(4096);
+    .bss : AT(ADDR(.bss) - KERNEL_VMA) {
       __bss_start = .;
       *(COMMON)
       *(.bss .bss.*)
       __bss_end = .;
-  }
+    }
 
-  /DISCARD/ : { *(.comment) *(.eh_frame) *(.note*) }
+    . = ALIGN(4096);
+    _kernel_end = .;
+
+    /DISCARD/ : { *(.comment) *(.eh_frame) *(.note*) }
 }
 
 

@@ -88,8 +88,10 @@
 #define MULTIBOOT_CONSOLE_FLAGS_EGA_TEXT_SUPPORTED 2
 
 #ifndef ASM_FILE
+#include <stddef.h>
+
 #include "../lib/bitmap.h"
-bitmap *handle_multiboot2 ();
+#include "../shell/shellio.h"
 
 typedef unsigned char           multiboot_uint8_t;
 typedef unsigned short          multiboot_uint16_t;
@@ -414,13 +416,14 @@ struct multiboot_tag_load_base_addr
   multiboot_uint32_t load_base_addr;
 };
 
-struct multiboot_info {
+typedef struct multiboot_info {
   multiboot_uint32_t total_size;
   multiboot_uint32_t reserved;
   struct multiboot_tag tags[];
-};
+}boot_info;
 
 
+bitmap *handle_multiboot2 (uint32_t magic, boot_info *info);
 
 #endif /*  ! ASM_FILE */
 

@@ -4,9 +4,11 @@
 #include <stdint.h>
 #include "../shell/shellio.h"
 
-// 20 chars
-bitmap *handle_multiboot2 (uint32_t magic, struct multiboot_info *info){
-	bitmap *map;
+/**
+ * handles parsing the info struct passed by GRUB multiboot2
+ *
+ */
+bitmap *handle_multiboot2 (uint32_t magic, boot_info *info){
 	unsigned long long addr = (unsigned long long) info;
 	struct multiboot_tag *tag;
 	unsigned long size;
@@ -95,8 +97,6 @@ bitmap *handle_multiboot2 (uint32_t magic, struct multiboot_info *info){
                                   + ((tag->size + 7) & ~7));
 	mprintf(&cur, "Total mbi size 0x%i\n", (unsigned) tag - addr);
 
-	while(1);
-
-	return map;
+	return NULL;
 }
 	
