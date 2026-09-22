@@ -19,13 +19,13 @@ add_executable(Icarus_kernel
         src/shell/shellio.h
         src/kernel/MMU/memory_mapping.c
         src/kernel/MMU/memory_mapping.h
-        src/lib/string.c
-        src/lib/string.h
         src/kernel/interrupts/TSS.c
         src/kernel/interrupts/TSS.h
         src/kernel/MMU/page_definitions.h
         src/kernel/multiboot2.c
         src/kernel/multiboot2.h
+        src/lib/bitmap.c
+        src/lib/bitmap.h
 )
 
 target_compile_options(Icarus_kernel PRIVATE
@@ -48,7 +48,6 @@ target_link_options(Icarus_kernel PRIVATE
         -nostdlib
         -static
         -no-pie
-        -no-pic
         -fno-pie
         -fno-pic
         -z max-page-size=0x1000

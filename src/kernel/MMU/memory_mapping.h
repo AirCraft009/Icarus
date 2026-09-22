@@ -7,4 +7,8 @@
 
 #pragma once
 
+typedef struct Page_BitMap {
+    
+}page_map;
+
 #endif //ICARUS_MEMORY_MAPPING_H
