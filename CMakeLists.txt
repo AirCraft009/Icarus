@@ -19,13 +19,17 @@ add_executable(Icarus_kernel
         src/shell/shellio.h
         src/kernel/MMU/memory_mapping.c
         src/kernel/MMU/memory_mapping.h
-        src/kernel/interrupts/TSS.c
-        src/kernel/interrupts/TSS.h
+        src/kernel/TSS/TSS.c
+        src/kernel/TSS/TSS.h
         src/kernel/MMU/page_definitions.h
         src/kernel/multiboot2.c
         src/kernel/multiboot2.h
         src/lib/bitmap.c
         src/lib/bitmap.h
+        src/kernel/GDT/gdt.c
+        src/kernel/GDT/gdt.h
+        src/lib/mem.c
+        src/lib/mem.h
 )
 
 target_compile_options(Icarus_kernel PRIVATE
