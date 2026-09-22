@@ -21,9 +21,11 @@ static uint64_t BitmapStart;
 extern uint64_t pml4[512], pdpt[512], pd[512], pt[512];
 
 int init_mmap(struct multiboot_tag *mmap_tag) {
+    cursor cur = {0, 5};
+
     BitmapStart = (uint64_t)&_kernel_end_phys;
     bitmap *bit_mmap = (bitmap *) BitmapStart; // FIX: value, not address-of
-    cons_mprintf("START: %l", BitmapStart);
+    mprintf(&cur, "START: %l", BitmapStart);
 
     struct multiboot_mmap_entry *mmap;
 
@@ -44,6 +46,7 @@ int init_mmap(struct multiboot_tag *mmap_tag) {
             uint64_t end   = ALIGN_UP(mmap->addr + mmap->len, PAGE_SIZE);
             index = start / PAGE_SIZE;
             bits  = (end - start) / PAGE_SIZE;
+            mprintf(&cur, "addrG: %l len: %l\n", mmap->addr, mmap->len);
             bitmap_set_values(bit_mmap, index, bits);
         } else {
             // available: round inward so we never over-claim a partial page
@@ -52,12 +55,12 @@ int init_mmap(struct multiboot_tag *mmap_tag) {
             if (end > start) {
                 index = start / PAGE_SIZE;
                 bits  = (end - start) / PAGE_SIZE;
-                cons_mprintf("addrF: %l len: %l\n", mmap->addr, mmap->len);
+                mprintf(&cur, "addrF: %l len: %l\n", mmap->addr, mmap->len);
                 bitmap_clear_values(bit_mmap, index, bits);
             }
         }
     }
-    cons_mprintf("Final out");
+    mprintf(&cur, "Final out");
     return 0;
 }
 

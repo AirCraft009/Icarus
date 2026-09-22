@@ -164,9 +164,6 @@ void cons_write_c(char c) {
 void cons_write_str(char *str) {
     write_str(str, &curs);
 }
-void cons_mprintf(char *format, ...) {
-    mprintf(&curs, format);
-}
 
 cursor *init_shellio(char * starting_text){
     curs = (cursor) {0,0};
