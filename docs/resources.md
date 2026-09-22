@@ -12,7 +12,8 @@ grub 2 multiboot header
 - https://wiki.osdev.org/Multiboot
 - lwk ask an LLM (info out there is cryptic)
 - multiboot2 info spec
-- https://www.gnu.org/software/grub/manual/multiboot2/multiboot.html?
+- https://www.gnu.org/software/grub/manual/multiboot2/multiboot.html
+- https://www.gnu.org/software/grub/manual/multiboot2/html_node/multiboot2_002eh.html
 
 IDT
 - https://wiki.osdev.org/Interrupt_Descriptor_Table

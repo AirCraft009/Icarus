@@ -98,7 +98,19 @@ void mprintf(cursor *cur,  char *format, ...) {
                     for (int i = len-1; i >= 0; i--) {
                         write_c(buf[i], cur);
                     }
+                case 'l':
+                    char lbuf[20];
+                    int long_arg = va_arg(args, int);
+                    int llen = 0;
+                    while (int_arg > 0) {
+                        lbuf[llen++] = '0' + long_arg % 10;
+                        long_arg /= 10;
+                    }
+                    for (int i = llen-1; i >= 0; i--) {
+                        write_c(lbuf[i], cur);
+                    }
                     break;
+
                 case 's':
                     write_str(va_arg(args, char *), cur);
                     break;
