@@ -28,8 +28,8 @@ add_executable(Icarus_kernel
         src/lib/bitmap.h
         src/kernel/GDT/gdt.c
         src/kernel/GDT/gdt.h
-        src/lib/mem.c
-        src/lib/mem.h
+        src/lib/mem_utils.c
+        src/lib/mem_utils.h
         src/kernel/kernel_info.h
         src/kernel/kernel_helper.h
 )

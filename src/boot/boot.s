@@ -118,8 +118,8 @@ pdpt:
 
 align 4096
 pd:
-    dq 0x00000083
-    times 511 dq 0
+    times 16 dq 0x00000083
+    times 496 dq 0
 
 align 4096
 pt:

@@ -2,7 +2,7 @@
 // Created by cocon on 22.09.2026.
 //
 
-#include "mem.h"
+#include "mem_utils.h"
 
 #include <stdint.h>
 

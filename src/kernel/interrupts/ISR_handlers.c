@@ -19,7 +19,7 @@ _Static_assert(sizeof(struct interrupt_frame) == 184, "asm/C frame mismatch");
 
 
 void page_fault_handler(struct interrupt_frame *frame){
-    cons_mprintf( "#Page Fault detected: %i\nerror: %i", frame->cr2, frame->error_code);
+    cons_mprintf("#Page Fault detected: %i\nerror: %i\n", frame->cr2, frame->error_code);
     //TODO: stop user process
     __asm__ volatile ("cli; hlt"); // Completely hangs the computer
 }
@@ -51,7 +51,7 @@ void c_isr(
 )
 {
     cursor cur = {0,0};
-    cons_mprintf("Registered w/ general handler: %i", frame->vector);
+    cons_mprintf("Registered w/ general handler: %i\n", frame->vector);
     switch (frame->vector) {
         case 0:
             // Divide error

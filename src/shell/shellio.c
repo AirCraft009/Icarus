@@ -7,7 +7,7 @@
 // All text will be in white on black bg
 
 #include "shellio.h"
-#include "../lib/mem.h"
+#include "../lib/mem_utils.h"
 
 #include <assert.h>
 #include <stdarg.h>

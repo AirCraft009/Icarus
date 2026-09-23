@@ -19,4 +19,11 @@
 
 int init_mmap(	struct multiboot_tag *mmap_tag);
 
+typedef struct PageTable {
+    uint64_t pml4[512];
+    uint64_t pdpt[512];
+    uint64_t pd[512];
+    uint64_t pt[512];
+}__attribute__((aligned(4096))) page_table_t;
+
 #endif //ICARUS_MEMORY_MAPPING_H

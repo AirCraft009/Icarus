@@ -7,6 +7,11 @@
 #pragma once
 #include <stdint.h>
 
+typedef struct PageFrame {
+    uint64_t virtual_address;
+    uint64_t physical_address;
+}page_frame;
+
 typedef struct PageMapL4Entry {
     uint64_t present                   :1;
     uint64_t writeable                 :1;
