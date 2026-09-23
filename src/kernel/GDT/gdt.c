@@ -54,7 +54,7 @@ void gdt_init(void) {
     gdt_set_entry(3, 0, 0xFFFFF, 0xF2, 0xC0);         // user data
     gdt_set_entry(4, 0, 0xFFFFF, 0xFA, 0xA0);         // user code
 
-    memset(&tss, 0, sizeof(tss));
+    Imemset(&tss, 0, sizeof(tss));
     tss.iomap_base = sizeof(tss);
 
     uint64_t tss_base  = (uint64_t)&tss;
@@ -62,7 +62,7 @@ void gdt_init(void) {
     gdt_set_entry(5, (uint32_t)(tss_base & 0xFFFFFFFF), tss_limit, 0x89, 0x00);
     gdt_hi.base_upper32 = (uint32_t)(tss_base >> 32);
     gdt_hi.reserved = 0;
-    memcpy(&gdt[6], &gdt_hi, sizeof(gdt_hi));
+    Imemcpy(&gdt[6], &gdt_hi, sizeof(gdt_hi));
 
     gdt_descriptor.limit = sizeof(gdt) - 1;
     gdt_descriptor.base  = (uint64_t)&gdt;

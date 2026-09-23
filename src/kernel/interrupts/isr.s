@@ -116,6 +116,10 @@ common_isr:
     push r14
     push r15
 
+    ; now push cr2 bc it contains the faulted addr in case of #PF
+    mov rax, cr2
+    push rax
+
 
     ; At this point:
     ;
@@ -125,9 +129,7 @@ common_isr:
     ; rsp + 144 = CS
     ; rsp + 152 = RFLAGS
 
-    mov rdi, [rsp + 120]      ; arg 1 = vector
-    mov rsi, [rsp + 128]      ; arg 2 = error code
-    lea rdx, [rsp + 136]      ; arg 3 = CPU interrupt frame
+    lea rdi, [rsp]      ; arg 3 = CPU interrupt frame
 
 
     ; C function has the correct args on the stack(or ig the correct struct since it only takes a struct)
@@ -135,6 +137,7 @@ common_isr:
 
 
     ; Restore registers
+    pop rax     ; pop the stale cr2 reg
 
     pop r15
     pop r14

@@ -14,14 +14,12 @@ struct interrupt_frame {
     uint64_t error_code;                // 0 if the CPU didn't push one
     // pushed by the CPU
     uint64_t rip, cs, rflags, rsp, ss;
-};
+}__attribute__((packed));
 _Static_assert(sizeof(struct interrupt_frame) == 184, "asm/C frame mismatch");
 
 
 void page_fault_handler(struct interrupt_frame *frame){
-    cursor cur = (cursor) {0,0};
-
-    mprintf(&cur, "#Page Fault detected: %i\nerror: %i", frame->cr2, frame->error_code);
+    cons_mprintf( "#Page Fault detected: %i\nerror: %i", frame->cr2, frame->error_code);
     //TODO: stop user process
     __asm__ volatile ("cli; hlt"); // Completely hangs the computer
 }
@@ -29,7 +27,7 @@ void page_fault_handler(struct interrupt_frame *frame){
 void general_protection_fault_handler(struct interrupt_frame *frame){
     cursor cur = (cursor) {0,0};
 
-    mprintf(&cur, "#General Fault detected\nsegment: %i\nerror: %i", frame->ss, frame->error_code);
+    cons_mprintf( "#General Fault detected\nsegment: %i\nerror: %i", frame->ss, frame->error_code);
     //TODO: stop user process
     __asm__ volatile ("cli; hlt"); // Completely hangs the computer
 }
@@ -38,7 +36,7 @@ void undefined_instruction_handler(struct interrupt_frame *frame) {
     cursor cur = (cursor) {0,0};
     uint8_t *fault_instr = (uint8_t *)frame->rip;
 
-    mprintf(&cur, "undefined instruction: %i", *fault_instr);
+    cons_mprintf( "undefined instruction: %i", *fault_instr);
 
     if (frame->cs == 0) {
         // ring 0 (kernel mode #UD) is not recoverable (FOR NOW MUHAHAHAHA)
@@ -52,6 +50,8 @@ void c_isr(
     struct interrupt_frame *frame
 )
 {
+    cursor cur = {0,0};
+    cons_mprintf("Registered w/ general handler: %i", frame->vector);
     switch (frame->vector) {
         case 0:
             // Divide error
