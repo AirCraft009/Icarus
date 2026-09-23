@@ -90,7 +90,7 @@
 #ifndef ASM_FILE
 #include <stddef.h>
 
-#include "../lib/bitmap.h"
+#include "MMU/memmap.h"
 #include "../shell/shellio.h"
 
 typedef unsigned char           multiboot_uint8_t;
@@ -423,7 +423,7 @@ typedef struct multiboot_info {
 }boot_info;
 
 
-bitmap *handle_multiboot2 (uint32_t magic, boot_info *info);
+mem_map *handle_multiboot2 (uint32_t magic, boot_info *info);
 
 #endif /*  ! ASM_FILE */
 

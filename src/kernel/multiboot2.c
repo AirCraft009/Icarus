@@ -11,7 +11,7 @@
  *	- prints utility to the screen
  *	- initiates bitmap
  */
-bitmap *handle_multiboot2 (uint32_t magic, boot_info *info){
+mem_map *handle_multiboot2 (uint32_t magic, boot_info *info){
 	unsigned long long addr = (unsigned long long) info;
 	struct multiboot_tag *tag;
 	unsigned long size;

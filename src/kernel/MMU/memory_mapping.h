@@ -7,23 +7,27 @@
 
 #pragma once
 
-#define PageS 4096
-#define HugePS 2097152
-#define SuperPs 1073741824
+#define PAGE_S 4096
+#define HUGE_PS 2097152
+#define SUPER_PS 1073741824
+#define VA_INDEX_MASK        0x1FFULL   /* 9 bits per level */
 
-#define NPage 0
-#define HPage 1
-#define SPage 2
+#define VA_PML4_INDEX(va)    ((((uint64_t)(va)) >> 39) & VA_INDEX_MASK)
+#define VA_PDPT_INDEX(va)    ((((uint64_t)(va)) >> 30) & VA_INDEX_MASK)
+#define VA_PD_INDEX(va)      ((((uint64_t)(va)) >> 21) & VA_INDEX_MASK)
+#define VA_PT_INDEX(va)      ((((uint64_t)(va)) >> 12) & VA_INDEX_MASK)
+
+// Offsets within the final page, depending on where the walk ended
+#define VA_OFFSET_4K(va)     (((uint64_t)(va)) & 0xFFFULL)       /* bits 11:0  */
+#define VA_OFFSET_2M(va)     (((uint64_t)(va)) & 0x1FFFFFULL)    /* bits 20:0  */
+#define VA_OFFSET_1G(va)     (((uint64_t)(va)) & 0x3FFFFFFFULL)  /* bits 29:0  */
+
+// canonical check for 48-bit VAs (bits 63:47 must all match)
+#define VA_IS_CANONICAL_48(va) \
+((((int64_t)(va) << 16) >> 16) == (int64_t)(va))
 
 #include "../multiboot2.h"
 
-int init_mmap(	struct multiboot_tag *mmap_tag);
-
-typedef struct PageTable {
-    uint64_t pml4[512];
-    uint64_t pdpt[512];
-    uint64_t pd[512];
-    uint64_t pt[512];
-}__attribute__((aligned(4096))) page_table_t;
+uint64_t init_mmap(	struct multiboot_tag *mmap_tag);
 
 #endif //ICARUS_MEMORY_MAPPING_H

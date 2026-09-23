@@ -2,9 +2,16 @@
 // Created by Mxsxll on 22.09.2026.
 //
 
-#include "bitmap.h"
+#include "memmap.h"
 
-int bitmap_set_value(bitmap *map, uint64_t index, char value) {
+#include <stddef.h>
+
+#include "../kernel_info.h"
+
+/**
+ * sets multiple bits to a value (0 | 1)
+ */
+int memmap_set_value(mem_map *map, uint64_t index, char value) {
     uint64_t byte_ind = index / 8;
     uint64_t offset = index % 8;
 
@@ -15,7 +22,11 @@ int bitmap_set_value(bitmap *map, uint64_t index, char value) {
     map->data[byte_ind] |= value << offset;
     return 0;
 }
-int bitmap_set(bitmap *map, uint64_t index) {
+
+/**
+ *
+ */
+int memmap_set(mem_map *map, uint64_t index) {
     uint64_t byte_ind = index / 8;
     uint64_t offset = index % 8;
 
@@ -25,7 +36,7 @@ int bitmap_set(bitmap *map, uint64_t index) {
     map->data[byte_ind] |= 1 << offset;
     return 0;
 }
-int bitmap_clear(bitmap *map, uint64_t index) {
+int memmap_clear(mem_map *map, uint64_t index) {
     uint64_t byte_ind = index / 8;
     uint64_t offset = index % 8;
 
@@ -37,7 +48,7 @@ int bitmap_clear(bitmap *map, uint64_t index) {
     return 0;
 }
 
-byte bitmap_get(bitmap *map, uint64_t index) {
+byte memmap_get(mem_map *map, uint64_t index) {
     uint64_t byte_ind = index / 8;
     uint64_t offset = index % 8;
 
@@ -48,7 +59,7 @@ byte bitmap_get(bitmap *map, uint64_t index) {
     return (map->data[byte_ind] & (1 << offset)) >> offset;
 }
 
-int bitmap_set_values(bitmap *map, uint64_t startIndex, uint64_t len) {
+int memmap_set_len(mem_map *map, uint64_t startIndex, uint64_t len) {
     if ((startIndex + len) > map->size) {
         return -1;
     }
@@ -68,7 +79,7 @@ int bitmap_set_values(bitmap *map, uint64_t startIndex, uint64_t len) {
     return 0;
 }
 
-int bitmap_clear_values(bitmap *map, uint64_t startIndex, uint64_t len) {
+int memmap_clear_len(mem_map *map, uint64_t startIndex, uint64_t len) {
     if ((startIndex + len) > map->size) {
         return -1;
     }
@@ -87,3 +98,4 @@ int bitmap_clear_values(bitmap *map, uint64_t startIndex, uint64_t len) {
     }
     return 0;
 }
+

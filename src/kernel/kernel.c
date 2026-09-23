@@ -9,6 +9,7 @@
 
 
 extern uint64_t *gdt_descriptor;
+extern uint64_t pml4[512], pdpt[512], pd[512], pt[512];
 
 
 void kmain(uint32_t magic, struct multiboot_info *mboot) {

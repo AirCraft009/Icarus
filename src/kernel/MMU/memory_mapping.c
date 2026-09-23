@@ -6,9 +6,11 @@
 
 #include <stdint.h>
 
+#include "allocater.h"
 #include "../kernel_info.h"
 #include "../kernel_helper.h"
 #include "page_definitions.h"
+#include "../../lib/mem_utils.h"
 
 /*
  *  handles paging in and out
@@ -16,20 +18,19 @@
 
 
 
-extern uint64_t pml4[512], pdpt[512], pd[512], pt[512];
 extern uint8_t _kernel_end;
 extern uint8_t _kernel_end_phys;
 
-static uint64_t BitmapStart;
-static bitmap * mmap;
-static page_table_t * page_table;
+static void *BitmapStart;
+//TODO replace bitmap w/ more efficient data struct that saves last data access etc.
+static mem_map * mmap;
 
 
-int init_mmap(struct multiboot_tag *mmap_tag) {
+uint64_t init_mmap(struct multiboot_tag *mmap_tag) {
 
-    BitmapStart = (uint64_t)&_kernel_end_phys;
-    mmap = (bitmap *) BitmapStart;
-    cons_mprintf( "Bitmap_start: %l\n", BitmapStart);
+    BitmapStart = (void *)&_kernel_end_phys;
+    mmap = (mem_map *) BitmapStart;
+    cons_mprintf( "memmap_start: %l\n", BitmapStart);
 
     struct multiboot_mmap_entry *mmap_entry;
 
@@ -46,45 +47,71 @@ int init_mmap(struct multiboot_tag *mmap_tag) {
 
         if (mmap_entry->type != MULTIBOOT_MEMORY_AVAILABLE) {
             // reserved: round outward so we never under-cover it
-            uint64_t start = ALIGN_DOWN(mmap_entry->addr, PAGE_SIZE);
-            uint64_t end   = ALIGN_UP(mmap_entry->addr + mmap_entry->len, PAGE_SIZE);
-            index = start / PAGE_SIZE;
-            bits  = (end - start) / PAGE_SIZE;
+            uint64_t start = ALIGN_DOWN(mmap_entry->addr, DEFAULT_PAGE_SIZE);
+            uint64_t end   = ALIGN_UP(mmap_entry->addr + mmap_entry->len, DEFAULT_PAGE_SIZE);
+            index = start / DEFAULT_PAGE_SIZE;
+            bits  = (end - start) / DEFAULT_PAGE_SIZE;
             //cons_mprintf( "addrG: %l len: %l\n", mmap->addr, mmap->len);
-            bitmap_set_values(mmap, index, bits);
+            memmap_set_len(mmap, index, bits);
         } else {
             // available: round inward so we never over-claim a partial page
-            uint64_t start = ALIGN_UP(mmap_entry->addr, PAGE_SIZE);
-            uint64_t end   = ALIGN_DOWN(mmap_entry->addr + mmap_entry->len, PAGE_SIZE);
+            uint64_t start = ALIGN_UP(mmap_entry->addr, DEFAULT_PAGE_SIZE);
+            uint64_t end   = ALIGN_DOWN(mmap_entry->addr + mmap_entry->len, DEFAULT_PAGE_SIZE);
             if (end > start) {
-                index = start / PAGE_SIZE;
-                bits  = (end - start) / PAGE_SIZE;
+                index = start / DEFAULT_PAGE_SIZE;
+                bits  = (end - start) / DEFAULT_PAGE_SIZE;
                 //cons_mprintf( "addrF: %l len: %l\n", mmap->addr, mmap->len);
-                bitmap_clear_values(mmap, index, bits);
+                memmap_clear_len(mmap, index, bits);
             }
         }
     }
+
+    //mark the bitmap itself as not available
+    memmap_set_len(mmap, (uint64_t) BitmapStart / DEFAULT_PAGE_SIZE, mmap->size / DEFAULT_PAGE_SIZE);
     return mmap->size;
 }
 
-int page_in(page_frame *pf, uint8_t pageT) {
-    uint64_t size;
-    switch(pageT) {
-        case NPage:
-            size = PageS;
-            break;
-        case HPage:
-            size = HugePS;
-            break;
-        case SPage:
-            size = SuperPs;
-            break;
-        default:
-            return -1;
+int page_in(page_map_l4_entry *pml4, uint64_t virt_addr, uint64_t phys_addr, uint64_t pageSize) {
+    page_map_l4_entry pml4_entry = pml4[VA_PML4_INDEX(virt_addr)];
+
+    if (!pml4->present) {
+        // no pdpt entry in the region (make a new one)
+        void * pdpt =  alloc_frame(mmap, DEFAULT_PAGE_SIZE);
+        Imemset((void *) KERNEL_PHYS_TO_VIRT(pdpt), 0, DEFAULT_PAGE_SIZE);
+        pml4->page_ppn = (uint64_t) pdpt;
     }
 
-    
+    pdpt_entry_t *pdpt_entry = (pdpt_entry_t *) pml4->page_ppn;
 
-    return -1;
+    if (!pdpt_entry->present) {
+        pdpt_entry->present = 1;
+        // no pd entry in the region (make a new one)
+        void * pd =  alloc_frame(mmap, DEFAULT_PAGE_SIZE);
+        Imemset((void *) KERNEL_PHYS_TO_VIRT(pd), 0, DEFAULT_PAGE_SIZE);
+        pml4->page_ppn = (uint64_t) pd;
+    }
+
+    pd_entry_t *pd_entry = (pd_entry_t *) pml4->page_ppn;
+    if (pageSize == HUGE_PS) {
+        pd_entry->huge = 1;
+        pd_entry->page_ppn = phys_addr;
+    }
+
+    if (!pd_entry->present) {
+        pd_entry->present = 1;
+        // no pt entry in the region (make a new one)
+        void * pt =  alloc_frame(mmap, DEFAULT_PAGE_SIZE);
+        Imemset((void *) KERNEL_PHYS_TO_VIRT(pt), 0, DEFAULT_PAGE_SIZE);
+        pml4->page_ppn = (uint64_t) pt;
+    }
+
+    PageTableEntry *pt = (PageTableEntry *) pd_entry->page_ppn;
+    pt->present = 1;
+    pt->page_ppn = phys_addr;
+    pt->accessed = 0;
+    pt->dirty = 0;
+    pt->cache_disabled = 1; // TODO: Enable later after more testing
+
+    return 0;
 }
 
