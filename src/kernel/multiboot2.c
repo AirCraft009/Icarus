@@ -22,46 +22,46 @@ bitmap *handle_multiboot2 (uint32_t magic, boot_info *info){
 
 	if ((int)magic != MULTIBOOT2_BOOTLOADER_MAGIC)
 	{
-		mprintf(&cur,"Invalid magic number: 0x%i\n", (unsigned) magic);
+		cons_mprintf("Invalid magic number: 0x%i\n", (unsigned) magic);
 		return NULL;
 	}
 
 	if (addr & 7)
 	{
-		mprintf(&cur, "Unaligned mbi: 0x%i\n", addr);
+		cons_mprintf( "Unaligned mbi: 0x%i\n", addr);
 		return NULL;
 	}
 
 	size = *(unsigned *) addr;
-	mprintf(&cur, "Announced mbi size 0x%d\n", size);
+	cons_mprintf( "Announced mbi size 0x%d\n", size);
 	for (tag = (struct multiboot_tag *) (addr + 8);
 	tag->type != MULTIBOOT_TAG_TYPE_END;
 	tag = (struct multiboot_tag *) ((multiboot_uint8_t *) tag
                                        + ((tag->size + 7) & ~7))) {
-		mprintf(&cur, "Tag 0x%i, Size 0x%i\n", tag->type, tag->size);
+		cons_mprintf( "Tag 0x%i, Size 0x%i\n", tag->type, tag->size);
 		switch (tag->type)
 		{
 			case MULTIBOOT_TAG_TYPE_CMDLINE:
-				mprintf(&cur, "Command line = %s\n",
+				cons_mprintf( "Command line = %s\n",
 				((struct multiboot_tag_string *) tag)->string);
 				break;
 			case MULTIBOOT_TAG_TYPE_BOOT_LOADER_NAME:
-				mprintf(&cur, "Boot loader name = %s\n",
+				cons_mprintf( "Boot loader name = %s\n",
 				((struct multiboot_tag_string *) tag)->string);
 				break;
 			case MULTIBOOT_TAG_TYPE_MODULE:
-				mprintf(&cur, "Module at 0x%i-0x%i. Command line %s\n",
+				cons_mprintf( "Module at 0x%i-0x%i. Command line %s\n",
 				((struct multiboot_tag_module *) tag)->mod_start,
 				((struct multiboot_tag_module *) tag)->mod_end,
 				((struct multiboot_tag_module *) tag)->cmdline);
 				break;
 			case MULTIBOOT_TAG_TYPE_BASIC_MEMINFO:
-				mprintf(&cur, "mem_lower = %uKB, mem_upper = %uKB\n",
+				cons_mprintf( "mem_lower = %uKB, mem_upper = %uKB\n",
 				((struct multiboot_tag_basic_meminfo *) tag)->mem_lower,
 				((struct multiboot_tag_basic_meminfo *) tag)->mem_upper);
 				break;
 			case MULTIBOOT_TAG_TYPE_BOOTDEV:
-				mprintf(&cur, "Boot device 0x%i,%u,%u\n",
+				cons_mprintf( "Boot device 0x%i,%u,%u\n",
 				((struct multiboot_tag_bootdev *) tag)->biosdev,
 				((struct multiboot_tag_bootdev *) tag)->slice,
 				((struct multiboot_tag_bootdev *) tag)->part);
@@ -78,7 +78,7 @@ bitmap *handle_multiboot2 (uint32_t magic, boot_info *info){
 		}
 		tag = (struct multiboot_tag *) ((multiboot_uint8_t *) tag
 									  + ((tag->size + 7) & ~7));
-		mprintf(&cur, "Total mbi size 0x%i\n", (unsigned) tag - addr);
+		cons_mprintf( "Total mbi size 0x%i\n", (unsigned) tag - addr);
 
 		return NULL;
 	}

@@ -6,7 +6,7 @@
 
 #include <stdint.h>
 
-void  memset(void *addr, int val, uint64_t length) {
+void  Imemset(void *addr, int val, uint64_t length) {
     uint8_t *p = (uint8_t *)addr;
 
     for (uint64_t i = 0; i < length; i++) {
@@ -15,7 +15,7 @@ void  memset(void *addr, int val, uint64_t length) {
     }
 }
 
-void memcpy(void *dest, const void *src, uint64_t length) {
+void Imemcpy(void *dest, const void *src, uint64_t length) {
     uint8_t *dp = (uint8_t *)dest;
     uint8_t *sp = (uint8_t *)src;
 
