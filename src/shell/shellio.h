@@ -22,5 +22,6 @@ void cons_move_cursor(uint16_t offset);
 void cons_new_lines(uint16_t count);
 void cons_write_c(char c);
 void cons_write_str(char *str);
+void cons_mprintf(char *format, ...);
 
 #endif //ICARUS_SHELLIO_H

@@ -7,36 +7,43 @@
 // All text will be in white on black bg
 
 #include "shellio.h"
+#include "../lib/mem.h"
 
 #include <assert.h>
 #include <stdarg.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
-#include <string.h>
 
 
-const uint64_t videoMemStart =  0xB8000;
 const uint16_t COLS = 80;
 const uint16_t ROWS= 25;
+const uint64_t videoMemStart =  0xB8000;
+const uint64_t videoMemEnd =  0xB8000 + COLS * ROWS;
 static cursor curs;
 
 
 
 void move_cursor(uint16_t offset, cursor *cur) {
-    // two bytes bc first is ASCII second is color & bg
-    offset = offset * 2;
-
 
     uint16_t rows = offset / ROWS;
     uint16_t cols = offset % ROWS;
 
     cur->x = (cur->x + cols);
     cur->y = (cur->y + rows);
+
+    uint64_t ptr = videoMemStart + (cur->x + cur->y * COLS) * 2;
+    if (ptr > videoMemEnd - COLS * 2) {
+        uint64_t needed_offset = ptr - videoMemEnd - COLS * 2;
+        uint64_t needed_rows = needed_offset / (COLS * 2) + (needed_offset % (COLS * 2))? 1 : 0;
+        uint64_t needed_bytes = needed_rows * COLS * 2;
+        Imemcpy((uint64_t *)videoMemStart,(uint64_t *) (videoMemStart + needed_bytes), needed_bytes);
+        Imemset((uint64_t *)(videoMemEnd - needed_bytes), 0, needed_bytes);
+    }
 }
 
 void new_lines(uint16_t count, cursor *cur) {
-    cur->y += count * 2;
+    cur->y += count;
     cur->x = 0;
 }
 
@@ -45,7 +52,7 @@ void write_c(char c, cursor *cur) {
         new_lines(1, cur);
         return;
     }
-    char * vidptr = (char *) videoMemStart + cur->x + cur->y * COLS;
+    char * vidptr = (char *) videoMemStart + (cur->x + cur->y * COLS) * 2;
     *vidptr = c;
     move_cursor(1, cur);
 }
@@ -56,25 +63,10 @@ void write_str(char *str, cursor *cur) {
     }
 }
 
-/**
- *
- * very basic printf supporting
- *
- * c - char
- * s - string
- * i - int/whole number (up to 20 digits)
- *
- * @param cur
- * @param format
- * @param ...
- */
-void mprintf(cursor *cur, char *format, ...) {
+void vprintf(cursor *cur, char *format, va_list args) {
     if (format == NULL) {
         return;
     }
-
-    va_list args;
-    va_start(args, format);
 
     bool format_next = false;
     while (*format) {
@@ -148,6 +140,24 @@ void mprintf(cursor *cur, char *format, ...) {
         }
         write_c(c, cur);
     }
+}
+
+/**
+ *
+ * very basic printf supporting
+ *
+ * c - char
+ * s - string
+ * i - int/whole number (up to 20 digits)
+ *
+ * @param cur
+ * @param format
+ * @param ...
+ */
+void mprintf(cursor *cur, char *format, ...) {
+    va_list args;
+    va_start(args, format);
+    vprintf(cur, format, args);
     va_end(args);
 }
 
@@ -163,6 +173,13 @@ void cons_write_c(char c) {
 }
 void cons_write_str(char *str) {
     write_str(str, &curs);
+}
+
+void cons_mprintf(char *format, ...) {
+    va_list args;
+    va_start(args, format);
+    vprintf(&curs, format, args);
+    va_end(args);
 }
 
 cursor *init_shellio(char * starting_text){
