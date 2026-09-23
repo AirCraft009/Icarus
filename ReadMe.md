@@ -11,6 +11,7 @@ I hope the name is obvious enough
 - nasm 
 - (xorriso) - might be needed for grub2
 - gcc
+- sudo apt install --reinstall grub-pc-bin
 
 ## Usage (linux)
 run `./build.sh`
