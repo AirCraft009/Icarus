@@ -1,6 +1,5 @@
 megs: 32
-romimage: file=C:\Program Files\Bochs-3.0\BIOS-bochs-latest
-vgaromimage: file=C:\Program Files\Bochs-3.0\VGABIOS-lgpl-latest.bin
+romimage: file="C:\Program Files\Bochs-3.0\BIOS-bochs-latest"
+vgaromimage: file="C:\Program Files\Bochs-3.0\VGABIOS-lgpl-latest.bin"
 boot: cdrom
-ata0-master: type=cdrom, path="../isofiles/boot/kernel/kernel.bin", status=inserted
-display_library: x
+ata0-master: type=cdrom, path="../build/icarus.iso", status=inserted
