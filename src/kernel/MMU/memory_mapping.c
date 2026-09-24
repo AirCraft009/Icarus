@@ -33,7 +33,6 @@ uint64_t init_mmap(struct multiboot_tag *mmap_tag) {
 
     BitmapStart = (uint64_t) &_kernel_end;
     mmap = (mem_map *) BitmapStart;
-    cons_mprintf("BitmapStart: %x\n", BitmapStart);
 
     struct multiboot_mmap_entry *mmap_entry;
 
@@ -45,8 +44,6 @@ uint64_t init_mmap(struct multiboot_tag *mmap_tag) {
         if (mmap_entry->addr + mmap_entry->len > mmap->size) {
             mmap->size = mmap_entry->addr + mmap_entry->len;
         }
-
-        cons_mprintf("Evaluating entry: %l\n",mmap_entry->addr);
 
         uint64_t index, bits;
 
@@ -66,7 +63,6 @@ uint64_t init_mmap(struct multiboot_tag *mmap_tag) {
                 index = start / DEFAULT_PAGE_SIZE;
                 bits  = (end - start) / DEFAULT_PAGE_SIZE;
                 cons_mprintf( "addrF: %x len: %x\n", mmap_entry->addr, mmap_entry->len);
-                cons_mprintf("mmap addr: %x\n", mmap);
                 memmap_clear_len(mmap, index, bits);
             }
         }

@@ -121,8 +121,12 @@ pdpt:
 
 align 4096
 pd:
-    times 16 dq 0x00000083
-    times 496 dq 0
+    %assign i 0
+    %rep 17
+        dq (i * 0x200000) | 0x83
+        %assign i i+1
+    %endrep
+    times (512 - 17) dq 0
 
 align 4096
 pt:

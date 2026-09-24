@@ -19,7 +19,7 @@ _Static_assert(sizeof(struct interrupt_frame) == 184, "asm/C frame mismatch");
 
 
 void page_fault_handler(struct interrupt_frame *frame){
-    cons_mprintf("#Page Fault detected: %i\nerror: %i\n", frame->cr2, frame->error_code);
+    cons_mprintf("#Page Fault detected: %x\nerror: %x\n", frame->cr2, frame->error_code);
     //TODO: stop user process
     __asm__ volatile ("cli; hlt"); // Completely hangs the computer
 }
