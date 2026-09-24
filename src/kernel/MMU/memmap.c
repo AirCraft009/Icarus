@@ -7,6 +7,7 @@
 #include <stddef.h>
 
 #include "../kernel_info.h"
+#include "../../shell/shellio.h"
 
 /**
  * sets multiple bits to a value (0 | 1)
@@ -83,10 +84,13 @@ int memmap_clear_len(mem_map *map, uint64_t startIndex, uint64_t len) {
     if ((startIndex + len) > map->size) {
         return -1;
     }
+
+    cons_mprintf("clearing values starting at: %l\naddr: %l\n", startIndex, (uint64_t)(map) / 8);
     uint64_t i;
     for (i = startIndex; i < startIndex + len - 8; i += 8) {
         uint64_t byte_ind = i / 8;
 
+        cons_mprintf("pre clearing data[%i]\n", byte_ind);
         map->data[byte_ind] = 0;
     }
 

@@ -1,5 +1,6 @@
 #include <stddef.h>
 
+#include "kernel_info.h"
 #include "multiboot2.h"
 #include "interrupts/IDT.h"
 #include "../shell/shellio.h"
@@ -14,7 +15,8 @@ extern uint64_t pml4[512], pdpt[512], pd[512], pt[512];
 
 void kmain(uint32_t magic, struct multiboot_info *mboot) {
     cursor *cur = init_shellio("ICARUS\n");
-    mprintf(cur, "Multiboot magic: %i\n", magic);
+    cons_mprintf("extern pml4: %l\n", pml4);
+    cons_mprintf("KERNEL VMA: %l\n", KERNEL_VMA);
 
     // initialize the Interrupt Descriptor table
     idt_init();

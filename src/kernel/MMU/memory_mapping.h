@@ -26,8 +26,10 @@
 #define VA_IS_CANONICAL_48(va) \
 ((((int64_t)(va) << 16) >> 16) == (int64_t)(va))
 
+#include "page_definitions.h"
 #include "../multiboot2.h"
 
 uint64_t init_mmap(	struct multiboot_tag *mmap_tag);
+int page_in(page_map_l4_entry *pml4, const void *virt_addr, const void *phys_addr, uint64_t pageSize);
 
 #endif //ICARUS_MEMORY_MAPPING_H

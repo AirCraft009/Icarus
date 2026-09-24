@@ -103,6 +103,9 @@ hang:
 
 
 section .boot.data
+
+global pml4
+
 align 4096
 pml4:
     dq pdpt + 0x003             ; [0]   identity map
