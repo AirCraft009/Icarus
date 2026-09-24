@@ -26,6 +26,8 @@
 #define VA_IS_CANONICAL_48(va) \
 ((((int64_t)(va) << 16) >> 16) == (int64_t)(va))
 
+
+#define LOWEST_FRAME_SIZE 0x100000;
 #include "page_definitions.h"
 #include "../multiboot2.h"
 

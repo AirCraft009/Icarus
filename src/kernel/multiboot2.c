@@ -38,7 +38,7 @@ mem_map *handle_multiboot2 (uint32_t magic, boot_info *info){
 	tag->type != MULTIBOOT_TAG_TYPE_END;
 	tag = (struct multiboot_tag *) ((multiboot_uint8_t *) tag
                                        + ((tag->size + 7) & ~7))) {
-		cons_mprintf( "Tag 0x%i, Size 0x%i\n", tag->type, tag->size);
+		//cons_mprintf( "Tag 0x%i, Size 0x%i\n", tag->type, tag->size);
 		switch (tag->type)
 		{
 			case MULTIBOOT_TAG_TYPE_CMDLINE:

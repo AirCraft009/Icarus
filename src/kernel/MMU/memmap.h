@@ -10,6 +10,7 @@
 typedef unsigned char byte;
 typedef struct MemMap {
     uint64_t size;
+    uint64_t mem_size;
     uint64_t last_accessed;
     // use an array not a ptr (bc the array is part of the struct) I learned my lesson
     byte	data[];

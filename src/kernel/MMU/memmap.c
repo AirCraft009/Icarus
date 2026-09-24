@@ -71,9 +71,10 @@ int memmap_set_len(mem_map *map, uint64_t startIndex, uint64_t len) {
         map->data[byte_ind] = 0xFF;
     }
 
-    for (i = startIndex + len - 8; i < startIndex + len; i ++) {
+    for (i ; i < startIndex + len; i ++) {
         uint64_t byte_ind = i / 8;
         uint64_t offset = i % 8;
+        //cons_mprintf("setting %i at byte=%i, bit=%i\n", startIndex, byte_ind, offset);
 
         map->data[byte_ind] |= (1 << offset);
     }

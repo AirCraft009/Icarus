@@ -15,11 +15,13 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include "../kernel/kernel_helper.h"
+
 
 const uint16_t COLS = 80;
 const uint16_t ROWS= 25;
-const uint64_t videoMemStart =  0xB8000;
-const uint64_t videoMemEnd =  0xB8000 + COLS * ROWS;
+const uint64_t videoMemStart =  KERNEL_PHYS_TO_VIRT(0xB8000);
+const uint64_t videoMemEnd =  KERNEL_PHYS_TO_VIRT(0xB8000 + COLS * ROWS);
 static cursor curs;
 
 
@@ -68,6 +70,7 @@ void vprintf(cursor *cur, char *format, va_list args) {
         return;
     }
 
+    //Imemset((void*)(videoMemStart + cur->y * 2), 0, COLS * 2);
     bool format_next = false;
     while (*format) {
         char c = *format++;
