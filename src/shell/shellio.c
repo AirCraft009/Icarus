@@ -29,17 +29,17 @@ void move_cursor(uint16_t offset, cursor *cur) {
     uint16_t rows = offset / ROWS;
     uint16_t cols = offset % ROWS;
 
-    cur->x = (cur->x + cols);
-    cur->y = (cur->y + rows);
+    cur->x = (cur->x + cols) % COLS;
+    cur->y = (cur->y + rows) % ROWS;
 
-    uint64_t ptr = videoMemStart + (cur->x + cur->y * COLS) * 2;
-    if (ptr > videoMemEnd - COLS * 2) {
-        uint64_t needed_offset = ptr - videoMemEnd - COLS * 2;
-        uint64_t needed_rows = needed_offset / (COLS * 2) + (needed_offset % (COLS * 2))? 1 : 0;
-        uint64_t needed_bytes = needed_rows * COLS * 2;
-        Imemcpy((uint64_t *)videoMemStart,(uint64_t *) (videoMemStart + needed_bytes), needed_bytes);
-        Imemset((uint64_t *)(videoMemEnd - needed_bytes), 0, needed_bytes);
-    }
+    // uint64_t ptr = videoMemStart + (cur->x + cur->y * COLS) * 2;
+    // if (ptr > videoMemEnd - COLS * 2) {
+    //     uint64_t needed_offset = ptr - (videoMemEnd - (COLS * 2));
+    //     uint64_t needed_rows = needed_offset / (COLS * 2) + (needed_offset % (COLS * 2))? 1 : 0;
+    //     uint64_t needed_bytes = needed_rows * COLS * 2;
+    //     Imemcpy((uint64_t *)videoMemStart,(uint64_t *) (videoMemStart + needed_bytes), needed_bytes);
+    //     Imemset((uint64_t *)(videoMemEnd - needed_bytes), 0, needed_bytes);
+    // }
 }
 
 void new_lines(uint16_t count, cursor *cur) {
@@ -113,16 +113,26 @@ void vprintf(cursor *cur, char *format, va_list args) {
                     break;
                 }
                 case 'l': {
-                    uint64_t long_arg = va_arg(args, uint64_t);
-                    char lbuf[20];
+                    uint64_t v = va_arg(args, uint64_t);
+                    char lbuf[21];               /* 20 digits + margin */
                     int llen = 0;
                     do {
-                        lbuf[llen++] = '0' + long_arg % 10;
-                        long_arg /= 10;
-                    } while (long_arg > 0);
-                    for (int i = llen - 1; i >= 0; i--) {
-                        write_c(lbuf[i], cur);
-                    }
+                        lbuf[llen++] = '0' + (v % 10);
+                        v /= 10;
+                    } while (v > 0);
+                    while (llen--) write_c(lbuf[llen], cur);
+                    break;
+                }
+                case 'x': {   /* 64-bit hex, good for pointers */
+                    uint64_t v = va_arg(args, uint64_t);
+                    char xbuf[16];
+                    int xlen = 0;
+                    do {
+                        xbuf[xlen++] = "0123456789abcdef"[v & 0xf];
+                        v >>= 4;
+                    } while (v > 0);
+                    write_c('0', cur); write_c('x', cur);
+                    while (xlen--) write_c(xbuf[xlen], cur);
                     break;
                 }
                 case 's':
