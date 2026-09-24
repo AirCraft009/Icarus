@@ -25,9 +25,15 @@ void page_fault_handler(struct interrupt_frame *frame){
 }
 
 void general_protection_fault_handler(struct interrupt_frame *frame){
-    cursor cur = (cursor) {0,0};
+    cons_mprintf( "#General Fault detected\nsegment: %i\nerror: %i\nRAX %x\nCR2 %x\n", frame->ss, frame->error_code, frame->rax, frame->cr2);
 
-    cons_mprintf( "#General Fault detected\nsegment: %i\nerror: %i", frame->ss, frame->error_code);
+    uint8_t * instruction_data = (uint8_t*)frame->rip;
+    cons_mprintf("rip: b1=%x,b2=%x,b3=%x\n", instruction_data[0],instruction_data[1],instruction_data[2]);
+    cons_mprintf("fulldata=");
+    for (int i = 0; i < 10; i++) {
+        cons_mprintf("%x ", instruction_data[i]);
+    }
+
     //TODO: stop user process
     __asm__ volatile ("cli; hlt"); // Completely hangs the computer
 }

@@ -11,7 +11,8 @@ typedef unsigned char byte;
 typedef struct MemMap {
     uint64_t size;
     uint64_t last_accessed;
-    byte	*data;
+    // use an array not a ptr (bc the array is part of the struct) I learned my lesson
+    byte	data[];
 }mem_map;
 
 int memmap_set_value(mem_map *map, uint64_t index, char value);

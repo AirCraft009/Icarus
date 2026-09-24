@@ -28,11 +28,12 @@ static mem_map * mmap;
 
 
 uint64_t init_mmap(struct multiboot_tag *mmap_tag) {
-    cons_mprintf("INIT_MMAP: %i\n", &_kernel_end);
+    cons_mprintf("INIT_MMAP: %x\n", &_kernel_end);
+
 
     BitmapStart = (uint64_t) &_kernel_end;
     mmap = (mem_map *) BitmapStart;
-    cons_mprintf("memmap_start: %l\n", BitmapStart);
+    cons_mprintf("BitmapStart: %x\n", BitmapStart);
 
     struct multiboot_mmap_entry *mmap_entry;
 
@@ -55,7 +56,7 @@ uint64_t init_mmap(struct multiboot_tag *mmap_tag) {
             uint64_t end   = ALIGN_UP(mmap_entry->addr + mmap_entry->len, DEFAULT_PAGE_SIZE);
             index = start / DEFAULT_PAGE_SIZE;
             bits  = (end - start) / DEFAULT_PAGE_SIZE;
-            cons_mprintf( "addrG: %l len: %l\n", mmap_entry->addr, mmap_entry->len);
+            cons_mprintf( "addrG: %x len: %x\n", mmap_entry->addr, mmap_entry->len);
             memmap_set_len(mmap, index, bits);
         } else {
             // available: round inward so we never over-claim a partial page
@@ -64,7 +65,8 @@ uint64_t init_mmap(struct multiboot_tag *mmap_tag) {
             if (end > start) {
                 index = start / DEFAULT_PAGE_SIZE;
                 bits  = (end - start) / DEFAULT_PAGE_SIZE;
-                cons_mprintf( "addrF: %l len: %l\n", mmap_entry->addr, mmap_entry->len);
+                cons_mprintf( "addrF: %x len: %x\n", mmap_entry->addr, mmap_entry->len);
+                cons_mprintf("mmap addr: %x\n", mmap);
                 memmap_clear_len(mmap, index, bits);
             }
         }

@@ -7,7 +7,7 @@
 #include "IDT.h"
 extern void *isr_table[256];
 
-// same segment that we jumped to in boot.s
+// same segment that we jumped to in boot.asm
 static const uint16_t GDT_OFFSET_KERNEL_CODE = 0x8;
 
 
