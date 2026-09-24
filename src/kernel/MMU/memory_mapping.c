@@ -19,6 +19,7 @@
 
 extern char _kernel_end[];
 extern char _kernel_end_phys[];
+extern char _kernel_start[];
 
 //static const page_map_l4_entry KERNEL_PML4 [512];
 static uint64_t BitmapStart;
@@ -41,6 +42,11 @@ uint64_t init_mmap(struct multiboot_tag *mmap_tag) {
         (multiboot_uint8_t *) mmap_entry < (multiboot_uint8_t *) mmap_tag + mmap_tag->size;
         mmap_entry = (multiboot_memory_map_t *) ((unsigned long) mmap_entry +
         ((struct multiboot_tag_mmap *) mmap_tag)->entry_size)) {
+
+        if (mmap_entry->addr < (uint64_t) &_kernel_start) {
+            // ignore the lower space
+            continue;
+        }
 
         if (mmap_entry->addr + mmap_entry->len > mmap->mem_size) {
             mmap->mem_size = mmap_entry->addr + mmap_entry->len;
