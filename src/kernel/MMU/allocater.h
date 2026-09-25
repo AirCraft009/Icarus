@@ -6,8 +6,8 @@
 #define ICARUS_ALLOCATER_H
 #include <stdint.h>
 
-#include "memmap.h"
+#include "../util/BitMap.h"
 
-void * alloc_frame(mem_map *mmap, uint64_t page_size);
+void * alloc_frame(bit_map *mmap, uint64_t page_size);
 
 #endif //ICARUS_ALLOCATER_H

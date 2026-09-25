@@ -15,7 +15,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include "../kernel/kernel_helper.h"
+#include "../kernel/util/kernel_helper.h"
 
 
 const uint16_t COLS = 80;

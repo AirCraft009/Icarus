@@ -1,5 +1,16 @@
-megs: 32
+megs: 512
 romimage: file="C:\Program Files\Bochs-3.0\BIOS-bochs-latest"
 vgaromimage: file="C:\Program Files\Bochs-3.0\VGABIOS-lgpl-latest.bin"
+
+# CPU-Konfiguration für x86-64 aktivieren
+cpu: model=turion64_tyler, count=1, ips=40000000
+
 boot: cdrom
-ata0-master: type=cdrom, path="../build/icarus.iso", status=inserted
+ata0-master: type=cdrom, path="./build/icarus.iso", status=inserted
+
+# Anzeige und Loggen
+mouse: enabled=0
+log: bochsout.txt
+
+# debugging
+ display_library: win32, options="gui_debug"

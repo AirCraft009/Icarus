@@ -8,7 +8,7 @@
 
 #include "allocater.h"
 #include "../kernel_info.h"
-#include "../kernel_helper.h"
+#include "../util/kernel_helper.h"
 #include "page_definitions.h"
 #include "../../lib/mem_utils.h"
 
@@ -24,7 +24,7 @@ extern char _kernel_start[];
 //static const page_map_l4_entry KERNEL_PML4 [512];
 static uint64_t BitmapStart;
 //TODO replace bitmap w/ more efficient data struct that saves last data access etc.
-static mem_map * mmap;
+static bit_map *mmap;
 
 
 /**
@@ -35,12 +35,15 @@ static mem_map * mmap;
  * @return the size of the mmap (block count)
  */
 uint64_t init_mmap(struct multiboot_tag *mmap_tag) {
-    cons_mprintf("INIT_MMAP: %x - %x -> %x\n", &_kernel_start, &_kernel_end, &_kernel_end_phys);
-
+    //phys addr of method 0x107812
     BitmapStart = (uint64_t) &_kernel_end;
-    mmap = (mem_map *) BitmapStart;
+    cons_mprintf("INIT_MMAP: %x == %x -> %x\n", BitmapStart, &_kernel_end, &_kernel_end_phys);
+
+    mmap = (bit_map *) BitmapStart;
     mmap->mem_size = 0;
     mmap->size = 0;
+    mmap->last_accessed = 0;
+    mmap->offset = 0;
 
     struct multiboot_mmap_entry *mmap_entry;
 
@@ -67,9 +70,9 @@ uint64_t init_mmap(struct multiboot_tag *mmap_tag) {
             uint64_t end = ALIGN_UP(mmap_entry->addr + mmap_entry->len, DEFAULT_PAGE_SIZE);
             index = start / DEFAULT_PAGE_SIZE;
             bits = (end - start) / DEFAULT_PAGE_SIZE;
-            cons_mprintf("addrG(%i): %x len: %x\n", mmap_entry->type, mmap_entry->addr, mmap_entry->len);
+            cons_mprintf("addrG(%i): %l len: %l\n", mmap_entry->type, index / 8, bits / 8);
             mmap->size += bits;
-            memmap_set_len(mmap, index, bits);
+            bitmap_set_len(mmap, index, bits);
         } else {
             // available: round inward so we never over-claim a partial page
             uint64_t start = ALIGN_UP(mmap_entry->addr, DEFAULT_PAGE_SIZE);
@@ -78,15 +81,15 @@ uint64_t init_mmap(struct multiboot_tag *mmap_tag) {
                 index = start / DEFAULT_PAGE_SIZE;
                 bits = (end - start) / DEFAULT_PAGE_SIZE;
                 mmap->size += bits;
-                cons_mprintf("addrF: %x len: %x\n", mmap_entry->addr, mmap_entry->len);
-                memmap_clear_len(mmap, index, bits);
+                cons_mprintf("addrF: %l len: %l\n", index / 8, bits / 8);
+                bitmap_clear_len(mmap, index, bits);
             }
         }
     }
 
     cons_mprintf("Size: %x\n", mmap->size / 8);
     //mark the bitmap itself as not available
-    memmap_set_len(mmap, KERNEL_VIRT_TO_PHYS(BitmapStart), mmap->size / DEFAULT_PAGE_SIZE);
+    bitmap_set_len(mmap, KERNEL_VIRT_TO_PHYS(BitmapStart), mmap->size / DEFAULT_PAGE_SIZE);
     //
     //show_mmap(mmap);
     show_mmap_range(mmap, 0x1792b000 / DEFAULT_PAGE_SIZE, 0x7FEE0000  / DEFAULT_PAGE_SIZE);

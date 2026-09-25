@@ -2,8 +2,8 @@
 
 #include <stddef.h>
 #include <stdint.h>
-#include "../shell/shellio.h"
-#include "MMU/memory_mapping.h"
+#include "../../shell/shellio.h"
+#include "../MMU/memory_mapping.h"
 
 /**
  * handles parsing the info struct passed by GRUB multiboot2
@@ -11,7 +11,7 @@
  *	- prints utility to the screen
  *	- initiates bitmap
  */
-mem_map *handle_multiboot2 (uint32_t magic, boot_info *info){
+bit_map *handle_multiboot2 (uint32_t magic, boot_info *info){
 	unsigned long long addr = (unsigned long long) info;
 	struct multiboot_tag *tag;
 	unsigned long size;

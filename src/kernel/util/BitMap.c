@@ -2,18 +2,29 @@
 // Created by Mxsxll on 22.09.2026.
 //
 
-#include "memmap.h"
+#include "BitMap.h"
 
 #include <stdbool.h>
 #include <stddef.h>
 
-#include "../kernel_info.h"
+#include "kernel_info.h"
 #include "../../shell/shellio.h"
 
+typedef struct BitMap{
+uint64_t size;
+// use an array not a ptr (bc the array is part of the struct) I learned my lesson
+byte	data[];
+}bit_map;
+
+typedef struct MemMap {
+
+    bit_map regions[];
+}mem_map;
+
 /**
- * sets multiple bits to a value (0 | 1)
+ * sets bit to a value (0 | 1)
  */
-int memmap_set_value(mem_map *map, uint64_t index, char value) {
+int bitmap_set_value(bit_map *map, uint64_t index, char value) {
     uint64_t byte_ind = index / 8;
     uint64_t offset = index % 8;
 
@@ -28,7 +39,7 @@ int memmap_set_value(mem_map *map, uint64_t index, char value) {
 /**
  *
  */
-int memmap_set(mem_map *map, uint64_t index) {
+int bitmap_set(bit_map *map, uint64_t index) {
     uint64_t byte_ind = index / 8;
     uint64_t offset = index % 8;
 
@@ -38,7 +49,7 @@ int memmap_set(mem_map *map, uint64_t index) {
     map->data[byte_ind] |= 1 << offset;
     return 0;
 }
-int memmap_clear(mem_map *map, uint64_t index) {
+int bitmap_clear(bit_map *map, uint64_t index) {
     uint64_t byte_ind = index / 8;
     uint64_t offset = index % 8;
 
@@ -50,7 +61,7 @@ int memmap_clear(mem_map *map, uint64_t index) {
     return 0;
 }
 
-byte memmap_get(mem_map *map, uint64_t index) {
+byte bitmap_get(bit_map *map, uint64_t index) {
     uint64_t byte_ind = index / 8;
     uint64_t offset = index % 8;
 
@@ -61,7 +72,7 @@ byte memmap_get(mem_map *map, uint64_t index) {
     return (map->data[byte_ind] & (1 << offset)) >> offset;
 }
 
-int memmap_set_len(mem_map *map, uint64_t startIndex, uint64_t len) {
+int bitmap_set_len(bit_map *map, uint64_t startIndex, uint64_t len) {
     if (startIndex > map->size || len > map->size - startIndex) {
         return -1;
     }
@@ -90,7 +101,7 @@ int memmap_set_len(mem_map *map, uint64_t startIndex, uint64_t len) {
     return 0;
 }
 
-int memmap_clear_len(mem_map *map, uint64_t startIndex, uint64_t len) {
+int bitmap_clear_len(bit_map *map, uint64_t startIndex, uint64_t len) {
     if (startIndex > map->size || len > map->size - startIndex) {
         return -1;
     }
@@ -119,7 +130,7 @@ int memmap_clear_len(mem_map *map, uint64_t startIndex, uint64_t len) {
     return 0;
 }
 
-void show_mmap(mem_map *map) {
+void show_mmap(bit_map *map) {
     uint64_t i = 0;
     uint64_t blockS = 0;
     bool currently_set = (map->data[0] & 0x1) == 1;
@@ -136,7 +147,7 @@ void show_mmap(mem_map *map) {
     }
 }
 
-int show_mmap_range(mem_map *map, uint64_t start, uint64_t end) {
+int show_mmap_range(bit_map *map, uint64_t start, uint64_t end) {
     if (start > map->size || end > map->size - start) {
         return -1;
     }

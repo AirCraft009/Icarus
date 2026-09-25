@@ -1,8 +1,8 @@
 #include <stddef.h>
 
-#include "kernel_helper.h"
+#include "util/kernel_helper.h"
 #include "kernel_info.h"
-#include "multiboot2.h"
+#include "util/multiboot2.h"
 #include "interrupts/IDT.h"
 #include "../shell/shellio.h"
 #include "GDT/gdt.h"
@@ -26,7 +26,7 @@ void kmain(uint32_t magic, struct multiboot_info *mboot) {
     //init the bitmap for free memory
     handle_multiboot2(magic, mboot);
 
-    //call lgdt from high addr again
+    //call lgdt from high addr again (addr: 0x1088FD)
     gdt_init();
 
 

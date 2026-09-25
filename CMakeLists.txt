@@ -22,20 +22,22 @@ add_executable(Icarus_kernel
         src/kernel/TSS/TSS.c
         src/kernel/TSS/TSS.h
         src/kernel/MMU/page_definitions.h
-        src/kernel/multiboot2.c
-        src/kernel/multiboot2.h
-        src/kernel/MMU/memmap.c
-        src/kernel/MMU/memmap.h
+        src/kernel/util/multiboot2.c
+        src/kernel/util/multiboot2.h
+        src/kernel/util/BitMap.c
+        src/kernel/util/BitMap.h
         src/kernel/GDT/gdt.c
         src/kernel/GDT/gdt.h
         src/lib/mem_utils.c
         src/lib/mem_utils.h
-        src/kernel/kernel_info.h
-        src/kernel/kernel_helper.h
+        src/kernel/util/kernel_info.h
+        src/kernel/util/kernel_helper.h
         src/kernel/MMU/allocater.c
         src/kernel/MMU/allocater.h
         src/kernel/MMU/v_mem_range_map.c
         src/kernel/MMU/v_mem_range_map.h
+        src/kernel/MMU/mem_map.c
+        src/kernel/MMU/mem_map.h
 )
 
 target_compile_options(Icarus_kernel PRIVATE

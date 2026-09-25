@@ -29,7 +29,7 @@
 
 #define LOWEST_FRAME_SIZE 0x100000;
 #include "page_definitions.h"
-#include "../multiboot2.h"
+#include "../util/multiboot2.h"
 
 uint64_t init_mmap(	struct multiboot_tag *mmap_tag);
 int page_in(page_map_l4_entry *pml4, const void *virt_addr, const void *phys_addr, uint64_t pageSize);
