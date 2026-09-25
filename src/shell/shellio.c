@@ -70,7 +70,7 @@ void vprintf(cursor *cur, char *format, va_list args) {
         return;
     }
 
-    //Imemset((void*)(videoMemStart + cur->y * 2), 0, COLS * 2);
+    //Imemset((void*)(videoMemStart + cur->y * COLS * 2), 0, 10);
     bool format_next = false;
     while (*format) {
         char c = *format++;

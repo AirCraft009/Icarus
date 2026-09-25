@@ -6,7 +6,7 @@
 
 struct interrupt_frame {
     // pushed by isr_common
-    uint64_t cr2;                       // faulting address (valid on #PF)
+    uint64_t cr4, cr3, cr2;                       // faulting address (valid on #PF)
     uint64_t r15, r14, r13, r12, r11, r10, r9, r8;
     uint64_t rbp, rdi, rsi, rdx, rcx, rbx, rax;
     // pushed by the stub
@@ -15,7 +15,7 @@ struct interrupt_frame {
     // pushed by the CPU
     uint64_t rip, cs, rflags, rsp, ss;
 }__attribute__((packed));
-_Static_assert(sizeof(struct interrupt_frame) == 184, "asm/C frame mismatch");
+_Static_assert(sizeof(struct interrupt_frame) == 200, "asm/C frame mismatch");
 
 
 void page_fault_handler(struct interrupt_frame *frame){
@@ -25,7 +25,7 @@ void page_fault_handler(struct interrupt_frame *frame){
 }
 
 void general_protection_fault_handler(struct interrupt_frame *frame){
-    cons_mprintf( "#General Fault detected\nsegment: %i\nerror: %i\nRAX %x\nCR2 %x\n", frame->ss, frame->error_code, frame->rax, frame->cr2);
+    cons_mprintf( "#General Fault detected\nsegment: (%i)\nerror: (%i)\nRAX (%x)\nCR2 (%x)\nCR3: (%x)\nCR4: (%x)", frame->ss, frame->error_code, frame->rax, frame->cr2, frame->cr3, frame->cr4);
 
     uint8_t * instruction_data = (uint8_t*)frame->rip;
     cons_mprintf("rip: b1=%x,b2=%x,b3=%x\n", instruction_data[0],instruction_data[1],instruction_data[2]);
@@ -57,7 +57,7 @@ void c_isr(
 )
 {
     cursor cur = {0,0};
-    cons_mprintf("Registered w/ general handler: %i\n", frame->vector);
+    cons_mprintf("Registered w/ fault handler: %i\n", frame->vector);
     switch (frame->vector) {
         case 0:
             // Divide error

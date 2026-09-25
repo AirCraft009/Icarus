@@ -10,11 +10,6 @@
 #include "kernel_info.h"
 #include "../../shell/shellio.h"
 
-typedef struct MemMap {
-
-    bit_map regions[];
-}mem_map;
-
 /**
  * sets bit to a value (0 | 1)
  */
@@ -124,7 +119,7 @@ int bitmap_clear_len(bit_map *map, uint64_t startIndex, uint64_t len) {
     return 0;
 }
 
-void show_mmap(bit_map *map) {
+void show_bit_map(bit_map *map) {
     uint64_t i = 0;
     uint64_t blockS = 0;
     bool currently_set = (map->data[0] & 0x1) == 1;
@@ -141,7 +136,7 @@ void show_mmap(bit_map *map) {
     }
 }
 
-int show_mmap_range(bit_map *map, uint64_t start, uint64_t end) {
+int show_bit_map_range(bit_map *map, uint64_t start, uint64_t end) {
     if (start > map->size || end > map->size - start) {
         return -1;
     }

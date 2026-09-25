@@ -116,18 +116,16 @@ common_isr:
     push r14
     push r15
 
-    ; now push cr2 bc it contains the faulted addr in case of #PF
+    ; now push control regs bc it contains the faulted addr in case of #PF
     mov rax, cr2
+    push rax
+    mov rax, cr3
+    push rax
+    mov rax, cr4
     push rax
 
 
-    ; At this point:
-    ;
-    ; rsp + 120 = vector
-    ; rsp + 128 = error code
-    ; rsp + 136 = RIP
-    ; rsp + 144 = CS
-    ; rsp + 152 = RFLAGS
+
 
     lea rdi, [rsp]      ; arg 3 = CPU interrupt frame
 
@@ -138,6 +136,8 @@ common_isr:
 
     ; Restore registers
     pop rax     ; pop the stale cr2 reg
+    pop rax     ; pop the stale cr3 reg
+    pop rax     ; pop the stale cr4 reg
 
     pop r15
     pop r14

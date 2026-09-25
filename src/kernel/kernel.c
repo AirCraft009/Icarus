@@ -1,7 +1,7 @@
 #include <stddef.h>
 
 #include "util/kernel_helper.h"
-#include "kernel_info.h"
+#include "util/kernel_info.h"
 #include "util/multiboot2.h"
 #include "interrupts/IDT.h"
 #include "../shell/shellio.h"
@@ -13,7 +13,9 @@
 
 
 extern uint64_t *gdt_descriptor;
-static page_map_l4_entry Kernel_PML4_TABLE[512];
+
+
+static page_map_l4_entry Kernel_PML4_TABLE[512] __attribute__((aligned(4096)));
 
 
 void kmain(uint32_t magic, struct multiboot_info *mboot) {
@@ -33,10 +35,11 @@ void kmain(uint32_t magic, struct multiboot_info *mboot) {
     // drop old pml4 table and switch to new one.
     // currently just map 17 huge pages.
     for (uint64_t i = 0; i < 17; i++) {
-        page_in(Kernel_PML4_TABLE, (void *) (KERNEL_VMA + i * HUGE_PS), (void *) (i * HUGE_PS), HUGE_PS);
+        page_in(&Kernel_PML4_TABLE[0], (void *) (KERNEL_VMA + i * HUGE_PS), (void *) (i * HUGE_PS), HUGE_PS);
     }
     mprintf(cur, "KERNEL SETUP COMPLETE1");
-    write_cr3((uint64_t) Kernel_PML4_TABLE);
+    //TODO: look into !!!!cr3 seems to inherit wrong table data!!!!
+    write_cr3((uint64_t) &Kernel_PML4_TABLE[0]);
 
     mprintf(cur, "KERNEL SETUP COMPLETE2");
     while (1){}

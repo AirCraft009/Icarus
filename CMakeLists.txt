@@ -32,8 +32,6 @@ add_executable(Icarus_kernel
         src/lib/mem_utils.h
         src/kernel/util/kernel_info.h
         src/kernel/util/kernel_helper.h
-        src/kernel/MMU/allocater.c
-        src/kernel/MMU/allocater.h
         src/kernel/MMU/v_mem_range_map.c
         src/kernel/MMU/v_mem_range_map.h
         src/kernel/MMU/mem_map.c
