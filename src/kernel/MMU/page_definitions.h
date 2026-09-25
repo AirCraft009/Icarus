@@ -7,6 +7,9 @@
 #pragma once
 #include <stdint.h>
 
+/**
+ * represents a pml4 table entry
+ */
 typedef struct PageMapL4Entry {
     uint64_t present                   :1;
     uint64_t writeable                 :1;

@@ -144,6 +144,8 @@ void vprintf(cursor *cur, char *format, va_list args) {
                 case 'c':
                     write_c(va_arg(args, int), cur);
                     break;
+                case 'b':
+                    write_str(va_arg(args, int)? "true" : "false", cur);
                 default:
                     write_c('%', cur);
                     write_c(c, cur);

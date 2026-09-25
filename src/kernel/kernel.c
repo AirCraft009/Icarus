@@ -33,7 +33,7 @@ void kmain(uint32_t magic, struct multiboot_info *mboot) {
     // drop old pml4 table and switch to new one.
     // currently just map 17 huge pages.
     for (uint64_t i = 0; i < 17; i++) {
-        page_in(&Kernel_PML4_TABLE[0], (void *) (KERNEL_VMA + i * HUGE_PS), (void *) (i * HUGE_PS), HUGE_PS);
+        page_in(Kernel_PML4_TABLE, (void *) (KERNEL_VMA + i * HUGE_PS), (void *) (i * HUGE_PS), HUGE_PS);
     }
     mprintf(cur, "KERNEL SETUP COMPLETE1");
     write_cr3((uint64_t) Kernel_PML4_TABLE);

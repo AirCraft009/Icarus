@@ -6,6 +6,13 @@
 
 #include <stdint.h>
 
+/**
+ *  set a region of memory to a specific value.
+ *
+ * @param addr ptr to start
+ * @param val value to set
+ * @param length länge
+ */
 void  Imemset(void *addr, int val, uint64_t length) {
     uint8_t *p = (uint8_t *)addr;
 
@@ -15,6 +22,14 @@ void  Imemset(void *addr, int val, uint64_t length) {
     }
 }
 
+/**
+ *
+ *  copies a given amount of bytes from src to dest
+ *
+ * @param dest start of destination
+ * @param src start of source
+ * @param length length of mem to copy
+ */
 void Imemcpy(void *dest, const void *src, uint64_t length) {
     uint8_t *dp = (uint8_t *)dest;
     uint8_t *sp = (uint8_t *)src;
