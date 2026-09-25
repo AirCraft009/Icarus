@@ -136,10 +136,13 @@ void show_mmap(mem_map *map) {
     }
 }
 
-void show_mmap_range(mem_map *map, uint64_t start, uint64_t end) {
+int show_mmap_range(mem_map *map, uint64_t start, uint64_t end) {
+    if (start > map->size || end > map->size - start) {
+        return -1;
+    }
     uint64_t i = start;
     uint64_t blockS = 0;
-    bool currently_set = (map->data[0] & 0x1) == 1;
+    bool currently_set = (map->data[start] & 0x1) == 1;
     while (i < end) {
         while (i < end
             && currently_set == ((map->data[i / 8] >> (i % 8)) & 1u))
@@ -147,8 +150,9 @@ void show_mmap_range(mem_map *map, uint64_t start, uint64_t end) {
             blockS ++;
             i++;
         }
-        cons_mprintf("found block(%i): %x - %x\n",currently_set,  i - blockS, i);
+        cons_mprintf("found block(%i): %x - %x\n",currently_set,  (i - blockS) * DEFAULT_PAGE_SIZE, i * DEFAULT_PAGE_SIZE);
         currently_set = !currently_set;
         blockS = 0;
     }
+    return 0;
 }

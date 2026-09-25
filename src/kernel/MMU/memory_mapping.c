@@ -80,16 +80,16 @@ uint64_t init_mmap(struct multiboot_tag *mmap_tag) {
                 mmap->size += bits;
                 cons_mprintf("addrF: %x len: %x\n", mmap_entry->addr, mmap_entry->len);
                 memmap_clear_len(mmap, index, bits);
-                show_mmap(mmap);
             }
         }
     }
 
     cons_mprintf("Size: %x\n", mmap->size / 8);
     //mark the bitmap itself as not available
-    //memmap_set_len(mmap, KERNEL_VIRT_TO_PHYS(BitmapStart), mmap->size / DEFAULT_PAGE_SIZE);
+    memmap_set_len(mmap, KERNEL_VIRT_TO_PHYS(BitmapStart), mmap->size / DEFAULT_PAGE_SIZE);
     //
     //show_mmap(mmap);
+    show_mmap_range(mmap, 0x1792b000 / DEFAULT_PAGE_SIZE, 0x7FEE0000  / DEFAULT_PAGE_SIZE);
     return mmap->mem_size;
 }
 
