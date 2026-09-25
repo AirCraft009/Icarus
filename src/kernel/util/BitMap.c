@@ -10,12 +10,6 @@
 #include "kernel_info.h"
 #include "../../shell/shellio.h"
 
-typedef struct BitMap{
-uint64_t size;
-// use an array not a ptr (bc the array is part of the struct) I learned my lesson
-byte	data[];
-}bit_map;
-
 typedef struct MemMap {
 
     bit_map regions[];

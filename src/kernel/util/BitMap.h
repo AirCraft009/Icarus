@@ -8,7 +8,12 @@
 #include <stdint.h>
 
 typedef unsigned char byte;
-typedef struct BitMap bit_map;
+typedef struct BitMap{
+    uint64_t size;
+    // use an array not a ptr (bc the array is part of the struct) I learned my lesson
+    byte	data[];
+}bit_map;
+
 
 int memmap_set_value(bit_map *map, uint64_t index, char value);
 int memmap_set(bit_map *map, uint64_t index);
