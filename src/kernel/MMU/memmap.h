@@ -23,4 +23,6 @@ int memmap_clear(mem_map *map, uint64_t index);
 byte memmap_get(mem_map *map, uint64_t index);
 int memmap_set_len(mem_map *map, uint64_t startIndex, uint64_t len);
 int memmap_clear_len(mem_map *map, uint64_t startIndex, uint64_t len);
+void show_mmap(mem_map *map);
+void show_mmap_range(mem_map *map, uint64_t start, uint64_t end);
 #endif //ICARUS_memmap_H

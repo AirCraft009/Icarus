@@ -4,6 +4,7 @@
 
 #include "memmap.h"
 
+#include <stdbool.h>
 #include <stddef.h>
 
 #include "../kernel_info.h"
@@ -61,43 +62,93 @@ byte memmap_get(mem_map *map, uint64_t index) {
 }
 
 int memmap_set_len(mem_map *map, uint64_t startIndex, uint64_t len) {
-    if ((startIndex + len) > map->size) {
+    if (startIndex > map->size || len > map->size - startIndex) {
         return -1;
     }
-    uint64_t i;
-    for (i = startIndex; i < startIndex + len - 8; i += 8) {
-        uint64_t byte_ind = i / 8;
 
-        map->data[byte_ind] = 0xFF;
+    uint64_t end = startIndex + len;
+    uint64_t i = startIndex;
+
+    // Set bits until byte-aligned.
+    while (i < end && (i % 8) != 0) {
+        map->data[i / 8] |= (uint8_t)(1u << (i % 8));
+        i++;
     }
 
-    for (i ; i < startIndex + len; i ++) {
-        uint64_t byte_ind = i / 8;
-        uint64_t offset = i % 8;
-        //cons_mprintf("setting %i at byte=%i, bit=%i\n", startIndex, byte_ind, offset);
-
-        map->data[byte_ind] |= (1 << offset);
+    // Set complete bytes.
+    while (i + 8 <= end) {
+        map->data[i / 8] = 0xFF;
+        i += 8;
     }
+
+    // Set remaining bits.
+    while (i < end) {
+        map->data[i / 8] |= (uint8_t)(1u << (i % 8));
+        i++;
+    }
+
     return 0;
 }
 
 int memmap_clear_len(mem_map *map, uint64_t startIndex, uint64_t len) {
-    if ((startIndex + len) > map->size) {
+    if (startIndex > map->size || len > map->size - startIndex) {
         return -1;
     }
 
-    uint64_t i;
-    for (i = startIndex; i < startIndex + len - 8; i += 8) {
-        uint64_t byte_ind = i / 8;
-        map->data[byte_ind] = 0;
+    uint64_t end = startIndex + len;
+    uint64_t i = startIndex;
+
+    // Set bits until byte-aligned.
+    while (i < end && (i % 8) != 0) {
+        map->data[i / 8] &= (uint8_t)~(1u << (i % 8));
+        i++;
     }
 
-    for (i = startIndex + len - 8; i < startIndex + len; i ++) {
-        uint64_t byte_ind = i / 8;
-        uint64_t offset = i % 8;
-
-        map->data[byte_ind] &= ~(1 << offset);
+    // Set complete bytes.
+    while (i + 8 <= end) {
+        map->data[i / 8] = 0x0;
+        i += 8;
     }
+
+    // Set remaining bits.
+    while (i < end) {
+        map->data[i / 8] &= (uint8_t)~(1u << (i % 8));
+        i++;
+    }
+
     return 0;
 }
 
+void show_mmap(mem_map *map) {
+    uint64_t i = 0;
+    uint64_t blockS = 0;
+    bool currently_set = (map->data[0] & 0x1) == 1;
+    while (i < map->size) {
+        while (i < map->size
+            && currently_set == ((map->data[i / 8] >> (i % 8)) & 1u))
+        {
+            blockS ++;
+            i++;
+        }
+        cons_mprintf("found block(%i): %x - %x\n",currently_set,  i - blockS, i);
+        currently_set = !currently_set;
+        blockS = 0;
+    }
+}
+
+void show_mmap_range(mem_map *map, uint64_t start, uint64_t end) {
+    uint64_t i = start;
+    uint64_t blockS = 0;
+    bool currently_set = (map->data[0] & 0x1) == 1;
+    while (i < end) {
+        while (i < end
+            && currently_set == ((map->data[i / 8] >> (i % 8)) & 1u))
+        {
+            blockS ++;
+            i++;
+        }
+        cons_mprintf("found block(%i): %x - %x\n",currently_set,  i - blockS, i);
+        currently_set = !currently_set;
+        blockS = 0;
+    }
+}
