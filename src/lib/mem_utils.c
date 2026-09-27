@@ -13,7 +13,7 @@
  * @param val value to set
  * @param length länge
  */
-void  Imemset(void *addr, int val, uint64_t length) {
+void  Imemset(void *addr, uint8_t val, uint64_t length) {
     uint8_t *p = (uint8_t *)addr;
 
     for (uint64_t i = 0; i < length; i++) {

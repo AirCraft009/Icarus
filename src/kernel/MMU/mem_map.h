@@ -9,12 +9,15 @@
 #include <stdint.h>
 #include "../util/BitMap.h"
 
+#define FRAME_ALLOC_FAILED UINT64_MAX
+#define MAX_MEM_REGIONS 32
+
 
 typedef struct MemRegion {
     uint64_t start_addr;
-    uint64_t end_addr;
+    uint64_t len_bytes;
+    uint64_t bitmap_start_addr;
     uint64_t free_frames;
-    bit_map bitmap;
 }mem_region;
 
 /**
@@ -24,12 +27,18 @@ typedef struct MemRegion {
 typedef struct MemMap {
     uint64_t mem_size;
     uint32_t region_count;
-    mem_region regions[];
+    mem_region regions[MAX_MEM_REGIONS];
+    bit_map bitmap;
 }mem_map;
+
+typedef uint64_t phys_addr_t;
 
 
 void memmap_register_region(mem_map *mmap, uint64_t start, uint64_t end);
 void show_mem_map(mem_map *mmap, bool verbose);
-void * alloc_frame(mem_map *mmap, uint64_t page_size);
+phys_addr_t alloc_frame(mem_map *mmap, uint64_t page_size);
+int zero_mem_region(mem_map *mmap, uint64_t start_addr, uint64_t end_addr);
+int set_mem_region(mem_map *mmap, uint64_t start_addr, uint64_t end_addr);
+void zero_mem_map(mem_map *mmap);
 
 #endif //ICARUS_MEM_MAP_H

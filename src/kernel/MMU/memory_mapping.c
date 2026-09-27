@@ -19,7 +19,7 @@
 
 extern char _kernel_end[];
 extern char _kernel_end_phys[];
-extern char _kernel_start[];
+extern char _kernel_start_phys[];
 
 //static const page_map_l4_entry KERNEL_PML4 [512];
 static uint64_t MemmapStart;
@@ -37,9 +37,11 @@ static mem_map *mmap;
 uint64_t init_mmap(struct multiboot_tag *mmap_tag) {
     //phys addr of method 0x107812
     MemmapStart = (uint64_t) &_kernel_end;
-    cons_mprintf("INIT_MMAP: %x == %x -> %x\n", MemmapStart, &_kernel_end, &_kernel_end_phys);
+    cons_mprintf("INIT_MMAP: %x == %x -> %x\n", _kernel_start_phys, &_kernel_end, &_kernel_end_phys);
 
     mmap = (mem_map *) MemmapStart;
+    mmap->region_count = 0;
+    mmap->mem_size = 0;
 
     struct multiboot_mmap_entry *mmap_entry;
 
@@ -69,14 +71,25 @@ uint64_t init_mmap(struct multiboot_tag *mmap_tag) {
             uint64_t end = ALIGN_DOWN(mmap_entry->addr + mmap_entry->len, DEFAULT_PAGE_SIZE);
             if (end > start) {
                 len = end - start;
-                //cons_mprintf("addrF: %x - %x = len: %l\n", start, end, len);
+                cons_mprintf("addrF: %x - %x = len: %l\n", start, end, len);
                 memmap_register_region(mmap, start, end);
             }
         }
     }
 
-    //mark the bitmap itself as not available
-    //bitmap_set_len(mmap, KERNEL_VIRT_TO_PHYS(MemmapStart), mmap->size / DEFAULT_PAGE_SIZE);
+    cons_mprintf("zeroing mmap\n");
+    zero_mem_map(mmap);
+
+    cons_mprintf("setting kernel and bitmap space\n");
+    //mark the kernel and bitmap itself as not available
+    int err = set_mem_region(mmap,
+        ALIGN_DOWN((uint64_t) &_kernel_start_phys, DEFAULT_PAGE_SIZE),
+        KERNEL_VIRT_TO_PHYS(ALIGN_UP((uint64_t) mmap->bitmap.data + mmap->bitmap.size, DEFAULT_PAGE_SIZE ))
+    );
+    if (err != 0) {
+        cons_mprintf("ERROR: Bitmap wasn't set check bounds\n");
+    }
+    cons_mprintf("FRAMES: %x", mmap->regions[1].free_frames);
     show_mem_map(mmap, false);
     return mmap->mem_size;
 }
@@ -97,23 +110,25 @@ int page_in(page_map_l4_entry *pml4, const void *virt_addr, const void *phys_add
     page_map_l4_entry *pml4_entry = &pml4[VA_PML4_INDEX(virt_addr)];
     if (pml4_entry->present == 0) {
         // no pdpt entry in the region (make a new one)
-        void * pdpt =  alloc_frame(mmap, DEFAULT_PAGE_SIZE);
-        if (pdpt == NULL) {
+        phys_addr_t pdpt =  alloc_frame(mmap, DEFAULT_PAGE_SIZE);
+        if (pdpt == FRAME_ALLOC_FAILED) {
+            cons_mprintf("ERROR PML4!\n");
             return -1;
         }
         Imemset((void *) KERNEL_PHYS_TO_VIRT(pdpt), 0, DEFAULT_PAGE_SIZE);
         pml4_entry->present = 1;
-        pml4_entry->page_ppn = (uint64_t) pdpt;
+        pml4_entry->page_ppn = pdpt;
         cons_mprintf("PDPT table: %x\n", pdpt);
     }
 
     pdpt_entry_t *pdpt_table = (pdpt_entry_t *) pml4->page_ppn;
     pdpt_entry_t *pdpt_entry = &pdpt_table[VA_PDPT_INDEX(virt_addr)];
 
-    if (!pdpt_entry->present) {
+    if (pdpt_entry->present == 0) {
         // no pd entry in the region (make a new one)
-        void * pd =  alloc_frame(mmap, DEFAULT_PAGE_SIZE);
-        if (pd == NULL) {
+        phys_addr_t pd =  alloc_frame(mmap, DEFAULT_PAGE_SIZE);
+        if (pd == FRAME_ALLOC_FAILED) {
+            cons_mprintf("ERROR PDPT !\n");
             return -1;
         }
         Imemset((void *) KERNEL_PHYS_TO_VIRT(pd), 0, DEFAULT_PAGE_SIZE);
@@ -129,14 +144,15 @@ int page_in(page_map_l4_entry *pml4, const void *virt_addr, const void *phys_add
         pd_entry->huge = 1;
         pd_entry->page_ppn = (uint64_t) phys_addr;
         pd_entry->writeable = 1;
-        cons_mprintf("PD physical: %x\n", phys_addr);
+        //cons_mprintf("PD physical: %x\n", phys_addr);
         return 0;
     }
 
-    if (!pd_entry->present) {
+    if (pd_entry->present == 0) {
         // no pt entry in the region (make a new one)
-        void * pt =  alloc_frame(mmap, DEFAULT_PAGE_SIZE);
-        if (pt == NULL) {
+        phys_addr_t pt =  alloc_frame(mmap, DEFAULT_PAGE_SIZE);
+        if (pt == FRAME_ALLOC_FAILED) {
+            cons_mprintf("ERROR PD!\n");
             return -1;
         }
         pd_entry->present = 1;
@@ -146,6 +162,7 @@ int page_in(page_map_l4_entry *pml4, const void *virt_addr, const void *phys_add
 
     PageTableEntry *pt_table = (PageTableEntry *) pd_entry->page_ppn;
     PageTableEntry *pt_entry = &pt_table[VA_PT_INDEX(virt_addr)];
+    cons_mprintf("4KIB entry: %x", phys_addr);
     pt_entry->present = 1;
     pt_entry->page_ppn = (uint64_t) phys_addr;
     pt_entry->accessed = 0;

@@ -7,7 +7,7 @@ KERNEL_VMA = 0xFFFFFFFF80000000;
 
 SECTIONS {
   . = 1M;
-  _kernel_start = .;
+  _kernel_start_phys = .;
   .boot : {
       KEEP(*(.multiboot2))
       *(.boot.text)

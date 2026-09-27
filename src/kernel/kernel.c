@@ -1,5 +1,6 @@
 #include <stddef.h>
 
+#include "../lib/mem_utils.h"
 #include "util/kernel_helper.h"
 #include "util/kernel_info.h"
 #include "util/multiboot2.h"
@@ -34,13 +35,13 @@ void kmain(uint32_t magic, struct multiboot_info *mboot) {
 
     // drop old pml4 table and switch to new one.
     // currently just map 17 huge pages.
+    Imemset(&Kernel_PML4_TABLE[0], 0, sizeof(Kernel_PML4_TABLE));
     for (uint64_t i = 0; i < 17; i++) {
         page_in(&Kernel_PML4_TABLE[0], (void *) (KERNEL_VMA + i * HUGE_PS), (void *) (i * HUGE_PS), HUGE_PS);
     }
     mprintf(cur, "KERNEL SETUP COMPLETE1");
     //TODO: look into !!!!cr3 seems to inherit wrong table data!!!!
-    write_cr3((uint64_t) &Kernel_PML4_TABLE[0]);
-
-    mprintf(cur, "KERNEL SETUP COMPLETE2");
+    cons_mprintf("KERNEL ADDR: %x\n", KERNEL_VIRT_TO_PHYS(&Kernel_PML4_TABLE[0]));
+    write_cr3((uint64_t) KERNEL_VIRT_TO_PHYS(&Kernel_PML4_TABLE[0]));
     while (1){}
 }
