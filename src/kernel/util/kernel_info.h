@@ -6,6 +6,7 @@
 #define ICARUS_KERNEL_INFO_H
 #pragma once
 #define KERNEL_VMA 0xFFFFFFFF80000000UL
+#define INVALID_PHYS_ADDR UINT64_MAX
 // page size for each bitmap entry
 #define DEFAULT_PAGE_SIZE 4096
 

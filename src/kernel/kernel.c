@@ -39,9 +39,13 @@ void kmain(uint32_t magic, struct multiboot_info *mboot) {
     for (uint64_t i = 0; i < 17; i++) {
         page_in(&Kernel_PML4_TABLE[0], (void *) (KERNEL_VMA + i * HUGE_PS), (void *) (i * HUGE_PS), HUGE_PS);
     }
-    mprintf(cur, "KERNEL SETUP COMPLETE1");
+    //manual_map_test(&Kernel_PML4_TABLE[0]);
+
+    test_walk_table(&Kernel_PML4_TABLE[0], (void *) KERNEL_VMA + 7 * HUGE_PS);
+    //mprintf(cur, "KERNEL SETUP COMPLETE1");
     //TODO: look into !!!!cr3 seems to inherit wrong table data!!!!
-    cons_mprintf("KERNEL ADDR: %x\n", KERNEL_VIRT_TO_PHYS(&Kernel_PML4_TABLE[0]));
     write_cr3((uint64_t) KERNEL_VIRT_TO_PHYS(&Kernel_PML4_TABLE[0]));
+    cons_mprintf("KERNEL CONCLUDED");
     while (1){}
 }
+//235372403 = 256809072
