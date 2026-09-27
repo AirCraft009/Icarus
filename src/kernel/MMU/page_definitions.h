@@ -78,4 +78,11 @@ typedef struct
     uint64_t execution_disabled        :1;
 } __attribute__((__packed__)) PageTableEntry;
 
+
+
+typedef struct PageTable {
+    page_map_l4_entry *pml4_entry;
+    uint32_t entry_count;
+} page_table_t;
+
 #endif //ICARUS_PAGE_DEFINITIONS_H

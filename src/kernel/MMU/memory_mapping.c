@@ -200,5 +200,30 @@ phys_addr_t test_walk_table(page_map_l4_entry *pml4, const phys_addr_t *virt_add
 }
 
 int page_out(page_map_l4_entry *pml4, uint64_t virt_addr) {
+    page_map_l4_entry *pml4_entry = &pml4[VA_PML4_INDEX(virt_addr)];
+    if (pml4_entry->present == 0) {
+        return -1;
+    }
 
+    pdpt_entry_t *pdpt_entry = &((pdpt_entry_t *) KERNEL_PHYS_TO_VIRT(pml4_entry->page_ppn << 12))[VA_PDPT_INDEX(virt_addr)];
+    if (pdpt_entry->present == 0) {
+        return -2;
+    }
+
+    pd_entry_t *pd_entry = &((pd_entry_t *) KERNEL_PHYS_TO_VIRT(pdpt_entry->page_ppn << 12))[VA_PD_INDEX(virt_addr)];
+    if (pd_entry->huge == 1 && pd_entry->present == 0) {
+        *(uint64_t *) pml4_entry = 0;
+        *(uint64_t *) pd_entry = 0;
+        return 0;
+    }
+
+    if (pd_entry->present == 0) {
+        return -3;
+    }
+
+    PageTableEntry *pt_entry = &((PageTableEntry *) KERNEL_PHYS_TO_VIRT(pd_entry->page_ppn << 12))[VA_PT_INDEX(virt_addr)];
+    *(uint64_t *) pml4_entry = 0;
+    *(uint64_t *) pd_entry = 0;
+    *(uint64_t *) pt_entry = 0;
+    return 0;
 }

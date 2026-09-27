@@ -4,7 +4,6 @@
 - Grub magic
   - gets to protected mode
   - paging is disabled
-  - initRAMfs
   - loads boot.s
 - boot.s switches to long mode
   - Set the PAE enable bit in CR4
@@ -12,7 +11,7 @@
   - Enable long mode by setting the LME flag (bit 8) in MSR 0xC0000080 (aka EFER)
   - Enable paging
   - enter the main kernel
-  
+
 ## KERNEL TIME
   - set up IDT
   - #PF handler
@@ -22,6 +21,8 @@
   - Physical memory allocator
   - Dynamic page-table mapper
   - Kernel heap
+  - initRAMfs
+
 ## I/O
   - Timer interrupt
   - Keyboard interrupt
