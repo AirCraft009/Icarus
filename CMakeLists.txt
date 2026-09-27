@@ -17,11 +17,11 @@ add_executable(Icarus_kernel
         src/kernel/interrupts/IDT.h
         src/shell/shellio.c
         src/shell/shellio.h
-        src/kernel/MMU/memory_mapping.c
-        src/kernel/MMU/memory_mapping.h
+        src/kernel/Memory/memory_mapping.c
+        src/kernel/Memory/memory_mapping.h
         src/kernel/TSS/TSS.c
         src/kernel/TSS/TSS.h
-        src/kernel/MMU/page_definitions.h
+        src/kernel/Memory/page_definitions.h
         src/kernel/util/multiboot2.c
         src/kernel/util/multiboot2.h
         src/kernel/util/BitMap.c
@@ -32,10 +32,10 @@ add_executable(Icarus_kernel
         src/lib/mem_utils.h
         src/kernel/util/kernel_info.h
         src/kernel/util/kernel_helper.h
-        src/kernel/MMU/v_mem_range_map.c
-        src/kernel/MMU/v_mem_range_map.h
-        src/kernel/MMU/mem_map.c
-        src/kernel/MMU/mem_map.h
+        src/kernel/Memory/v_mem_range_map.c
+        src/kernel/Memory/v_mem_range_map.h
+        src/kernel/Memory/mem_map.c
+        src/kernel/Memory/mem_map.h
 )
 
 target_compile_options(Icarus_kernel PRIVATE

@@ -3,7 +3,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include "../../shell/shellio.h"
-#include "../MMU/memory_mapping.h"
+#include "../Memory/memory_mapping.h"
 
 /**
  * handles parsing the info struct passed by GRUB multiboot2

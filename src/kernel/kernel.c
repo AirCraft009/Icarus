@@ -7,8 +7,8 @@
 #include "interrupts/IDT.h"
 #include "../shell/shellio.h"
 #include "GDT/gdt.h"
-#include "MMU/memory_mapping.h"
-#include "MMU/page_definitions.h"
+#include "Memory/memory_mapping.h"
+#include "Memory/page_definitions.h"
 // currently paged in 2MiB page
 // 0xFFFFFF7F80000000 – 0xFFFFFF7F801FFFFF
 
