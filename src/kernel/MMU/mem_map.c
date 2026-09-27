@@ -36,7 +36,7 @@ void memmap_register_region(mem_map *mmap, uint64_t start, uint64_t end) {
  * zeros out the entire bitmap (use for fresh systems)
  */
 void zero_mem_map(mem_map *mmap) {
-    Imemset(mmap->bitmap.data, 0, mmap->bitmap.size);
+    Imemset(mmap->bitmap.data, 0, mmap->bitmap.size / 8);
 }
 
 /**
@@ -145,4 +145,26 @@ phys_addr_t alloc_frame(mem_map *mmap, uint64_t page_size) {
        }
    }
     return FRAME_ALLOC_FAILED;
+}
+
+
+int dealloc_frame(mem_map *mmap, phys_addr_t phys_addr, uint64_t page_size) {
+    // default page size = 4096 while the page size param could be a huge or super page
+    uint64_t cont_units = page_size / DEFAULT_PAGE_SIZE;
+
+    if (phys_addr < mmap->regions[0].start_addr || phys_addr + page_size > mmap->regions[mmap->region_count - 1].start_addr + mmap->regions[mmap->region_count - 1].len_bytes) {
+        return -1;
+    }
+
+    for (uint32_t i = 0; i < mmap->region_count; i++) {
+        mem_region *region = &mmap->regions[i];
+        if (region->start_addr > phys_addr || phys_addr + page_size > region->start_addr + region->len_bytes )
+            continue;
+
+        region->free_frames += cont_units;
+        uint64_t effective_addr = phys_addr - region->start_addr;
+        bitmap_clear_len(&mmap->bitmap, region->bitmap_start_addr + effective_addr / DEFAULT_PAGE_SIZE , cont_units);
+        break;
+    }
+    return 0;
 }
