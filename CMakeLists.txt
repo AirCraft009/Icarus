@@ -32,10 +32,10 @@ add_executable(Icarus_kernel
         src/lib/mem_utils.h
         src/kernel/util/kernel_info.h
         src/kernel/util/kernel_helper.h
-        src/kernel/Memory/v_mem_range_map.c
-        src/kernel/Memory/v_mem_range_map.h
         src/kernel/Memory/mem_map.c
         src/kernel/Memory/mem_map.h
+        src/kernel/Memory/alloc.c
+        src/kernel/Memory/alloc.h
 )
 
 target_compile_options(Icarus_kernel PRIVATE
