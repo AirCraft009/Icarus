@@ -8,7 +8,7 @@
 #define MAX_ALLOCATION_SIZE
 #include <stdint.h>
 
-#include "mem_map.h"
+#include "PMM/mem_map.h"
 #include "page_definitions.h"
 
 
@@ -24,22 +24,26 @@
  */
 
 #define MIN_ALLOC_SIZE 32
-#define ALIGNMENT 16
+#define HEAP_ALIGNMENT 16
+#define META_DATA_SIZE sizeof(alloc_meta_data_t)
+#define NO_PREV_ENTRY 0
+
 
 /**
- * Allocation Meta-data (header and footer)
- * in a header alloc_segments points forward
- * in a footer it points backwards
+ * Allocation Meta-data
+ * takes role of header and footer
+ * by having the size of the current block
+ * as well as the offset to the prev's blocks metadata
  */
 typedef struct AllocMetaData {
-    uint64_t alloc_segments : 31; // size in 16byte chunks
+    uint64_t block_size : 63;
     uint64_t allocated : 1;
+    uint64_t prev_block_data;       // offset to prev block from AllocMetadata * (0 for first block)
 }__attribute__((packed)) alloc_meta_data_t;
 
 typedef struct Allocator {
     uint64_t heapStart;
     uint64_t heapSize;
-    struct_page_t info_page;
 }alloc_t;
 
 #endif //ICARUS_ALLOC_H
