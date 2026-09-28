@@ -6,16 +6,18 @@
 
 #include <stdbool.h>
 
-#include "../util/BitMap.h"
+#include "../../util/BitMap.h"
 
 #include <stddef.h>
 
-#include "../../lib/mem_utils.h"
-#include "../../shell/shellio.h"
-#include "../util/kernel_helper.h"
-#include "../util/kernel_info.h"
+#include "../../../lib/mem_utils.h"
+#include "../../../shell/shellio.h"
+#include "../../util/kernel_helper.h"
+#include "../../util/kernel_info.h"
 
 extern char _kernel_end[];
+static struct_page_t * temp_page;
+
 
 
 void memmap_register_region(mem_map *mmap, uint64_t start, uint64_t end) {
@@ -108,19 +110,22 @@ void show_mem_map(mem_map *mmap, bool verbose) {
 /**
  * allocate count frames
  *
- * @param count amount of pages allocated
+ * @param count amount of pages allocated < 512
  * @param page_size size of each allocated page
  * @return NULL on fail
  */
 struct_page_t *ialloc_frames(uint64_t count, uint64_t page_size) {
+    //TODO: make structpage a linkedlist so that arbitrary amount of pages can be allocated
+    if (count > 510)        // rn this bc the struct_page only has space for 510 entries  (will build a linked list later)
+        return NULL;
     mem_map * mmap = (mem_map *) &_kernel_end;
-    struct_page_t *info_page = (struct_page_t *) alloc_frame(mmap, page_size);
+    struct_page_t *info_page = (struct_page_t *) map_alloc_kframe(mmap, page_size);
     info_page->page_count = count;
     info_page->page_addr[0] = (phys_addr_t) info_page;
     info_page->page_size = page_size;
 
     for (uint64_t i = 1; i < count; i++) {
-        info_page->page_addr[i] = alloc_frame(mmap, page_size);
+        info_page->page_addr[i] = map_alloc_kframe(mmap, page_size);
         if (info_page->page_addr[i] == FRAME_ALLOC_FAILED)
             return NULL;
     }
@@ -131,23 +136,34 @@ struct_page_t *ialloc_frames(uint64_t count, uint64_t page_size) {
 int idealloc_frames(struct_page_t * info_page) {
     mem_map * mmap = (mem_map *) &_kernel_end;
     for (uint64_t i = 1; i < info_page->page_count; i++) {
-        if (dealloc_frame(mmap,  ALIGN_DOWN(info_page->page_addr[i], info_page->page_size), info_page->page_size) != 0) {
+        if (map_dealloc_frame(mmap,  ALIGN_DOWN(info_page->page_addr[i], info_page->page_size), info_page->page_size) != 0) {
             return -1;
         }
     }
 
-    dealloc_frame(mmap, ALIGN_DOWN(info_page->page_addr[0]), info_page->page_size);
+    map_dealloc_frame(mmap, ALIGN_DOWN(info_page->page_addr[0], DEFAULT_PAGE_SIZE), info_page->page_size);
     return 0;
 }
 
+phys_addr_t alloc_kframe(uint64_t size) {
+    mem_map * mmap = (mem_map *) &_kernel_end;
+    return map_alloc_kframe(mmap, size);
+}
+
+int dealloc_kframe(phys_addr_t start, uint64_t size) {
+    mem_map * mmap = (mem_map *) &_kernel_end;
+    return map_dealloc_frame(mmap, start, size);
+}
+
+
 /**
- * Allocate a physical frame from a given memory map and page size
- * returns FRAME_ALLOC_FAILED on failure
+ * Allocate contiguous physical memory
+ * @size is the total size of all 4KiB regions (should be aligned to 4KiB)
  */
-phys_addr_t alloc_frame(mem_map *mmap, uint64_t page_size) {
+phys_addr_t map_alloc_kframe(mem_map *mmap, uint64_t size) {
 
     // default page size = 4096 while the page size param could be a huge or super page
-    uint64_t cont_units = page_size / DEFAULT_PAGE_SIZE;
+    uint64_t cont_units = size / DEFAULT_PAGE_SIZE;
     //cons_mprintf("Allocating memory for frame [%i]\n", cont_units);
     uint64_t count = 0;
    for (uint32_t i = 0; i < mmap->region_count; i++) {
@@ -187,7 +203,7 @@ phys_addr_t alloc_frame(mem_map *mmap, uint64_t page_size) {
 }
 
 
-int dealloc_frame(mem_map *mmap, phys_addr_t phys_addr, uint64_t page_size) {
+int map_dealloc_frame(mem_map *mmap, phys_addr_t phys_addr, uint64_t page_size) {
     // default page size = 4096 while the page size param could be a huge or super page
     uint64_t cont_units = page_size / DEFAULT_PAGE_SIZE;
 

@@ -32,8 +32,8 @@ add_executable(Icarus_kernel
         src/lib/mem_utils.h
         src/kernel/util/kernel_info.h
         src/kernel/util/kernel_helper.h
-        src/kernel/Memory/mem_map.c
-        src/kernel/Memory/mem_map.h
+        src/kernel/Memory/PMM/mem_map.c
+        src/kernel/Memory/PMM/mem_map.h
         src/kernel/Memory/alloc.c
         src/kernel/Memory/alloc.h
 )
