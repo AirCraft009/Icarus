@@ -82,6 +82,22 @@ alloc_t * init_alloc(uint64_t initial_size, uint64_t heap_start) {
     return init_custom_alloc(initial_size, heap_start, ialloc_frames(pages, DEFAULT_PAGE_SIZE));
 }
 
+
+int map_frame_into_heap(alloc_t * allocator, page_map_l4_entry *pml4,  struct_page_t *info_page) {
+    for (uint64_t i = 0; i < info_page->page_count; i++) {
+        if (
+            page_in(
+            pml4,
+            (void *) allocator->heapStart + allocator->heapSize + i * DEFAULT_PAGE_SIZE,
+            (void *) info_page->page_addr[i],
+            DEFAULT_PAGE_SIZE) != 0)
+        {
+            return -1;
+        }
+    }
+    return 0;
+}
+
 /**
  * first fit allocator
  */
@@ -89,33 +105,34 @@ void * imalloc(alloc_t * allocator, uint64_t size) {
     size += META_DATA_SIZE;      // make the total size
     size = ALIGN_UP(size, HEAP_ALIGNMENT);
 
-    alloc_meta_data_t * header = (alloc_meta_data_t *) allocator->heapStart;
-    while ((uint64_t) header + header->block_size < allocator->heapStart + allocator->heapSize) {
-        if (!header->allocated && header->block_size == size) {
-            header->allocated = 1;
-            // don't know why (void *) (uint64_t) should do anything (I don't think it does) but the CLANG warning goes away so
-            return (void *) (uint64_t) header + META_DATA_SIZE;
-        }
-        if (!header->allocated && header->block_size > size) {
-            alloc_meta_data_t *next_block = (alloc_meta_data_t *) header + header->block_size;
-            uint64_t remaining_s = header->block_size - size;               //remaining_s can't be < 16 (bc it's all aligned to 16)
-            next_block->allocated = 0;
-            next_block->block_size = remaining_s;
-            next_block->prev_block_data = size;
-            return (void *) (uint64_t) header + META_DATA_SIZE;
+    while (1) {
+        alloc_meta_data_t * header = (alloc_meta_data_t *) allocator->heapStart;
+        while ((uint64_t) header + header->block_size < allocator->heapStart + allocator->heapSize) {
+            if (!header->allocated && header->block_size == size) {
+                header->allocated = 1;
+                // don't know why (void *) (uint64_t) should do anything (I don't think it does) but the CLANG warning goes away so
+                return (void *) (uint64_t) header + META_DATA_SIZE;
+            }
+            if (!header->allocated && header->block_size > size) {
+                alloc_meta_data_t *next_block = (alloc_meta_data_t *) header + header->block_size;
+                uint64_t remaining_s = header->block_size - size;               //remaining_s can't be < 16 (bc it's all aligned to 16)
+                next_block->allocated = 0;
+                next_block->block_size = remaining_s;
+                next_block->prev_block_data = size;
+                return (void *) (uint64_t) header + META_DATA_SIZE;
+            }
+
+            header = header + header->block_size;
         }
 
-        header = header + header->block_size;
+        // ask for more memory from the kernel
+        // * 30 / 10 bc SSE doesn't work or smth and yk... but I'm a genius
+        struct_page_t *info_page = (struct_page_t *) KERNEL_VIRT_TO_PHYS(ialloc_frames(ALIGN_UP((uint64_t) (allocator->heapSize * 30 / 10), DEFAULT_PAGE_SIZE), DEFAULT_PAGE_SIZE));
+        if (map_frame_into_heap(allocator, (page_map_l4_entry *) read_cr3(), info_page) != 0) {
+            return NULL;
+        }
+        allocator->heapSize += info_page->page_count * DEFAULT_PAGE_SIZE;
     }
-
-    // ask for more memory from the kernel
-    // * 30 / 10 bc SSE doesn't work or smth and yk... but I'm a genius
-    struct_page_t *info_page = ialloc_frames(ALIGN_UP((uint64_t) (allocator->heapSize * 30 / 10), DEFAULT_PAGE_SIZE), DEFAULT_PAGE_SIZE);
-    allocator->heapSize += info_page->page_count * DEFAULT_PAGE_SIZE;
-
 }
 
-int map_frame_into_heap(alloc_t * allocator, struct_page_t *info_page) {
-
-}
 

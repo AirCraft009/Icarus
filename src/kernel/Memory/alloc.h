@@ -46,4 +46,8 @@ typedef struct Allocator {
     uint64_t heapSize;
 }alloc_t;
 
+alloc_t *init_custom_alloc (uint64_t initial_size, uint64_t heap_start, struct_page_t * info_page);
+alloc_t * init_alloc(uint64_t initial_size, uint64_t heap_start);
+void * imalloc(alloc_t * allocator, uint64_t size);
+
 #endif //ICARUS_ALLOC_H
