@@ -67,7 +67,7 @@ bit_map *handle_multiboot2 (uint32_t magic, boot_info *info){
 				((struct multiboot_tag_bootdev *) tag)->part);
 				break;
 			case MULTIBOOT_TAG_TYPE_MMAP:
-				init_mmap(tag);
+				handle_mb2_mmap(tag);
 				break;
 
 			case MULTIBOOT_TAG_TYPE_FRAMEBUFFER:

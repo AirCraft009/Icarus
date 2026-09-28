@@ -6,7 +6,7 @@
 
 #include <stdint.h>
 
-#include "mem_map.h"
+#include "PMM/mem_map.h"
 #include "../util/kernel_info.h"
 #include "../util/kernel_helper.h"
 #include "page_definitions.h"
@@ -33,7 +33,7 @@ static mem_map *mmap;
  * @param mmap_tag multiboot2 mmap_tag info
  * @return the size of the mmap (block count)
  */
-uint64_t init_mmap(struct multiboot_tag *mmap_tag) {
+uint64_t handle_mb2_mmap(struct multiboot_tag *mmap_tag) {
     //phys addr of method 0x107812
     MemmapStart = (uint64_t) &_kernel_end;
     cons_mprintf("INIT_MMAP: %x == %x -> %x\n", _kernel_start_phys, &_kernel_end, &_kernel_end_phys);
@@ -56,22 +56,32 @@ uint64_t init_mmap(struct multiboot_tag *mmap_tag) {
 
         uint64_t len;
 
-        if (mmap_entry->type != MULTIBOOT_MEMORY_AVAILABLE) {
-            // reserved: round outward so we never under-cover it
-            // uint64_t start = ALIGN_DOWN(mmap_entry->addr, DEFAULT_PAGE_SIZE);
-            // uint64_t end = ALIGN_UP(mmap_entry->addr + mmap_entry->len, DEFAULT_PAGE_SIZE);
-            // index = start / DEFAULT_PAGE_SIZE;
-            // bits = (end - start) / DEFAULT_PAGE_SIZE;
-            // cons_mprintf("addrG(%i): %l len: %l\n", mmap_entry->type, index / 8, bits / 8);
-
-        } else {
+        if (mmap_entry->type == MULTIBOOT_MEMORY_AVAILABLE) {
             // available: round inward so we never over-claim a partial page
             uint64_t start = ALIGN_UP(mmap_entry->addr, DEFAULT_PAGE_SIZE);
             uint64_t end = ALIGN_DOWN(mmap_entry->addr + mmap_entry->len, DEFAULT_PAGE_SIZE);
             if (end > start) {
                 len = end - start;
+
                 cons_mprintf("addrF: %x - %x = len: %l\n", start, end, len);
                 memmap_register_region(mmap, start, end);
+
+                //map the entire addr space into virtual memory at a direct map
+                uint64_t s_pages = len / SUPER_PS;
+                len -= s_pages * SUPER_PS;
+                uint64_t h_pages = ALIGN_UP(len, HUGE_PS) / HUGE_PS;
+
+                page_map_l4_entry * pml4 = (page_map_l4_entry *) read_cr3();
+
+                for (uint64_t i = 0; i < s_pages; i++) {
+                    start += i * SUPER_PS;
+                    page_in(pml4,(void * ) KERNEL_PHYS_TO_VIRT(start), (void *) start, SUPER_PS);
+                }
+
+                for (uint64_t i = 0; i < h_pages; i++) {
+                    start += i * HUGE_PS;
+                    page_in(pml4,(void * ) KERNEL_PHYS_TO_VIRT(start), (void *) start, HUGE_PS);
+                }
             }
         }
     }
@@ -102,13 +112,13 @@ uint64_t init_mmap(struct multiboot_tag *mmap_tag) {
  * @param pml4 ptr to the 0'th entry of the pml4 table
  * @param virt_addr a virtual address pointing to a page (the offset bits are ignored)
  * @param phys_addr a physical address pointing to a frame (the offset bits are ignored)
- * @param pageSize 4Kib or 2MiB
+ * @param pageSize 4Kib, 2MiB, 1GiB
  * @return 0 for no error -1 for error
  */
 int page_in(page_map_l4_entry *pml4, const void *virt_addr, const void *phys_addr, uint64_t pageSize) {
     page_map_l4_entry *pml4_entry = &pml4[VA_PML4_INDEX(virt_addr)];
     if (pml4_entry->present == 0) {
-        phys_addr_t pdpt = alloc_frame(mmap, DEFAULT_PAGE_SIZE);
+        phys_addr_t pdpt = map_alloc_kframe(mmap, DEFAULT_PAGE_SIZE);
         if (pdpt == FRAME_ALLOC_FAILED) {
             cons_mprintf("ERROR PML4!\n");
             return -1;
@@ -122,8 +132,16 @@ int page_in(page_map_l4_entry *pml4, const void *virt_addr, const void *phys_add
     pdpt_entry_t *pdpt_table = (pdpt_entry_t *) KERNEL_PHYS_TO_VIRT(pml4_entry->page_ppn << 12);
     pdpt_entry_t *pdpt_entry = &pdpt_table[VA_PDPT_INDEX(virt_addr)];
 
+    if (pageSize == SUPER_PS) {
+        pdpt_entry->huge = 1;
+        pdpt_entry->present = 1;
+        pdpt_entry->page_ppn = ((uint64_t) phys_addr) >> 12;
+        pdpt_entry->writeable = 1;
+        return 0;
+    }
+
     if (pdpt_entry->present == 0) {
-        phys_addr_t pd = alloc_frame(mmap, DEFAULT_PAGE_SIZE);
+        phys_addr_t pd = map_alloc_kframe(mmap, DEFAULT_PAGE_SIZE);
         if (pd == FRAME_ALLOC_FAILED) {
             cons_mprintf("ERROR PDPT !\n");
             return -1;
@@ -147,7 +165,7 @@ int page_in(page_map_l4_entry *pml4, const void *virt_addr, const void *phys_add
     }
 
     if (pd_entry->present == 0) {
-        phys_addr_t pt = alloc_frame(mmap, DEFAULT_PAGE_SIZE);
+        phys_addr_t pt = map_alloc_kframe(mmap, DEFAULT_PAGE_SIZE);
         if (pt == FRAME_ALLOC_FAILED) {
             cons_mprintf("ERROR PD!\n");
             return -1;

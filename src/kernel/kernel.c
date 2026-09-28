@@ -25,8 +25,11 @@ void kmain(uint32_t magic, struct multiboot_info *mboot) {
     // initialize the Interrupt Descriptor table
     idt_init();
 
+
+    Imemset(&Kernel_PML4_TABLE[0], 0, sizeof(Kernel_PML4_TABLE)); // ready the pml4 table to map all phys addr
     //parse the struct given to use from the multiboot2 header
     //init the bitmap for free memory
+    //page in physical memory as a direct map
     handle_multiboot2(magic, mboot);
 
     //call lgdt from high addr again (addr: 0x1088FD)
@@ -35,10 +38,6 @@ void kmain(uint32_t magic, struct multiboot_info *mboot) {
 
     // drop old pml4 table and switch to new one.
     // currently just map 17 huge pages.
-    Imemset(&Kernel_PML4_TABLE[0], 0, sizeof(Kernel_PML4_TABLE));
-    for (uint64_t i = 0; i < 17; i++) {
-        page_in(&Kernel_PML4_TABLE[0], (void *) (KERNEL_VMA + i * HUGE_PS), (void *) (i * HUGE_PS), HUGE_PS);
-    }
     //manual_map_test(&Kernel_PML4_TABLE[0]);
 
     test_walk_table(&Kernel_PML4_TABLE[0], (void *) KERNEL_VMA + 7 * HUGE_PS);

@@ -28,11 +28,11 @@
 
 
 #define LOWEST_FRAME_SIZE 0x100000;
-#include "mem_map.h"
+#include "PMM/mem_map.h"
 #include "page_definitions.h"
 #include "../util/multiboot2.h"
 
-uint64_t init_mmap(	struct multiboot_tag *mmap_tag);
+uint64_t handle_mb2_mmap(	struct multiboot_tag *mmap_tag);
 int page_in(page_map_l4_entry *pml4, const void *virt_addr, const void *phys_addr, uint64_t pageSize);
 phys_addr_t test_walk_table(page_map_l4_entry *pml4, const phys_addr_t *virt_addr);
 
