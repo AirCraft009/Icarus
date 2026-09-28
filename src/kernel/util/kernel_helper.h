@@ -13,6 +13,7 @@
 #define KERNEL_PHYS_TO_VIRT(p) ((uintptr_t)(p) + KERNEL_VMA)
 #define KERNEL_VIRT_TO_PHYS(p) ((uintptr_t)(p) - KERNEL_VMA)
 
+#define KERNEL_HEAP_ADDR 0xFFFFFF0000000000UL
 #define PAGE_WRITEABLE 0x2
 #define PAGE_USER_ACCESSIBLE 0x4
 

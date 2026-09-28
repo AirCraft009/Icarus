@@ -92,6 +92,7 @@
 
 #include "BitMap.h"
 #include "../../shell/shellio.h"
+#include "../Memory/page_definitions.h"
 
 typedef unsigned char           multiboot_uint8_t;
 typedef unsigned short          multiboot_uint16_t;
@@ -423,7 +424,7 @@ typedef struct multiboot_info {
 }boot_info;
 
 
-bit_map *handle_multiboot2 (uint32_t magic, boot_info *info);
+int handle_multiboot2 (uint32_t magic, boot_info *info, page_map_l4_entry *pml4);
 
 #endif /*  ! ASM_FILE */
 

@@ -11,7 +11,7 @@
  *	- prints utility to the screen
  *	- initiates bitmap
  */
-bit_map *handle_multiboot2 (uint32_t magic, boot_info *info){
+int handle_multiboot2 (uint32_t magic, boot_info *info, page_map_l4_entry *pml4){
 	unsigned long long addr = (unsigned long long) info;
 	struct multiboot_tag *tag;
 	unsigned long size;
@@ -23,13 +23,13 @@ bit_map *handle_multiboot2 (uint32_t magic, boot_info *info){
 	if ((int)magic != MULTIBOOT2_BOOTLOADER_MAGIC)
 	{
 		cons_mprintf("Invalid magic number: 0x%i\n", (unsigned) magic);
-		return NULL;
+		return -1;
 	}
 
 	if (addr & 7)
 	{
 		cons_mprintf( "Unaligned mbi: 0x%i\n", addr);
-		return NULL;
+		return -1;
 	}
 
 	size = *(unsigned *) addr;
@@ -67,7 +67,7 @@ bit_map *handle_multiboot2 (uint32_t magic, boot_info *info){
 				((struct multiboot_tag_bootdev *) tag)->part);
 				break;
 			case MULTIBOOT_TAG_TYPE_MMAP:
-				handle_mb2_mmap(tag);
+				handle_mb2_mmap(tag, pml4);
 				break;
 
 			case MULTIBOOT_TAG_TYPE_FRAMEBUFFER:
@@ -80,5 +80,5 @@ bit_map *handle_multiboot2 (uint32_t magic, boot_info *info){
 									  + ((tag->size + 7) & ~7));
 		cons_mprintf( "Total mbi size 0x%i\n", (unsigned) tag - addr);
 
-		return NULL;
+		return 0;
 	}

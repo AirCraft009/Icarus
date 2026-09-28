@@ -33,7 +33,7 @@ static mem_map *mmap;
  * @param mmap_tag multiboot2 mmap_tag info
  * @return the size of the mmap (block count)
  */
-uint64_t handle_mb2_mmap(struct multiboot_tag *mmap_tag) {
+uint64_t handle_mb2_mmap(struct multiboot_tag *mmap_tag, page_map_l4_entry *pml4) {
     //phys addr of method 0x107812
     MemmapStart = (uint64_t) &_kernel_end;
     cons_mprintf("INIT_MMAP: %x == %x -> %x\n", _kernel_start_phys, &_kernel_end, &_kernel_end_phys);
@@ -61,35 +61,32 @@ uint64_t handle_mb2_mmap(struct multiboot_tag *mmap_tag) {
             uint64_t start = ALIGN_UP(mmap_entry->addr, DEFAULT_PAGE_SIZE);
             uint64_t end = ALIGN_DOWN(mmap_entry->addr + mmap_entry->len, DEFAULT_PAGE_SIZE);
             if (end > start) {
-                len = end - start;
-
-                cons_mprintf("addrF: %x - %x = len: %l\n", start, end, len);
+                cons_mprintf("addrF: %x - %x = len: %x\n", start, end, end - start);
                 memmap_register_region(mmap, start, end);
 
-                //map the entire addr space into virtual memory at a direct map
-                uint64_t s_pages = len / SUPER_PS;
-                len -= s_pages * SUPER_PS;
-                uint64_t h_pages = ALIGN_UP(len, HUGE_PS) / HUGE_PS;
+                uint64_t addr = start;
+                while (addr < end) {
+                    uint64_t remaining = end - addr;
+                    uint64_t sz;
 
-                page_map_l4_entry * pml4 = (page_map_l4_entry *) read_cr3();
+                    if ((addr % SUPER_PS) == 0 && remaining >= SUPER_PS)
+                        sz = SUPER_PS;
+                    else if ((addr % HUGE_PS) == 0 && remaining >= HUGE_PS)
+                        sz = HUGE_PS;
+                    else
+                        sz = DEFAULT_PAGE_SIZE;
 
-                for (uint64_t i = 0; i < s_pages; i++) {
-                    start += i * SUPER_PS;
-                    page_in(pml4,(void * ) KERNEL_PHYS_TO_VIRT(start), (void *) start, SUPER_PS);
-                }
-
-                for (uint64_t i = 0; i < h_pages; i++) {
-                    start += i * HUGE_PS;
-                    page_in(pml4,(void * ) KERNEL_PHYS_TO_VIRT(start), (void *) start, HUGE_PS);
+                    page_in(pml4, (void *)KERNEL_PHYS_TO_VIRT(addr), (void *)addr, sz);
+                    addr += sz;
                 }
             }
         }
     }
 
-    //cons_mprintf("zeroing mmap\n");
+    cons_mprintf("zeroing mmap\n");
     zero_mem_map(mmap);
 
-   // cons_mprintf("setting kernel and bitmap space\n");
+    cons_mprintf("setting kernel and bitmap space\n");
     //mark the kernel and bitmap itself as not available
     int err = set_mem_region(mmap,
         ALIGN_DOWN((uint64_t) &_kernel_start_phys, DEFAULT_PAGE_SIZE),
@@ -99,6 +96,7 @@ uint64_t handle_mb2_mmap(struct multiboot_tag *mmap_tag) {
     if (err != 0) {
         cons_mprintf("ERROR: set_mem_region returned %d\n", err);
     }
+    cons_mprintf("returning\n");
     show_mem_map(mmap, false);
     return mmap->mem_size;
 }
@@ -160,6 +158,7 @@ int page_in(page_map_l4_entry *pml4, const void *virt_addr, const void *phys_add
         pd_entry->present = 1;
         pd_entry->page_ppn = ((uint64_t) phys_addr) >> 12;
         pd_entry->writeable = 1;
+        cons_mprintf("pd: %x\n", *pd_entry);
         //cons_mprintf("PD physical: %x maps to %x\n", phys_addr, virt_addr);
         return 0;
     }
@@ -207,6 +206,7 @@ phys_addr_t test_walk_table(page_map_l4_entry *pml4, const phys_addr_t *virt_add
         cons_mprintf("Ending walk at PD (%x)\n", pd_entry->page_ppn << 12);
         return pd_entry->page_ppn << 12;
     }
+    cons_mprintf("PD: (%x)\n", *pd_entry);
     if (pd_entry->present == 0) {
         cons_mprintf("PD table: PT NOT PRESENT AT (%i)\n",  VA_PD_INDEX(virt_addr));
         return INVALID_PHYS_ADDR;
