@@ -12,7 +12,10 @@
 
 #include "../../lib/mem_utils.h"
 #include "../../shell/shellio.h"
+#include "../util/kernel_helper.h"
 #include "../util/kernel_info.h"
+
+extern char _kernel_end[];
 
 
 void memmap_register_region(mem_map *mmap, uint64_t start, uint64_t end) {
@@ -101,9 +104,45 @@ void show_mem_map(mem_map *mmap, bool verbose) {
     }
 }
 
+
+/**
+ * allocate count frames
+ *
+ * @param count amount of pages allocated
+ * @param page_size size of each allocated page
+ * @return NULL on fail
+ */
+struct_page_t *ialloc_frames(uint64_t count, uint64_t page_size) {
+    mem_map * mmap = (mem_map *) &_kernel_end;
+    struct_page_t *info_page = (struct_page_t *) alloc_frame(mmap, page_size);
+    info_page->page_count = count;
+    info_page->page_addr[0] = (phys_addr_t) info_page;
+    info_page->page_size = page_size;
+
+    for (uint64_t i = 1; i < count; i++) {
+        info_page->page_addr[i] = alloc_frame(mmap, page_size);
+        if (info_page->page_addr[i] == FRAME_ALLOC_FAILED)
+            return NULL;
+    }
+
+    return info_page;
+}
+
+int idealloc_frames(struct_page_t * info_page) {
+    mem_map * mmap = (mem_map *) &_kernel_end;
+    for (uint64_t i = 1; i < info_page->page_count; i++) {
+        if (dealloc_frame(mmap,  ALIGN_DOWN(info_page->page_addr[i], info_page->page_size), info_page->page_size) != 0) {
+            return -1;
+        }
+    }
+
+    dealloc_frame(mmap, ALIGN_DOWN(info_page->page_addr[0]), info_page->page_size);
+    return 0;
+}
+
 /**
  * Allocate a physical frame from a given memory map and page size
- *
+ * returns FRAME_ALLOC_FAILED on failure
  */
 phys_addr_t alloc_frame(mem_map *mmap, uint64_t page_size) {
 
