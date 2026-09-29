@@ -40,7 +40,7 @@ void kmain(uint32_t magic, struct multiboot_info *mboot) {
     write_cr3((uint64_t) KERNEL_VIRT_TO_PHYS(&Kernel_PML4_TABLE[0]));
     cons_mprintf("KERNEL SETUP CONCLUDED: %x\n", &Kernel_PML4_TABLE[0]);
 
-    allocator = init_alloc(DEFAULT_PAGE_SIZE * 5, KERNEL_HEAP_ADDR);
+    allocator = init_alloc(DEFAULT_PAGE_SIZE * 5, (void *) KERNEL_HEAP_ADDR);
     cons_mprintf("init allocator\n");
     uint64_t * allocated_b = imalloc(allocator, 10);
     cons_mprintf("allocated bloc: %x\n", allocated_b);
