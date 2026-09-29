@@ -149,7 +149,7 @@ int page_in(page_map_l4_entry *pml4, const void *virt_addr, const void *phys_add
     pdpt_entry_t *pdpt_table = (pdpt_entry_t *) KERNEL_PHYS_TO_VIRT(pml4_entry->page_ppn << 12);
     pdpt_entry_t *pdpt_entry = &pdpt_table[VA_PDPT_INDEX(virt_addr)];
 
-    if (pageSize == SUPER_PS) {
+    if (pageSize == SUPER_PS && pdpt_entry->present == 1) {
         pdpt_entry->huge = 1;
         pdpt_entry->present = 1;
         pdpt_entry->page_ppn = ((uint64_t) phys_addr) >> 12;
@@ -233,6 +233,7 @@ phys_addr_t test_walk_table(page_map_l4_entry *pml4, const phys_addr_t *virt_add
 
     PageTableEntry *pt_entry = &((PageTableEntry *) KERNEL_PHYS_TO_VIRT(pd_entry->page_ppn << 12))[VA_PT_INDEX(virt_addr)];
     if (pt_entry->present == 0) {
+        cons_mprintf("PT: NO ACTUAL FRAME AT (%i)\n",  VA_PT_INDEX(virt_addr));
         return INVALID_PHYS_ADDR;
     }
     cons_mprintf("4KIB entry: %x\n", pt_entry->page_ppn << 12);

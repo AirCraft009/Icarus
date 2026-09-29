@@ -202,7 +202,7 @@ phys_addr_t map_alloc_kframe(mem_map *mmap, uint64_t size) {
                region->free_frames -= cont_units;
 
 
-               cons_mprintf("allocated at: %x\n", region->start_addr + start * DEFAULT_PAGE_SIZE);
+               //cons_mprintf("allocated at: %x\n", region->start_addr + start * DEFAULT_PAGE_SIZE);
                return (region->start_addr + start * DEFAULT_PAGE_SIZE);
            }
        }
