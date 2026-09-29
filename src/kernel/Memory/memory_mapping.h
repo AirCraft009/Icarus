@@ -32,7 +32,7 @@
 #include "page_definitions.h"
 #include "../util/multiboot2.h"
 
-uint64_t handle_mb2_mmap(struct multiboot_tag *mmap_tag, page_map_l4_entry *pml4);
+int handle_mb2_mmap(struct multiboot_tag *mmap_tag, page_map_l4_entry *pml4);
 int page_in(page_map_l4_entry *pml4, const void *virt_addr, const void *phys_addr, uint64_t pageSize);
 phys_addr_t test_walk_table(page_map_l4_entry *pml4, const phys_addr_t *virt_addr);
 

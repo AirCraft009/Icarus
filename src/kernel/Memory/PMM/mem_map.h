@@ -26,7 +26,7 @@ typedef struct MemRegion {
  */
 typedef struct MemMap {
     uint64_t mem_size;
-    uint32_t region_count;
+    uint8_t region_count;
     mem_region regions[MAX_MEM_REGIONS];
     bit_map bitmap;
 }mem_map;

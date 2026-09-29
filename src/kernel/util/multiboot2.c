@@ -67,7 +67,8 @@ int handle_multiboot2 (uint32_t magic, boot_info *info, page_map_l4_entry *pml4)
 				((struct multiboot_tag_bootdev *) tag)->part);
 				break;
 			case MULTIBOOT_TAG_TYPE_MMAP:
-				handle_mb2_mmap(tag, pml4);
+				if (handle_mb2_mmap(tag, pml4) != 0)
+					return -1;
 				break;
 
 			case MULTIBOOT_TAG_TYPE_FRAMEBUFFER:

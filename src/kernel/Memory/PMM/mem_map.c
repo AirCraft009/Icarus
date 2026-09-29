@@ -117,20 +117,26 @@ void show_mem_map(mem_map *mmap, bool verbose) {
 struct_page_t *ialloc_frames(uint64_t count, uint64_t page_size) {
     //TODO: make structpage a linkedlist so that arbitrary amount of pages can be allocated
     if (count > 510)        // rn this bc the struct_page only has space for 510 entries  (will build a linked list later)
-        return NULL;
+        return (struct_page_t *) FRAME_ALLOC_FAILED;
     mem_map * mmap = (mem_map *) &_kernel_end;
     struct_page_t *info_page = (struct_page_t *) KERNEL_PHYS_TO_VIRT(map_alloc_kframe(mmap, page_size));
     info_page->page_count = count;
-    info_page->page_addr[0] = (phys_addr_t) info_page;
+    info_page->page_addr[0] = (phys_addr_t) KERNEL_VIRT_TO_PHYS(info_page);
     info_page->page_size = page_size;
 
     for (uint64_t i = 1; i < count; i++) {
         info_page->page_addr[i] = map_alloc_kframe(mmap, page_size);
-        if (info_page->page_addr[i] == FRAME_ALLOC_FAILED)
-            return NULL;
+        if (info_page->page_addr[i] == FRAME_ALLOC_FAILED) {
+            cons_mprintf("allocation failed\n");
+            return (struct_page_t *) FRAME_ALLOC_FAILED;
+        }
     }
 
-    return (struct_page_t *) KERNEL_VIRT_TO_PHYS((uint64_t) info_page);
+
+    // for (uint64_t i = 0; i < count; i++) {
+    //     cons_mprintf("actually allocated: %x\n", info_page->page_addr[i]);
+    // }
+    return (struct_page_t *) (uint64_t) info_page;
 }
 
 int idealloc_frames(struct_page_t * info_page) {
@@ -187,7 +193,6 @@ phys_addr_t map_alloc_kframe(mem_map *mmap, uint64_t size) {
            if (count == cont_units) {
                //success
                 uint32_t start = j - (count - 1);
-               //cons_mprintf("starting at: %i\n", start);
                //manually setting bits bc I'm sure it'll be faster (100% cope)
                for (uint64_t k = start; k < start + count; k++) {
                    byte_ind = k / 8;
@@ -195,6 +200,9 @@ phys_addr_t map_alloc_kframe(mem_map *mmap, uint64_t size) {
                    mmap->bitmap.data[byte_ind] |= (0x1 << bit_ind);
                }
                region->free_frames -= cont_units;
+
+
+               cons_mprintf("allocated at: %x\n", region->start_addr + start * DEFAULT_PAGE_SIZE);
                return (region->start_addr + start * DEFAULT_PAGE_SIZE);
            }
        }
