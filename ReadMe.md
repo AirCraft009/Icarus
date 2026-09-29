@@ -1,6 +1,6 @@
 ## ICARUS
 
-An operating system made in one week \
+An operating system made in one month \
 I hope the name is obvious enough
 
 ## dependencies
