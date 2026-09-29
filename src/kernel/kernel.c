@@ -18,7 +18,7 @@ extern uint64_t *gdt_descriptor;
 
 
 static page_map_l4_entry Kernel_PML4_TABLE[512] __attribute__((aligned(4096)));
-//static alloc_t * allocator;
+static alloc_t * allocator;
 
 
 void kmain(uint32_t magic, struct multiboot_info *mboot) {
@@ -30,22 +30,21 @@ void kmain(uint32_t magic, struct multiboot_info *mboot) {
     Imemset(&Kernel_PML4_TABLE[0], 0, sizeof(Kernel_PML4_TABLE));
     //parse the struct given to use from the multiboot2 header
     //init the bitmap for free memory
-    handle_multiboot2(magic, mboot, &Kernel_PML4_TABLE[0]);
+    if (handle_multiboot2(magic, mboot, &Kernel_PML4_TABLE[0]) != 0) {
+        cons_mprintf("init_multiboot2 failed, error while parsing struct\n");
+        __asm__ volatile ("cli; hlt"); // Completely hangs the computer
+    };
     //call lgdt from high addr again (addr: 0x1088FD)
     gdt_init();
-    cons_mprintf("pml4 %x\n", &Kernel_PML4_TABLE[0]);
-    uint8_t * instruction_data = (uint8_t*) 0xffffffff80106184;
-    cons_mprintf("fulldata=");
-    for (int i = 0; i < 10; i++) {
-        cons_mprintf("%x ", instruction_data[i]);
-    }
+    test_walk_table(&Kernel_PML4_TABLE[0], (phys_addr_t *) KERNEL_PHYS_TO_VIRT(0x0100000));
     write_cr3((uint64_t) KERNEL_VIRT_TO_PHYS(&Kernel_PML4_TABLE[0]));
-    cons_mprintf("KERNEL SETUP CONCLUDED");
-    //
-    // allocator = init_alloc(HUGE_PS, KERNEL_HEAP_ADDR);
-    // uint64_t * allocated_b = imalloc(allocator, 10);
-    // cons_mprintf("allocated bloc: %x\n", allocated_b);
-    //
+    cons_mprintf("KERNEL SETUP CONCLUDED: %x\n", &Kernel_PML4_TABLE[0]);
+
+    allocator = init_alloc(DEFAULT_PAGE_SIZE * 5, KERNEL_HEAP_ADDR);
+    cons_mprintf("init allocator\n");
+    uint64_t * allocated_b = imalloc(allocator, 10);
+    cons_mprintf("allocated bloc: %x\n", allocated_b);
+
     // cons_mprintf("KERNEL ENDING");
     while (1){}
 }

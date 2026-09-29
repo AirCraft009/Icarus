@@ -16,25 +16,29 @@
  * @return ptr to the allocator (same as alloc_page)
  */
 alloc_t *init_custom_alloc (uint64_t initial_size, uint64_t heap_start, struct_page_t * info_page) {
-    page_map_l4_entry * pml4 = (page_map_l4_entry *) read_cr3();
+    page_map_l4_entry * pml4 = (page_map_l4_entry *) (read_cr3());
     // page in the struct page bc otherwise all access to it will result in a #PF
     // it is at heap_start + 4096 bc the allocator itself is at heap_start
+
+    cons_mprintf("init allocator ( page_in info_page )\n");
     if (
         page_in(
             pml4,
             (void *) heap_start + DEFAULT_PAGE_SIZE,
-            (void *) info_page,
+            (void *) info_page->page_addr[0],
             DEFAULT_PAGE_SIZE) != 0)
     {
         return NULL;
     }
     info_page = (struct_page_t *)heap_start + DEFAULT_PAGE_SIZE;
 
+    cons_mprintf("pf: %x\n", (info_page));
     uint64_t pages = ALIGN_UP(initial_size, DEFAULT_PAGE_SIZE) / DEFAULT_PAGE_SIZE;
     initial_size = pages * DEFAULT_PAGE_SIZE;
     alloc_t * phys_allocator = (alloc_t *) ialloc_frames(1, DEFAULT_PAGE_SIZE); //TODO: map to virt at start and figure out how big we want the allocator to be
     heap_start = ALIGN_DOWN(heap_start, DEFAULT_PAGE_SIZE);
 
+    cons_mprintf("init allocator ( page_in allocator )\n");
     if (
         page_in(
         pml4,
@@ -44,7 +48,7 @@ alloc_t *init_custom_alloc (uint64_t initial_size, uint64_t heap_start, struct_p
     {
         return NULL;
     }
-
+    cons_mprintf("init allocator ( page loop )\n");
     for (uint64_t i = 2; i < pages; i++) {
         if (
             page_in(

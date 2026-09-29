@@ -6,6 +6,7 @@
 #define ICARUS_KERNEL_HELPER_H
 #include "kernel_info.h"
 #include "stdint.h"
+#include "../../shell/shellio.h"
 
 
 #define ALIGN_UP(addr, align)   (((addr) + (align) - 1) & ~((align) - 1))
