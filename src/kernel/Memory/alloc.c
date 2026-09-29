@@ -115,14 +115,14 @@ int map_frame_into_heap(alloc_t * allocator, page_map_l4_entry *pml4,  struct_pa
 /**
  * first fit allocator
  */
-void * imalloc(alloc_t * allocator, uint64_t size) {
+void * imalloc_alocator(alloc_t * allocator, uint64_t size) {
     size += META_DATA_SIZE;      // make the total size
     size = ALIGN_UP(size, HEAP_ALIGNMENT);
 
     while (1) {
         alloc_meta_data_t * header = (alloc_meta_data_t *) allocator->heapStart;
-        cons_mprintf("header %x\n", header);
         while ((uint64_t) header + header->block_size < allocator->heapStart + allocator->heapSize) {
+            //cons_mprintf("header(%i) %x\n",header->block_size, header);
             if (!header->allocated && header->block_size == size) {
                 header->allocated = 1;
                 // don't know why (void *) (uint64_t) should do anything (I don't think it does) but the CLANG warning goes away so
@@ -130,7 +130,7 @@ void * imalloc(alloc_t * allocator, uint64_t size) {
             }
             if (!header->allocated && header->block_size > size) {
                 // set attributes of next_block
-                alloc_meta_data_t *next_block = (alloc_meta_data_t *) header + size;
+                alloc_meta_data_t *next_block = (alloc_meta_data_t *) ((uintptr_t)header + size);
                 uint64_t remaining_s = header->block_size - size;               //remaining_s can't be < 16 (bc it's all aligned to 16)
                 next_block->allocated = 0;
                 next_block->block_size = remaining_s;
@@ -138,10 +138,12 @@ void * imalloc(alloc_t * allocator, uint64_t size) {
                 //set attributes of allocated block
                 header->allocated = 1;
                 header->block_size = size;
+                // prev meta_data stays is not touched bc it's alr there obv
                 return (void *) (uint64_t) header + META_DATA_SIZE;
             }
 
-            header = header + header->block_size;
+            header = (alloc_meta_data_t *) ((uintptr_t) header + header->block_size);
+
         }
 
         // ask for more memory from the kernel
@@ -152,6 +154,25 @@ void * imalloc(alloc_t * allocator, uint64_t size) {
         }
         allocator->heapSize += info_page->page_count * DEFAULT_PAGE_SIZE;
     }
+}
+
+void free(void * addr) {
+    alloc_meta_data_t * header = (alloc_meta_data_t *) (addr - sizeof(alloc_meta_data_t));
+    // check if merging w/ other free block is possible
+    alloc_meta_data_t * working = header;
+    alloc_meta_data_t * next_block = (alloc_meta_data_t *) ((uintptr_t) header + header->block_size);
+    alloc_meta_data_t *prev_block = (alloc_meta_data_t *) ((uintptr_t) header - header->prev_block_data);
+
+    if (prev_block->allocated == 0) {
+        working = prev_block;
+        working->block_size += header->block_size + sizeof(alloc_meta_data_t);
+    }
+
+    if (next_block->allocated == 0) {
+        working->block_size += next_block->block_size + sizeof(alloc_meta_data_t);
+    }
+
+    working->allocated = 0;
 }
 
 

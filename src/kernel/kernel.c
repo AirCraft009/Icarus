@@ -42,8 +42,19 @@ void kmain(uint32_t magic, struct multiboot_info *mboot) {
 
     allocator = init_alloc(DEFAULT_PAGE_SIZE * 5, (void *) KERNEL_HEAP_ADDR);
     cons_mprintf("init allocator\n");
-    uint64_t * allocated_b = imalloc(allocator, 10);
-    cons_mprintf("allocated bloc: %x\n", allocated_b);
+    uint64_t * allocated_a = imalloc_alocator(allocator, 10);
+    cons_mprintf("allocated block: %x\n", allocated_a);
+    uint64_t * allocated_b = imalloc_alocator(allocator, 10);
+    cons_mprintf("allocated block: %x\n", allocated_b);
+    uint64_t * allocated_c = imalloc_alocator(allocator, 10);
+    cons_mprintf("allocated block: %x\n", allocated_c);
+    uint64_t * allocated_d = imalloc_alocator(allocator, 10);
+    cons_mprintf("allocated block: %x\n", allocated_d);
+    free (allocated_b);
+    free (allocated_c);
+    uint64_t * allocated_e = imalloc_alocator(allocator, 20);
+    cons_mprintf("free filling block: %x\n", allocated_e);
+
 
     // cons_mprintf("KERNEL ENDING");
     while (1){}
