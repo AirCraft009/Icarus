@@ -1,6 +1,6 @@
 // gdt.c
 #include "gdt.h"
-#include "../../../lib/mem_utils.h"
+#include "../../lib/mem_utils.h"
 #include "TSS.h"
 
 
