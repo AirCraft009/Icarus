@@ -161,6 +161,11 @@ int dealloc_kframe(phys_addr_t start, uint64_t size) {
     return map_dealloc_frame(mmap, start, size);
 }
 
+phys_addr_t ialloc_kframe(uint64_t pages, uint64_t page_size) {
+    mem_map * mmap = (mem_map *) &_kernel_end;
+    return map_alloc_kframe(mmap, pages * page_size);
+}
+
 
 /**
  * Allocate contiguous physical memory

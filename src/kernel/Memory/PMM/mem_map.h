@@ -51,7 +51,7 @@ int map_dealloc_frame(mem_map *mmap, phys_addr_t phys_addr, uint64_t page_size);
 int zero_mem_region(mem_map *mmap, uint64_t start_addr, uint64_t end_addr);
 int set_mem_region(mem_map *mmap, uint64_t start_addr, uint64_t end_addr);
 void zero_mem_map(mem_map *mmap);
-
+phys_addr_t ialloc_kframe(uint64_t pages, uint64_t page_size);
 struct_page_t *ialloc_frames(uint64_t count, uint64_t page_size);
 int idealloc_frames(struct_page_t *info_page);
 

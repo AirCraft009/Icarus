@@ -19,15 +19,15 @@ add_executable(Icarus_kernel
         src/shell/shellio.h
         src/kernel/Memory/memory_mapping.c
         src/kernel/Memory/memory_mapping.h
-        src/kernel/TSS/TSS.c
-        src/kernel/TSS/TSS.h
+        src/kernel/BootStructs/TSS/TSS.c
+        src/kernel/BootStructs/TSS/TSS.h
         src/kernel/Memory/page_definitions.h
         src/kernel/util/multiboot2.c
         src/kernel/util/multiboot2.h
         src/kernel/util/BitMap.c
         src/kernel/util/BitMap.h
-        src/kernel/GDT/gdt.c
-        src/kernel/GDT/gdt.h
+        src/kernel/BootStructs/GDT/gdt.c
+        src/kernel/BootStructs/GDT/gdt.h
         src/lib/mem_utils.c
         src/lib/mem_utils.h
         src/kernel/util/kernel_info.h

@@ -22,8 +22,6 @@ typedef struct __attribute__((packed)) {
     uint64_t base;
 } gdt_ptr_t;
 
-// 64-bit TSS (structurally same as 32-bit TSS's IO/stack fields but widened;
-// io-bitmap/legacy fields mostly unused, IST stacks are what you actually want)
 typedef struct __attribute__((packed)) {
     uint32_t reserved0;
     uint64_t rsp0, rsp1, rsp2;

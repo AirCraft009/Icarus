@@ -2,10 +2,10 @@
 // Created by Mxsxll on 21.09.2026.
 //
 
-#include "TSS.h"
-
+#ifndef ICARUS_TSS_H
+#define ICARUS_TSS_H
+#pragma once
 #include <stdint.h>
-
 
 typedef struct TSS_Entry {
     uint8_t l_w1;
@@ -15,11 +15,7 @@ typedef struct TSS_Entry {
 } __attribute__((packed)) tss_entry_t;
 
 __attribute__((aligned(0x10)))
-static tss_entry_t tss[25];
+static tss_entry_t tss[26];
 
-void init_tss() {
-    for (int i = 0; i < 25; i++) {
-
-    }
-}
-
+void init_tss();
+#endif //ICARUS_TSS_H

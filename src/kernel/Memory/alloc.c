@@ -156,6 +156,10 @@ void * imalloc_alocator(alloc_t * allocator, uint64_t size) {
     }
 }
 
+void *imalloc(uint64_t size) {
+    return imalloc_alocator((alloc_t *) KERNEL_HEAP_ADDR, size);
+}
+
 void free(void * addr) {
     alloc_meta_data_t * header = (alloc_meta_data_t *) (addr - sizeof(alloc_meta_data_t));
     // check if merging w/ other free block is possible
