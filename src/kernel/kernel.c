@@ -7,7 +7,7 @@
 #include "interrupts/IDT.h"
 #include "../shell/shellio.h"
 #include "BootStructs/GDT/gdt.h"
-#include "BootStructs/TSS/TSS.h"
+#include "BootStructs/GDT/TSS.h"
 #include "Memory/memory_mapping.h"
 #include "Memory/page_definitions.h"
 #include "Memory/alloc.h"

@@ -1,7 +1,7 @@
 // gdt.c
 #include "gdt.h"
 #include "../../../lib/mem_utils.h"
-#include "../TSS/TSS.h"
+#include "TSS.h"
 
 
 static gdt_entry_t    gdt[GDT_ENTRIES];

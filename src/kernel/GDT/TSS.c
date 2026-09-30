@@ -2,7 +2,7 @@
 // Created by Mxsxll on 21.09.2026.
 //
 
-#include "TSS.h"
+#include "../TSS/TSS.h"
 
 #include "../../../lib/mem_utils.h"
 #include "../../Memory/PMM/mem_map.h"
