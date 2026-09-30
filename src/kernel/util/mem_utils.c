@@ -2,8 +2,6 @@
 // Created by cocon on 22.09.2026.
 //
 
-#include "mem_utils.h"
-
 #include <stdint.h>
 
 /**

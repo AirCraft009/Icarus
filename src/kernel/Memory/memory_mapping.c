@@ -6,11 +6,9 @@
 
 #include <stdint.h>
 
-#include "PMM/mem_map.h"
-#include "../util/kernel_info.h"
-#include "../util/kernel_helper.h"
-#include "page_definitions.h"
-#include "../../lib/mem_utils.h"
+#include "kernel_helper.h"
+#include "kernel/util/mem_utils.h"
+#include "kernel/util/shellio.h"
 
 /*
  *  handles paging in and out
@@ -50,7 +48,8 @@ int page_in_regions(mem_map *mmap, page_map_l4_entry * pml4) {
                     pml4,
                     (void *)KERNEL_PHYS_TO_VIRT(addr),
                     (void *)addr,
-                    HUGE_PS, WRITEABLE | USER_ACCESS | ) != 0)
+                    HUGE_PS,
+                    WRITEABLE | USER_ACCESS) != 0)
             {
                 return -1;
             }

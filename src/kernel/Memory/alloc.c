@@ -2,11 +2,33 @@
 // Created by cocon on 27.09.2026.
 //
 
-#include "alloc.h"
 
+
+#define MIN_ALLOC_SIZE 32
+#define HEAP_ALIGNMENT 16
+#define META_DATA_SIZE sizeof(alloc_meta_data_t)
+#define NO_PREV_ENTRY 0
+#include "kernel/Memory/alloc.h"
+
+#include <stdint.h>
+
+#include "kernel_helper.h"
 #include "memory_mapping.h"
-#include "../../lib/mem_utils.h"
-#include "../util/kernel_helper.h"
+#include "page_definitions.h"
+#include "kernel/Memory/PMM/mem_map.h"
+
+
+/**
+ * Allocation Meta-data
+ * takes role of header and footer
+ * by having the size of the current block
+ * as well as the offset to the prev's blocks metadata
+ */
+typedef struct AllocMetaData {
+    uint64_t block_size : 63;
+    uint64_t allocated : 1;
+    uint64_t prev_block_data;       // offset to prev block from AllocMetadata * (0 for first block)
+}__attribute__((packed)) alloc_meta_data_t;
 
 
 /**
@@ -28,7 +50,8 @@ alloc_t *init_custom_alloc (uint64_t initial_size, void * heap_start, struct_pag
             pml4,
             (void *) st,
             (void *) info_page->page_addr[0],
-            DEFAULT_PAGE_SIZE) != 0)
+            DEFAULT_PAGE_SIZE,
+            WRITEABLE | USER_ACCESS) != 0)
     {
         return NULL;
     }
@@ -47,7 +70,8 @@ alloc_t *init_custom_alloc (uint64_t initial_size, void * heap_start, struct_pag
         pml4,
         (void *) heap_start,
         (void *) phys_allocator,
-        DEFAULT_PAGE_SIZE) != 0 )
+        DEFAULT_PAGE_SIZE,
+        WRITEABLE | USER_ACCESS) != 0 )
     {
         return NULL;
     }
@@ -57,7 +81,8 @@ alloc_t *init_custom_alloc (uint64_t initial_size, void * heap_start, struct_pag
             pml4,
             (void *) heap_start + i * DEFAULT_PAGE_SIZE,
             (void *) info_page->page_addr[i - 1],
-            DEFAULT_PAGE_SIZE) != 0)
+            DEFAULT_PAGE_SIZE,
+            WRITEABLE | USER_ACCESS) != 0)
         {
             return NULL;
         }
@@ -104,7 +129,8 @@ int map_frame_into_heap(alloc_t * allocator, page_map_l4_entry *pml4,  struct_pa
             pml4,
             (void *) allocator->heapStart + allocator->heapSize + i * DEFAULT_PAGE_SIZE,
             (void *) info_page->page_addr[i],
-            DEFAULT_PAGE_SIZE) != 0)
+            DEFAULT_PAGE_SIZE,
+            WRITEABLE | USER_ACCESS) != 0)
         {
             return -1;
         }

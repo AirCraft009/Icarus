@@ -14,28 +14,31 @@ add_executable(Icarus_kernel
         src/kernel/interrupts/isr.asm
         src/kernel/interrupts/IDT.c
         src/kernel/interrupts/ISR_handlers.c
-        src/kernel/interrupts/IDT.h
-        src/shell/shellio.c
-        src/shell/shellio.h
+        include/kernel/interrupts/IDT.h
+        src/kernel/util/shellio.c
+        include/kernel/util/shellio.h
         src/kernel/Memory/memory_mapping.c
         src/kernel/Memory/memory_mapping.h
         src/kernel/GDT/TSS.c
         src/kernel/GDT/TSS.h
-        src/kernel/Memory/page_definitions.h
+        include/page_definitions.h
         src/kernel/util/multiboot2.c
         src/kernel/util/multiboot2.h
         src/kernel/util/BitMap.c
-        src/kernel/util/BitMap.h
+        include/kernel/util/BitMap.h
         src/kernel/GDT/gdt.c
-        src/kernel/GDT/gdt.h
-        src/lib/mem_utils.c
-        src/lib/mem_utils.h
-        src/kernel/util/kernel_info.h
-        src/kernel/util/kernel_helper.h
+        include/kernel/GDT/gdt.h
+        src/kernel/util/mem_utils.c
+        include/kernel/util/mem_utils.h
+        include/kernel_helper.h
         src/kernel/Memory/PMM/mem_map.c
-        src/kernel/Memory/PMM/mem_map.h
+        include/kernel/Memory/PMM/mem_map.h
         src/kernel/Memory/alloc.c
-        src/kernel/Memory/alloc.h
+        include/kernel/Memory/alloc.h
+)
+
+target_include_directories(Icarus_kernel PRIVATE include
+        ${PROJECT_SOURCE_DIR}/include
 )
 
 target_compile_options(Icarus_kernel PRIVATE

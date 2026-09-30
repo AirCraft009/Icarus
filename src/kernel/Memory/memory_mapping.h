@@ -60,9 +60,9 @@
     } while (0)
 
 
-#include "PMM/mem_map.h"
-#include "page_definitions.h"
+#include "../../../include/page_definitions.h"
 #include "../util/multiboot2.h"
+#include "kernel/Memory/PMM/mem_map.h"
 
 int handle_mb2_mmap(struct multiboot_tag *mmap_tag, page_map_l4_entry *pml4);
 int page_in(page_map_l4_entry *pml4, const void *virt_addr, const void *phys_addr, uint64_t pageSize, uint64_t permissions);

@@ -2,11 +2,11 @@
 // Created by Mxsxll on 21.09.2026.
 //
 
+#include "kernel_helper.h"
 #include "../GDT/Tss.h"
+#include "kernel/Memory/PMM/mem_map.h"
+#include "kernel/util/mem_utils.h"
 
-#include "../../lib/mem_utils.h"
-#include "../Memory/PMM/mem_map.h"
-#include "../util/kernel_helper.h"
 
 #define TSS_STACK_PAGES  4            // 16 KiB per stack
 #define TSS_IOPB_OFFSET  0x0067       // == sizeof(TSS)-1 == no I/O bitmap

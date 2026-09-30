@@ -4,10 +4,13 @@
 
 #ifndef ICARUS_KERNEL_HELPER_H
 #define ICARUS_KERNEL_HELPER_H
-#include "kernel_info.h"
-#include "stdint.h"
-#include "../../shell/shellio.h"
 
+#include <stdint.h>
+
+#define KERNEL_VMA 0xFFFFFFFF80000000UL
+#define INVALID_PHYS_ADDR UINT64_MAX
+// page size for each bitmap entry
+#define DEFAULT_PAGE_SIZE 4096
 
 #define ALIGN_UP(addr, align)   (((addr) + (align) - 1) & ~((align) - 1))
 #define ALIGN_DOWN(addr, align) ((addr) & ~((align) - 1))

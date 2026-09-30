@@ -2,18 +2,16 @@
 // Created by cocon on 25.09.2026.
 //
 
-#include "mem_map.h"
+#include "kernel/Memory/PMM/mem_map.h"
 
 #include <stdbool.h>
 
-#include "../../util/BitMap.h"
-
 #include <stddef.h>
 
-#include "../../../lib/mem_utils.h"
-#include "../../../shell/shellio.h"
-#include "../../util/kernel_helper.h"
-#include "../../util/kernel_info.h"
+#include "kernel_helper.h"
+#include "kernel/util/BitMap.h"
+#include "kernel/util/mem_utils.h"
+#include "kernel/util/shellio.h"
 
 extern char _kernel_end[];
 static struct_page_t * temp_page;

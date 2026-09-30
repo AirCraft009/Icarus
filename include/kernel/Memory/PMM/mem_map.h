@@ -7,7 +7,7 @@
 #pragma once
 #include <stdbool.h>
 #include <stdint.h>
-#include "../../util/BitMap.h"
+#include "kernel/util/BitMap.h"
 
 #define FRAME_ALLOC_FAILED UINT64_MAX
 #define MAX_MEM_REGIONS 32

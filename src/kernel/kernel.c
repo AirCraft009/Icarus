@@ -1,16 +1,16 @@
 #include <stddef.h>
+#include <stdint.h>
 
-#include "../lib/mem_utils.h"
-#include "util/kernel_helper.h"
-#include "util/kernel_info.h"
-#include "util/multiboot2.h"
-#include "interrupts/IDT.h"
-#include "../shell/shellio.h"
-#include "./GDT/gdt.h"
+#include "kernel_helper.h"
+#include "page_definitions.h"
+#include "kernel/GDT/gdt.h"
+#include "kernel/interrupts/IDT.h"
+#include "kernel/util/mem_utils.h"
+#include "kernel/util/shellio.h"
 #include "Memory/memory_mapping.h"
-#include "Memory/page_definitions.h"
-#include "Memory/alloc.h"
-
+#include "util/multiboot2.h"
+#include "kernel/Memory/alloc.h"
+#include "kernel/Memory/PMM/mem_map.h"
 
 extern uint64_t *gdt_descriptor;
 

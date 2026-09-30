@@ -2,7 +2,7 @@
 
 #include <stddef.h>
 #include <stdint.h>
-#include "../../shell/shellio.h"
+#include "../../../include/kernel/util/shellio.h"
 #include "../Memory/memory_mapping.h"
 
 /**
