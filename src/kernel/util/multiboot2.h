@@ -89,10 +89,10 @@
 
 #ifndef ASM_FILE
 #include <stddef.h>
+#include <stdint.h>
 
-#include "BitMap.h"
-#include "../../shell/shellio.h"
-#include "../Memory/page_definitions.h"
+#include "page_definitions.h"
+
 
 typedef unsigned char           multiboot_uint8_t;
 typedef unsigned short          multiboot_uint16_t;

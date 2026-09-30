@@ -2,7 +2,9 @@
 // Created by cocon on 20.09.2026.
 //
 #include <stdint.h>
-#include "../../shell/shellio.h"
+
+#include "kernel/util/shellio.h"
+
 
 struct interrupt_frame {
     // pushed by isr_common

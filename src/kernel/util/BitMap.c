@@ -2,14 +2,13 @@
 // Created by Mxsxll on 22.09.2026.
 //
 
-#include "BitMap.h"
+
+#include "kernel/util/BitMap.h"
 
 #include <stdbool.h>
-#include <stddef.h>
 
-#include "kernel_info.h"
-#include "../../shell/shellio.h"
-
+#include "kernel_helper.h"
+#include "kernel/util/shellio.h"
 /**
  * sets bit to a value (0 | 1)
  */

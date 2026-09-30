@@ -4,7 +4,7 @@
 // src from: https://wiki.osdev.org/Interrupts_Tutorial
 
 #include <stdint.h>
-#include "IDT.h"
+#include "../../../include/kernel/interrupts/IDT.h"
 extern void *isr_table[256];
 
 // same segment that we jumped to in boot.asm

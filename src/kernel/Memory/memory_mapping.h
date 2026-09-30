@@ -26,14 +26,46 @@
 #define VA_IS_CANONICAL_48(va) \
 ((((int64_t)(va) << 16) >> 16) == (int64_t)(va))
 
+// Helpers for setting the Page Permissions
+#define WRITEABLE 0x2
+#define USER_ACCESS 0x4
+#define WRITE_THROUGH 0x8
+#define CACHE_DISABLED 0x10
+#define EXECUTION_DISABLED 0x40
 
-#define LOWEST_FRAME_SIZE 0x100000;
-#include "PMM/mem_map.h"
-#include "page_definitions.h"
+#define WRITEABLE_SHIFT 0x1
+#define USER_ACCESS_SHIFT 0x3
+#define WRITE_THROUGH_SHIFT 0x7
+#define CACHE_DISABLED_SHIFT 0xF
+#define EXECUTION_DISABLED_SHIFT 0x3F
+
+#define PERM_BIT(p, shift)  (((p) >> (shift)) & 0x1)
+
+/* Intermediate entries: a 1 propagates up the tree, a 0 never clears anything.
+ * NX / PWT / PCD are deliberately NOT touched here. */
+#define APPLY_UPPER_PERMS(e, p)                                   \
+    do {                                                          \
+        if (PERM_BIT(p, USER_ACCESS_SHIFT)) (e)->user_access = 1; \
+        if (PERM_BIT(p, WRITEABLE_SHIFT))   (e)->writeable   = 1; \
+    } while (0)
+
+/* Leaf entry apply what the caller asked for. */
+#define APPLY_LEAF_PERMS(e, p)                                                    \
+    do {                                                                          \
+        (e)->user_access         = PERM_BIT(p, USER_ACCESS_SHIFT);                \
+        (e)->writeable           = PERM_BIT(p, WRITEABLE_SHIFT);                  \
+        (e)->write_through       = PERM_BIT(p, WRITE_THROUGH_SHIFT);              \
+        (e)->cache_disabled      = PERM_BIT(p, CACHE_DISABLED_SHIFT);             \
+        (e)->execution_disabled  = PERM_BIT(p, EXECUTION_DISABLED_SHIFT);         \
+    } while (0)
+
+
+#include "../../../include/page_definitions.h"
 #include "../util/multiboot2.h"
+#include "kernel/Memory/PMM/mem_map.h"
 
 int handle_mb2_mmap(struct multiboot_tag *mmap_tag, page_map_l4_entry *pml4);
-int page_in(page_map_l4_entry *pml4, const void *virt_addr, const void *phys_addr, uint64_t pageSize);
+int page_in(page_map_l4_entry *pml4, const void *virt_addr, const void *phys_addr, uint64_t pageSize, uint64_t permissions);
 phys_addr_t test_walk_table(page_map_l4_entry *pml4, const phys_addr_t *virt_addr);
 
 void manual_map_test(page_map_l4_entry *pml4_raw);

@@ -6,8 +6,8 @@
 // text input output for debugging & similar
 // All text will be in white on black bg
 
-#include "shellio.h"
-#include "../lib/mem_utils.h"
+
+#include "kernel/util/shellio.h"
 
 #include <assert.h>
 #include <stdarg.h>
@@ -15,7 +15,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include "../kernel/util/kernel_helper.h"
+#include "kernel_helper.h"
 
 
 const uint16_t COLS = 80;

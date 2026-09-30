@@ -6,7 +6,6 @@
 #define ICARUS_PAGE_DEFINITIONS_H
 #pragma once
 #include <stdint.h>
-
 /**
  * represents a pml4 table entry
  */
