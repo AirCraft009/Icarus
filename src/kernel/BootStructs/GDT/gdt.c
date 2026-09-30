@@ -1,12 +1,13 @@
 // gdt.c
 #include "gdt.h"
 #include "../../../lib/mem_utils.h"
+#include "../TSS/TSS.h"
 
 
 static gdt_entry_t    gdt[GDT_ENTRIES];
 static gdt_entry_hi_t gdt_hi;
 static gdt_ptr_t      gdt_descriptor;
-static tss_t          tss;
+static tss_t tss;
 
 static void gdt_set_entry(int i, uint32_t base, uint32_t limit,
                            uint8_t access, uint8_t flags) {
@@ -55,8 +56,7 @@ void gdt_init(void) {
     gdt_set_entry(3, 0, 0xFFFFF, 0xF2, 0xC0);         // user data
     gdt_set_entry(4, 0, 0xFFFFF, 0xFA, 0xA0);         // user code
 
-    Imemset(&tss, 0, sizeof(tss));
-    tss.iomap_base = sizeof(tss);
+    init_tss(&tss);
 
     uint64_t tss_base  = (uint64_t)&tss;
     uint32_t tss_limit = sizeof(tss) - 1;

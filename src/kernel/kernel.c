@@ -49,8 +49,6 @@ void kmain(uint32_t magic, struct multiboot_info *mboot) {
 
     allocator = init_alloc(DEFAULT_PAGE_SIZE * 510, (void *) KERNEL_HEAP_ADDR);
 
-
-
     // cons_mprintf("KERNEL ENDING");
     while (1){}
 }
