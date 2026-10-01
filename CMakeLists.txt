@@ -35,6 +35,9 @@ add_executable(Icarus_kernel
         include/kernel/Memory/PMM/mem_map.h
         src/kernel/Memory/alloc.c
         include/kernel/Memory/alloc.h
+        include/kernel/util/font.h
+        src/kernel/Drivers/USB3.c
+        include/kernel/Drivers/USB3.h
 )
 
 target_include_directories(Icarus_kernel PRIVATE include

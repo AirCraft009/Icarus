@@ -1,3 +1,4 @@
+; AI generated Header
 MB2_MAGIC  equ 0xE85250D6
 MB2_ARCH   equ 0                     ; i386 (32-bit protected mode entry)
 
@@ -31,6 +32,7 @@ multiboot2_header_start:
     dw 0
     dd 8
 multiboot2_header_end:
+; AI end
 
 
 extern kmain
@@ -108,16 +110,16 @@ global pml4
 
 align 4096
 pml4:
-    dq pdpt + 0x003             ; [0]   identity map
+    dq pdpt + 0x003
     times 510 dq 0
-    dq pdpt + 0x003             ; [511] higher half
+    dq pdpt + 0x003
 
 align 4096
 pdpt:
-    dq pd + 0x003               ; [0]
+    dq pd + 0x003
     times 509 dq 0
-    dq pd + 0x003               ; [510]
-    dq 0                        ; [511]
+    dq pd + 0x003
+    dq 0
 
 align 4096
 pd:

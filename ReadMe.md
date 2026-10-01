@@ -13,5 +13,10 @@ I hope the name is obvious enough
 - gcc
 - sudo apt install --reinstall grub-pc-bin
 
+## Credits
+
+### Framebuffer fonts
+- https://nothings.org/stb/font/
+
 ## Usage (linux)
 run `./build.sh`
