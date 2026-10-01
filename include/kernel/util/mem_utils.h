@@ -9,6 +9,7 @@
 
 void  Imemset(void *addr, uint8_t val, uint64_t length);
 void Imemcpy(void *dest, const void *src, uint64_t length);
-static inline uint64_t align_up(uint64_t addr, uint64_t align);
+int Istrncmp(const void *cmp1, const void *cmp2, uint64_t length);
+int Imemcmp(const void *str1, const void *str2, uint64_t count);
 
 #endif //ICARUS_MEM_H

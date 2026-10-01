@@ -23,7 +23,7 @@ add_executable(Icarus_kernel
         src/kernel/GDT/TSS.h
         include/page_definitions.h
         src/kernel/util/multiboot2.c
-        src/kernel/util/multiboot2.h
+        include/kernel/util/multiboot2.h
         src/kernel/util/BitMap.c
         include/kernel/util/BitMap.h
         src/kernel/GDT/gdt.c
@@ -38,6 +38,8 @@ add_executable(Icarus_kernel
         include/kernel/util/font.h
         src/kernel/Drivers/USB3.c
         include/kernel/Drivers/USB3.h
+        src/kernel/Memory/DMA/ACPI.c
+        include/kernel/Memory/DMA/ACPI.h
 )
 
 target_include_directories(Icarus_kernel PRIVATE include

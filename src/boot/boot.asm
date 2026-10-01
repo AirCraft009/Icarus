@@ -12,7 +12,7 @@ multiboot2_header_start:
     ; Information request: memory map (6) and framebuffer info (8), optional
     align 8
     dw 1                ; type
-    dw 1                ; flags: optional
+    dw 0                ; flags: optional
     dd 16               ; size = 8 header + 2*4 requests
     dd 6
     dd 8
@@ -25,6 +25,16 @@ multiboot2_header_start:
 ;    dd 1024
 ;    dd 768
 ;    dd 32
+
+    ; need ACPI info type-shit
+    ; Don't 100% understand yet but I'm here 🫡
+    align 8
+    dw 1          ; type = MULTIBOOT_HEADER_TAG_INFORMATION_REQUEST
+    dw 0          ; 0 for require cause yk I need it, this draco undefeated ...
+    dd 8 + 2*4    ; 8b + (4b * requested tags) lwk don't know why AI decided to put the upper two tags(memmap & frame_buf) as separate but I'll just leave it
+    dd 14         ; ACPI old RSDP
+    dd 15         ; ACPI new RSDP
+
 
     ; End tag
     align 8

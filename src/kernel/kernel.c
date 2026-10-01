@@ -8,7 +8,7 @@
 #include "kernel/util/mem_utils.h"
 #include "kernel/util/shellio.h"
 #include "Memory/memory_mapping.h"
-#include "util/multiboot2.h"
+#include "../../include/kernel/util/multiboot2.h"
 #include "kernel/Memory/alloc.h"
 #include "kernel/Memory/PMM/mem_map.h"
 
@@ -32,7 +32,7 @@ void kmain(uint32_t magic, struct multiboot_info *mboot) {
     //parse the struct given to use from the multiboot2 header
     //init the bitmap for free memory
     if (handle_multiboot2(magic, mboot, &Kernel_PML4_TABLE[0]) != 0) {
-        cons_mprintf("init_multiboot2 failed, error while parsing struct\n");
+        cons_mprintf("init_multiboot2 failed, error while parsing mulitboot2 struct\n");
         __asm__ volatile ("cli; hlt"); // Completely hangs the computer
     };
     test_walk_table(&Kernel_PML4_TABLE[0], (phys_addr_t *) KERNEL_PHYS_TO_VIRT(0x0100000));
