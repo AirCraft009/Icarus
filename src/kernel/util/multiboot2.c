@@ -15,10 +15,9 @@ int handle_multiboot2 (uint32_t magic, boot_info *info, page_map_l4_entry *pml4)
 	unsigned long long addr = (unsigned long long) info;
 	struct multiboot_tag *tag;
 	unsigned long size;
+	struct multiboot_tag *mmap_tag = 0;
 
 	cursor cur = (cursor) {.x = 0,.y = 0};
-
-	multiboot_memory_map_t *mmap;
 
 	if ((int)magic != MULTIBOOT2_BOOTLOADER_MAGIC)
 	{
@@ -33,7 +32,8 @@ int handle_multiboot2 (uint32_t magic, boot_info *info, page_map_l4_entry *pml4)
 	}
 
 	size = *(unsigned *) addr;
-	cons_mprintf( "Announced mbi size 0x%d\n", size);
+	cons_mprintf( "Announced mbi size %x\n", size);
+	cons_mprintf("addr: %x\n", (unsigned *) addr);
 	for (tag = (struct multiboot_tag *) (addr + 8);
 	tag->type != MULTIBOOT_TAG_TYPE_END;
 	tag = (struct multiboot_tag *) ((multiboot_uint8_t *) tag
@@ -67,8 +67,7 @@ int handle_multiboot2 (uint32_t magic, boot_info *info, page_map_l4_entry *pml4)
 				((struct multiboot_tag_bootdev *) tag)->part);
 				break;
 			case MULTIBOOT_TAG_TYPE_MMAP:
-				if (handle_mb2_mmap(tag, pml4) != 0)
-					return -1;
+				mmap_tag = tag;
 				break;
 
 			case MULTIBOOT_TAG_TYPE_FRAMEBUFFER:
@@ -80,6 +79,8 @@ int handle_multiboot2 (uint32_t magic, boot_info *info, page_map_l4_entry *pml4)
 		tag = (struct multiboot_tag *) ((multiboot_uint8_t *) tag
 									  + ((tag->size + 7) & ~7));
 		cons_mprintf( "Total mbi size 0x%i\n", (unsigned) tag - addr);
+
+		handle_mb2_mmap(mmap_tag, pml4);
 
 		return 0;
 	}
