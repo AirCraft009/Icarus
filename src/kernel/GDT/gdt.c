@@ -85,7 +85,7 @@ void gdt_init(void) {
     gdt_set_entry(5, (uint32_t)(tss_base & 0xFFFFFFFF), tss_limit, 0x89, 0x00);
     gdt_hi.base_upper32 = (uint32_t)(tss_base >> 32);
     gdt_hi.reserved = 0;
-    Imemcpy(&gdt[6], &gdt_hi, sizeof(gdt_hi));
+    Imemccpy(&gdt[6], &gdt_hi, sizeof(gdt_hi));
 
     gdt_descriptor.limit = sizeof(gdt) - 1;
     gdt_descriptor.base  = (uint64_t)&gdt;

@@ -97,6 +97,8 @@ int handle_mb2_mmap(struct multiboot_tag *mmap_tag, page_map_l4_entry *pml4) {
                 cons_mprintf("addrF: %x - %x = len: %x\n", start, end, end - start);
                 memmap_register_region(mmap, start, end);
             }
+        }else {
+            cons_mprintf("section %i\n", mmap_entry->type);
         }
     }
     zero_mem_map(mmap);

@@ -40,6 +40,8 @@ add_executable(Icarus_kernel
         include/kernel/Drivers/USB3.h
         src/kernel/Memory/DMA/ACPI.c
         include/kernel/Memory/DMA/ACPI.h
+        src/kernel/Memory/DMA/MMIO.c
+        include/kernel/Memory/DMA/MMIO.h
 )
 
 target_include_directories(Icarus_kernel PRIVATE include

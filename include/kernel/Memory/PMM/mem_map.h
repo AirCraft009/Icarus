@@ -32,6 +32,7 @@ typedef struct MemMap {
 }mem_map;
 
 typedef uint64_t phys_addr_t;
+typedef uint64_t virt_addr_t;
 
 /**
  * return value of alloc_frames and input to dealloc frames

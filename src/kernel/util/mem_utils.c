@@ -28,7 +28,7 @@ void  Imemset(void *addr, uint8_t val, uint64_t length) {
  * @param src start of source
  * @param length length of mem to copy
  */
-void Imemcpy(void *dest, const void *src, uint64_t length) {
+void Imemccpy(void *dest, const void *src, uint64_t length) {
     uint8_t *dp = (uint8_t *)dest;
     uint8_t *sp = (uint8_t *)src;
 
