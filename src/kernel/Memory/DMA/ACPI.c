@@ -12,19 +12,14 @@
 
 // GOLD!!! https://www.singlix.com/trdos/archive/OSDev_Wiki/RSDP.pdf
 
-#define SIGNATURE "RSD PTR "
+#define CHECKSUM(buff, p)  \
+    if(calculate_checksum((uint8_t *) (buff), (uint64_t) (p)) != 0){ \
+        return -1; \
+    }
 
-struct ACPISDTHeader {
-    char Signature[4];
-    uint32_t Length;
-    uint8_t Revision;
-    uint8_t Checksum;
-    char OEMID[6];
-    char OEMTableID[8];
-    uint32_t OEMRevision;
-    uint32_t CreatorID;
-    uint32_t CreatorRevision;
-};
+#define MIN(a, b) (((a) < (b)) ? (a) : (b))
+#define SIGNATURE "RSD PTR "
+#include "ACPI_tables.h"
 
 struct XSDT {
     struct ACPISDTHeader h;
@@ -36,7 +31,11 @@ struct __attribute__((packed)) RSDT {
     uint32_t PointerToOtherSDT[];
 };
 
-uint8_t calculate_checksum(uint8_t *buffer, size_t length) {
+// zero init so that ACPI v1 doesn't read uninit slop
+static struct FADT FACP = {0};
+static struct ACPI_MCFG MCFG = {0};
+
+uint8_t calculate_checksum(uint8_t *buffer, uint64_t length) {
     uint8_t sum = 0;
     for (size_t i = 0; i < length; i++) {
         sum += buffer[i];
@@ -60,19 +59,21 @@ void *findFACPXSDT(struct XSDT *xsdt)
     return NULL;
 }
 
-void *findFACPRSDT(struct RSDT *rsdt)
+void categoriseTables(struct RSDT *rsdt)
 {
     int entries = (rsdt->h.Length - sizeof(struct ACPISDTHeader)) / 4;
 
-    for (int i = 0; i < entries; i++) {
-        struct ACPISDTHeader *h = (struct ACPISDTHeader *) KERNEL_PHYS_TO_VIRT(rsdt->PointerToOtherSDT[i]);
-        if (!Istrncmp(h->Signature, "FACP", 4)){
-            return (void *) h;
-        }
-    }
 
-    // No FACP found
-    return NULL;
+    for (int i = 0; i < entries; i++) {
+        struct ACPISDTHeader *h = (struct ACPISDTHeader *) MMIO_PHYS_TO_VIRT(rsdt->PointerToOtherSDT[i]);
+        if (!Istrncmp(h->Signature, "FACP", 4)){
+            Imemccpy(h, &FACP, MIN(h->Length, sizeof(struct FADT)));
+        }
+        else if (!Istrncmp(h->Signature, "MCFG", 4)) {
+            Imemccpy(h, &MCFG, h->Length);
+        }
+        // TODO: expand for other Tables
+    }
 }
 
 
@@ -81,18 +82,14 @@ int handle_new_acpi(struct XSDP_t * xsdp) {
         return -1;
 
     // checksum for RSDP (first 20 bytes)
-    if (calculate_checksum((uint8_t *) xsdp, 20) % 2 != 0) {
-        return -1;
-    }
+    CHECKSUM( xsdp, 20);
 
     cons_mprintf("OEM: %s\n", xsdp->OEMID);
     int version = xsdp->Revision + 1;
     // ignore xsdp->RsdtAddress it's deprecated in all new versions
 
     //checksum for XsdP (all bytes)
-    if (calculate_checksum((uint8_t *) xsdp, xsdp->Length) % 2 != 0) {
-        return -1;
-    }
+    CHECKSUM (xsdp, xsdp->Length)
 
     struct XSDT * root = (struct XSDT *)  KERNEL_VIRT_TO_PHYS(xsdp->XsdtAddress);
 
@@ -105,9 +102,7 @@ int handle_old_acpi(struct RSDP_t * rsdp) {
         return -1;
 
     // checksum for RSDP (first 20 bytes)
-    if (calculate_checksum((uint8_t *) rsdp, 20) % 2 != 0) {
-        return -1;
-    }
+    CHECKSUM(rsdp, 20);
 
     cons_mprintf("OEM: %s\n", rsdp->OEMID);
     int version = rsdp->Revision + 1;
@@ -118,6 +113,10 @@ int handle_old_acpi(struct RSDP_t * rsdp) {
         return -1;
     }
 
-    struct ACPISDTHeader * FACP = findFACPRSDT((struct RSDT *) KERNEL_PHYS_TO_VIRT(root_phys));
+    categoriseTables((struct RSDT *) MMIO_PHYS_TO_VIRT(root_phys));
+    CHECKSUM(&FACP, FACP.h.Length);
+
+
+
     return 0;
 }

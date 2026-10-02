@@ -8,6 +8,9 @@
 #include <stdint.h>
 
 #define KERNEL_VMA 0xFFFFFFFF80000000UL
+#define KERNEL_HEAP_ADDR 0xFFFFFF0000000000UL
+#define KERNEL_MMIO 0xFFFFFE0000000000UL
+
 #define INVALID_PHYS_ADDR UINT64_MAX
 // page size for each bitmap entry
 #define DEFAULT_PAGE_SIZE 4096
@@ -17,7 +20,8 @@
 #define KERNEL_PHYS_TO_VIRT(p) ((uintptr_t)(p) + KERNEL_VMA)
 #define KERNEL_VIRT_TO_PHYS(p) ((uintptr_t)(p) - KERNEL_VMA)
 
-#define KERNEL_HEAP_ADDR 0xFFFFFF0000000000UL
+#define MMIO_PHYS_TO_VIRT(p) ((uintptr_t)(p) + KERNEL_MMIO)
+#define MMIO_VIRT_TO_PHYS(p) ((uintptr_t)(p) - KERNEL_MMIO)
 
 static inline uint64_t read_cr3(void)
 {

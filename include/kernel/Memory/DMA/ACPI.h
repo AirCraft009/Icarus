@@ -12,5 +12,6 @@
 int handle_new_acpi(struct XSDP_t * rsdp);
 int handle_old_acpi(struct RSDP_t * rsdp);
 
+
 #endif //ICARUS_ACPI_H
 

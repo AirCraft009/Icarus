@@ -22,3 +22,6 @@
 ### PCI
  - https://wiki.osdev.org/PCI#The_PCI_Bus
 
+### Enhanced Configuration Mechanism
+- This field is needed from ACPI for the eXtensible Host Controller Interface
+

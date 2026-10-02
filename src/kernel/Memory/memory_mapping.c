@@ -74,6 +74,7 @@ int handle_mb2_mmap(struct multiboot_tag *mmap_tag, page_map_l4_entry *pml4) {
     mmap = (mem_map *) MemmapStart;
     mmap->region_count = 0;
     mmap->mem_size = 0;
+    mmap->bitmap.size = 0;
 
     struct multiboot_mmap_entry *mmap_entry;
 
@@ -94,13 +95,14 @@ int handle_mb2_mmap(struct multiboot_tag *mmap_tag, page_map_l4_entry *pml4) {
             uint64_t start = ALIGN_UP(mmap_entry->addr, DEFAULT_PAGE_SIZE);
             uint64_t end = ALIGN_DOWN(mmap_entry->addr + mmap_entry->len, DEFAULT_PAGE_SIZE);
             if (end > start) {
-                cons_mprintf("addrF: %x - %x = len: %x\n", start, end, end - start);
+                cons_mprintf("addrF: %x - %x = len: %i\n", start, end, end - start);
                 memmap_register_region(mmap, start, end);
             }
         }else {
             cons_mprintf("section %i\n", mmap_entry->type);
         }
     }
+    //mmap->bitmap.size = 525987;
     zero_mem_map(mmap);
 
     //mark the kernel and bitmap itself as not available
