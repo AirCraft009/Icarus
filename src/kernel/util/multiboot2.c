@@ -1,9 +1,18 @@
-#include "multiboot2.h"
+#include "kernel/util/Multiboot2.h"
 
 #include <stddef.h>
 #include <stdint.h>
 #include "../../../include/kernel/util/shellio.h"
 #include "../Memory/memory_mapping.h"
+
+#include "kernel/Memory/DMA/ACPI.h"
+#include "kernel/util/mem_utils.h"
+
+
+extern char _kernel_end_phys[];
+static struct RSDP_t rsdp = {'\0'};
+static struct XSDP_t rsdp_new = {'\0'};
+
 
 /**
  * handles parsing the info struct passed by GRUB multiboot2
@@ -16,9 +25,7 @@ int handle_multiboot2 (uint32_t magic, boot_info *info, page_map_l4_entry *pml4)
 	struct multiboot_tag *tag;
 	unsigned long size;
 
-	cursor cur = (cursor) {.x = 0,.y = 0};
-
-	multiboot_memory_map_t *mmap;
+	struct multiboot_tag *mmap = 0;
 
 	if ((int)magic != MULTIBOOT2_BOOTLOADER_MAGIC)
 	{
@@ -67,8 +74,23 @@ int handle_multiboot2 (uint32_t magic, boot_info *info, page_map_l4_entry *pml4)
 				((struct multiboot_tag_bootdev *) tag)->part);
 				break;
 			case MULTIBOOT_TAG_TYPE_MMAP:
-				if (handle_mb2_mmap(tag, pml4) != 0)
-					return -1;
+				mmap = tag;
+				break;
+
+			case MULTIBOOT_TAG_TYPE_ACPI_OLD:
+				/*
+				 * copy acpi tag into rsdp bc mb2 info gets overwritten by the bitmap,
+				 * however we need the Direct kernel mapping to correctly access and parse the struct
+				 * if we don't want a #PF (I've met him he's not very nice )
+				 */
+				Imemccpy(&rsdp, tag + 1 , sizeof(struct RSDP_t));
+				// acpi 1.0 (https://edc.intel.com/content/www/us/en/publications/specification-nuc12dcm-nuc12edb/acpi/)
+				// rsdp & xsdp structs ( https://wiki.osdev.org/RSDP#Fields)
+				break;
+
+			case MULTIBOOT_TAG_TYPE_ACPI_NEW:
+				// same as above
+				Imemccpy(&rsdp_new , tag + 1, sizeof(struct XSDP_t));
 				break;
 
 			case MULTIBOOT_TAG_TYPE_FRAMEBUFFER:
@@ -81,5 +103,28 @@ int handle_multiboot2 (uint32_t magic, boot_info *info, page_map_l4_entry *pml4)
 									  + ((tag->size + 7) & ~7));
 		cons_mprintf( "Total mbi size 0x%i\n", (unsigned) tag - addr);
 
+
+	if (mmap == 0) {
+		cons_mprintf( "MB2 MMAP tag not found. stopping execution!\n");
+		return -1;
+	}
+
+	if (handle_mb2_mmap(mmap, pml4)) {
+		cons_mprintf("Error while parsing MB2 mmap tag and building physical mem alloc\n");
+		return -1;
+	}
+
+	//execute after mmap cause it needs to map the addr of possible acpi tables first
+	if (Istrncmp(rsdp_new.Signature, "\0", 1) != 0) {
+		handle_new_acpi(&rsdp_new);
+	}
+	else if (Istrncmp(rsdp.Signature, "\0", 1) != 0) {
+		handle_old_acpi(&rsdp);
+	}
+	else {
+		cons_mprintf( "No RSDP found (ACPI devices are non functional)\n");
 		return 0;
 	}
+
+	return 0;
+}
