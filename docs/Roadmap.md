@@ -21,7 +21,7 @@
   - Physical memory allocator
   - Dynamic page-table mapper
   - Kernel heap
-  - initRAMfs
+
 
 ## I/O
   - Timer interrupt

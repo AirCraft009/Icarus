@@ -18,5 +18,8 @@ I hope the name is obvious enough
 ### Framebuffer fonts
 - https://nothings.org/stb/font/
 
+### GOATED SERIES
+- https://www.youtube.com/watch?v=ADHfYnzjrkw&list=PLBTQvUDSl81dTG_5Uk2mycxZihfeAYTRm
+
 ## Usage (linux)
 run `./build.sh`
