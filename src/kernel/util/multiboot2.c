@@ -29,18 +29,18 @@ int handle_multiboot2 (uint32_t magic, boot_info *info, page_map_l4_entry *pml4)
 
 	if ((int)magic != MULTIBOOT2_BOOTLOADER_MAGIC)
 	{
-		cons_mprintf("Invalid magic number: 0x%i\n", (unsigned) magic);
+		Iprintf("Invalid magic number: 0x%i\n", (unsigned) magic);
 		return -1;
 	}
 
 	if (addr & 7)
 	{
-		cons_mprintf( "Unaligned mbi: 0x%i\n", addr);
+		Iprintf( "Unaligned mbi: 0x%i\n", addr);
 		return -1;
 	}
 
 	size = *(unsigned *) addr;
-	cons_mprintf( "Announced mbi size 0x%d\n", size);
+	Iprintf( "Announced mbi size 0x%d\n", size);
 	for (tag = (struct multiboot_tag *) (addr + 8);
 	tag->type != MULTIBOOT_TAG_TYPE_END;
 	tag = (struct multiboot_tag *) ((multiboot_uint8_t *) tag
@@ -49,26 +49,26 @@ int handle_multiboot2 (uint32_t magic, boot_info *info, page_map_l4_entry *pml4)
 		switch (tag->type)
 		{
 			case MULTIBOOT_TAG_TYPE_CMDLINE:
-				cons_mprintf( "Command line = %s\n",
+				Iprintf( "Command line = %s\n",
 				((struct multiboot_tag_string *) tag)->string);
 				break;
 			case MULTIBOOT_TAG_TYPE_BOOT_LOADER_NAME:
-				cons_mprintf( "Boot loader name = %s\n",
+				Iprintf( "Boot loader name = %s\n",
 				((struct multiboot_tag_string *) tag)->string);
 				break;
 			case MULTIBOOT_TAG_TYPE_MODULE:
-				cons_mprintf( "Module at 0x%i-0x%i. Command line %s\n",
+				Iprintf( "Module at 0x%i-0x%i. Command line %s\n",
 				((struct multiboot_tag_module *) tag)->mod_start,
 				((struct multiboot_tag_module *) tag)->mod_end,
 				((struct multiboot_tag_module *) tag)->cmdline);
 				break;
 			case MULTIBOOT_TAG_TYPE_BASIC_MEMINFO:
-				cons_mprintf( "mem_lower = %uKB, mem_upper = %uKB\n",
+				Iprintf( "mem_lower = %uKB, mem_upper = %uKB\n",
 				((struct multiboot_tag_basic_meminfo *) tag)->mem_lower,
 				((struct multiboot_tag_basic_meminfo *) tag)->mem_upper);
 				break;
 			case MULTIBOOT_TAG_TYPE_BOOTDEV:
-				cons_mprintf( "Boot device 0x%i,%u,%u\n",
+				Iprintf( "Boot device 0x%i,%u,%u\n",
 				((struct multiboot_tag_bootdev *) tag)->biosdev,
 				((struct multiboot_tag_bootdev *) tag)->slice,
 				((struct multiboot_tag_bootdev *) tag)->part);
@@ -101,16 +101,16 @@ int handle_multiboot2 (uint32_t magic, boot_info *info, page_map_l4_entry *pml4)
 		}
 		tag = (struct multiboot_tag *) ((multiboot_uint8_t *) tag
 									  + ((tag->size + 7) & ~7));
-		cons_mprintf( "Total mbi size 0x%i\n", (unsigned) tag - addr);
+		Iprintf( "Total mbi size 0x%i\n", (unsigned) tag - addr);
 
 
 	if (mmap == 0) {
-		cons_mprintf( "MB2 MMAP tag not found. stopping execution!\n");
+		Iprintf( "MB2 MMAP tag not found. stopping execution!\n");
 		return -1;
 	}
 
 	if (handle_mb2_mmap(mmap, pml4)) {
-		cons_mprintf("Error while parsing MB2 mmap tag and building physical mem alloc\n");
+		Iprintf("Error while parsing MB2 mmap tag and building physical mem alloc\n");
 		return -1;
 	}
 
@@ -122,7 +122,7 @@ int handle_multiboot2 (uint32_t magic, boot_info *info, page_map_l4_entry *pml4)
 		handle_old_acpi(&rsdp);
 	}
 	else {
-		cons_mprintf( "No RSDP found (ACPI devices are non functional)\n");
+		Iprintf( "No RSDP found (ACPI devices are non functional)\n");
 		return 0;
 	}
 

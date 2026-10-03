@@ -96,9 +96,9 @@ int zero_mem_region(mem_map *mmap, uint64_t start_addr, uint64_t end_addr) {
 void show_mem_map(mem_map *mmap, bool verbose) {
     for (uint32_t i = 0; i < mmap->region_count; i++) {
         mem_region *region = &mmap->regions[i];
-        cons_mprintf("Memory Region[%i] {addr: %x len: %x \n  (%x Frames) free: (%x Frames)}\n", i, region->start_addr, region->len_bytes, region->len_bytes / DEFAULT_PAGE_SIZE, region->free_frames);
+        Iprintf("Memory Region[%i] {addr: %x len: %x \n  (%x Frames) free: (%x Frames)}\n", i, region->start_addr, region->len_bytes, region->len_bytes / DEFAULT_PAGE_SIZE, region->free_frames);
         if (verbose) {
-            cons_mprintf("View: \n");
+            Iprintf("View: \n");
             show_bit_map_range(&mmap->bitmap, region->bitmap_start_addr, region->len_bytes / DEFAULT_PAGE_SIZE);
         }
     }
@@ -125,7 +125,7 @@ struct_page_t *ialloc_frames(uint64_t count, uint64_t page_size) {
     for (uint64_t i = 1; i < count; i++) {
         info_page->page_addr[i] = map_alloc_kframe(mmap, page_size);
         if (info_page->page_addr[i] == FRAME_ALLOC_FAILED) {
-            cons_mprintf("allocation failed\n");
+            Iprintf("allocation failed\n");
             return (struct_page_t *) FRAME_ALLOC_FAILED;
         }
     }

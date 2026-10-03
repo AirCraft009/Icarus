@@ -100,7 +100,7 @@ struct FADT
 };
 
 typedef struct {
-    uint64_t base_addr;             //Base address of enhanced configuration mechanism
+    uint64_t PCIE_base_addr;        //Base address of enhanced configuration mechanism
     uint16_t segment_group_num;     //PCI Segment Group Number
     uint8_t start_pci; 	            //Start PCI bus number decoded by this host bridge
     uint8_t end_pci; 	            //End PCI bus number decoded by this host bridge

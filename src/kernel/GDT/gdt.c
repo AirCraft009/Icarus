@@ -73,10 +73,10 @@ static inline void tss_flush(void) {
 
 void gdt_init(void) {
     gdt_set_entry(0, 0, 0, 0, 0);                    // null
-    gdt_set_entry(1, 0, 0xFFFFF, 0x9A, 0xA0);         // kernel code
-    gdt_set_entry(2, 0, 0xFFFFF, 0x92, 0xC0);         // kernel data
-    gdt_set_entry(3, 0, 0xFFFFF, 0xF2, 0xC0);         // user data
-    gdt_set_entry(4, 0, 0xFFFFF, 0xFA, 0xA0);         // user code
+    gdt_set_entry(1, 0, 0xFFFFFFFF, 0x9A, 0xA0);         // kernel code
+    gdt_set_entry(2, 0, 0xFFFFFFFF, 0x92, 0xC0);         // kernel data
+    gdt_set_entry(3, 0, 0xFFFFFFFF, 0xF2, 0xC0);         // user data
+    gdt_set_entry(4, 0, 0xFFFFFFFF, 0xFA, 0xA0);         // user code
 
     init_tss(&tss);
 

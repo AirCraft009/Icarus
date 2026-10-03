@@ -43,37 +43,61 @@ uint8_t calculate_checksum(uint8_t *buffer, uint64_t length) {
     return sum; // Must be 0 if valid
 }
 
-void *findFACPXSDT(struct XSDT *xsdt)
+int categoriseTablesXSDT(struct XSDT *xsdt)
 {
     int entries = (xsdt->h.Length - sizeof(xsdt->h)) / 8;
 
     for (int i = 0; i < entries; i++) {
-        struct ACPISDTHeader *h = (struct ACPISDTHeader *) xsdt->PointerToOtherSDT[i];
+        struct ACPISDTHeader *h = (struct ACPISDTHeader *) MMIO_PHYS_TO_VIRT(xsdt->PointerToOtherSDT[i]);
+        Iprintf("Header: %s\n", h->Signature );
         if (!Istrncmp(h->Signature, "FACP", 4)){
-            cons_mprintf("FACP: %s", h->OEMID);
-            return (void *) h;
-        }
-    }
-
-    // No FACP found
-    return NULL;
-}
-
-void categoriseTables(struct RSDT *rsdt)
-{
-    int entries = (rsdt->h.Length - sizeof(struct ACPISDTHeader)) / 4;
-
-
-    for (int i = 0; i < entries; i++) {
-        struct ACPISDTHeader *h = (struct ACPISDTHeader *) MMIO_PHYS_TO_VIRT(rsdt->PointerToOtherSDT[i]);
-        if (!Istrncmp(h->Signature, "FACP", 4)){
-            Imemccpy(h, &FACP, MIN(h->Length, sizeof(struct FADT)));
+            Iprintf("found FADT\n");
+            Imemccpy(&FACP, h, MIN(h->Length, sizeof(struct FADT)));
+            CHECKSUM(&FACP, h->Length);
         }
         else if (!Istrncmp(h->Signature, "MCFG", 4)) {
-            Imemccpy(h, &MCFG, h->Length);
+            Imemccpy(&MCFG, h, h->Length);
+            Iprintf("found MCFG: %x\n", ((struct ACPI_MCFG *) h)->conf_space_addrs[0].segment_group_num);
+            CHECKSUM(&MCFG, h->Length);
         }
         // TODO: expand for other Tables
     }
+    return 0;
+}
+
+int categoriseTablesRSDT(struct RSDT *rsdt)
+{
+    int entries = (rsdt->h.Length - sizeof(struct ACPISDTHeader)) / 4;
+
+    for (int i = 0; i < entries; i++) {
+        struct ACPISDTHeader *h = (struct ACPISDTHeader *) MMIO_PHYS_TO_VIRT(rsdt->PointerToOtherSDT[i]);
+        Iprintf("Header: %s\n", h->Signature );
+        if (!Istrncmp(h->Signature, "FACP", 4)){
+            Iprintf("found FADT\n");
+            Imemccpy(&FACP, h, MIN(h->Length, sizeof(struct FADT)));
+            CHECKSUM(&FACP, h->Length);
+        }
+        else if (!Istrncmp(h->Signature, "MCFG", 4)) {
+            Imemccpy(&MCFG, h, h->Length);
+            Iprintf("found MCFG: %x\n", ((struct ACPI_MCFG *) h)->conf_space_addrs[0].segment_group_num);
+            CHECKSUM(&MCFG, h->Length);
+        }
+        // TODO: expand for other Tables
+    }
+    return 0;
+}
+
+/**
+ * discovers the endpoints on the PCI/PCIE bus
+ * using either the MCFG table from ACPI or the legacy IO Ports
+ */
+int discoverBus() {
+    // no MCFG table found, so read w/ the old regs
+    if (MCFG.h.Signature[0] == '\0') {
+
+    }
+
+    return 0;
 }
 
 
@@ -84,16 +108,23 @@ int handle_new_acpi(struct XSDP_t * xsdp) {
     // checksum for RSDP (first 20 bytes)
     CHECKSUM( xsdp, 20);
 
-    cons_mprintf("OEM: %s\n", xsdp->OEMID);
+    Iprintf("OEM: %s\n", xsdp->OEMID);
     int version = xsdp->Revision + 1;
     // ignore xsdp->RsdtAddress it's deprecated in all new versions
 
     //checksum for XsdP (all bytes)
     CHECKSUM (xsdp, xsdp->Length)
 
-    struct XSDT * root = (struct XSDT *)  KERNEL_VIRT_TO_PHYS(xsdp->XsdtAddress);
+    void * root_phys = (void *)  xsdp->XsdtAddress;
+    if (map_mmio((phys_addr_t) root_phys, DEFAULT_PAGE_SIZE, WRITEABLE | CACHE_DISABLED) == FRAME_ALLOC_FAILED) {
+        Iprintf("error while mapping mmio\n");
+        return -1;
+    }
 
-    findFACPXSDT(root);
+    if (categoriseTablesXSDT((struct XSDT *) MMIO_PHYS_TO_VIRT(root_phys)) != 0) {
+        Iprintf("categorise tables (failed checksum)\n");
+        return -1;
+    }
     return 0;
 }
 
@@ -104,19 +135,19 @@ int handle_old_acpi(struct RSDP_t * rsdp) {
     // checksum for RSDP (first 20 bytes)
     CHECKSUM(rsdp, 20);
 
-    cons_mprintf("OEM: %s\n", rsdp->OEMID);
+    Iprintf("OEM: %s\n", rsdp->OEMID);
     int version = rsdp->Revision + 1;
 
     struct RSDT * root_phys = (struct RSDT *) (rsdp->RsdtAddress);
     if (map_mmio((phys_addr_t) root_phys, DEFAULT_PAGE_SIZE, WRITEABLE | CACHE_DISABLED) == FRAME_ALLOC_FAILED) {
-        cons_mprintf("error while mapping mmio\n");
+        Iprintf("error while mapping mmio\n");
         return -1;
     }
 
-    categoriseTables((struct RSDT *) MMIO_PHYS_TO_VIRT(root_phys));
-    CHECKSUM(&FACP, FACP.h.Length);
-
-
+    if (categoriseTablesRSDT((struct RSDT *) MMIO_PHYS_TO_VIRT(root_phys)) != 0) {
+        Iprintf("categorise tables (failed checksum)\n");
+        return -1;
+    }
 
     return 0;
 }
