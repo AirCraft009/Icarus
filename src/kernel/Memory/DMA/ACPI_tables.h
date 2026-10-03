@@ -100,7 +100,7 @@ struct FADT
 };
 
 typedef struct {
-    uint64_t PCIE_base_addr;        //Base address of enhanced configuration mechanism
+    uint64_t conf_base_addr;        //Base address of enhanced configuration mechanism
     uint16_t segment_group_num;     //PCI Segment Group Number
     uint8_t start_pci; 	            //Start PCI bus number decoded by this host bridge
     uint8_t end_pci; 	            //End PCI bus number decoded by this host bridge
@@ -111,5 +111,84 @@ typedef struct ACPI_MCFG {
     struct ACPISDTHeader h;
     ECAM conf_space_addrs[MAX_MCFG_ENTRIES];
 }mcfg;
+
+#include <stdint.h>
+#include <assert.h>
+
+typedef struct __attribute__((packed)) {
+    uint16_t vendor_id;
+    uint16_t device_id;
+    uint16_t command;
+    uint16_t status;
+    uint8_t  revision_id;
+    uint8_t  prog_if;
+    uint8_t  subclass;
+    uint8_t  class_code;
+    uint8_t  cache_line;
+    uint8_t  latency;
+    uint8_t  header_type;   // 0x0E (bit 7 = multifunction)
+    uint8_t  bist;
+} pci_hdr_common_t;
+
+// Type 0: endpoint
+typedef struct __attribute__((packed)) {
+    pci_hdr_common_t common;
+    uint32_t bar[6];
+    uint32_t cardbus_cis;
+    uint16_t subsys_vendor;
+    uint16_t subsys_id;
+    uint32_t rom_base;
+    uint8_t  cap_ptr;
+    uint8_t  reserved[7];
+    uint8_t  int_line;
+    uint8_t  int_pin;
+    uint8_t  min_grant;
+    uint8_t  max_latency;
+} pci_hdr0_t;
+
+// Type 1: PCI-to-PCI bridge
+typedef struct __attribute__((packed)) {
+    pci_hdr_common_t common;
+    uint32_t bar[2];
+    uint8_t  primary_bus;
+    uint8_t  secondary_bus;
+    uint8_t  subordinate_bus;
+    uint8_t  secondary_latency;
+    uint8_t  io_base;
+    uint8_t  io_limit;
+    uint16_t secondary_status;
+    uint16_t mem_base;
+    uint16_t mem_limit;
+    uint16_t pref_base;
+    uint16_t pref_limit;
+    uint32_t pref_base_upper;
+    uint32_t pref_limit_upper;
+    uint16_t io_base_upper;
+    uint16_t io_limit_upper;
+    uint8_t  cap_ptr;
+    uint8_t  reserved[3];
+    uint32_t rom_base;
+    uint8_t  int_line;
+    uint8_t  int_pin;
+    uint16_t bridge_control;
+} pci_hdr1_t;
+
+static_assert(sizeof(pci_hdr_common_t) == 0x10, "common");
+static_assert(sizeof(pci_hdr0_t) == 0x40, "type 0");
+static_assert(sizeof(pci_hdr1_t) == 0x40, "type 1");
+
+_Static_assert(sizeof(pci_hdr0_t) == 0x40, "bad header size");
+_Static_assert(offsetof(pci_hdr0_t, bar) == 0x10, "bad BAR offset");
+
+static inline volatile void *ecam_addr(uint64_t base, uint8_t start_bus,
+                                       uint8_t bus, uint8_t dev,
+                                       uint8_t func, uint16_t off)
+{
+    return (volatile void *)(base +
+        (((uint64_t)(bus - start_bus) << 20) |
+         ((uint64_t)dev << 15) |
+         ((uint64_t)func << 12) |
+         off));
+}
 
 #endif //ICARUS_ACPI_TABLES_H

@@ -42,7 +42,7 @@ add_executable(Icarus_kernel
         include/kernel/Memory/DMA/ACPI.h
         src/kernel/Memory/DMA/MMIO.c
         include/kernel/Memory/DMA/MMIO.h
-        src/kernel/Memory/DMA/ACPI_tables.h
+        src/kernel/Memory/DMA/ACPI_helpers.h
 )
 
 target_include_directories(Icarus_kernel PRIVATE include

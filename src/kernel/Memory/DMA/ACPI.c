@@ -87,14 +87,46 @@ int categoriseTablesRSDT(struct RSDT *rsdt)
     return 0;
 }
 
+
 /**
  * discovers the endpoints on the PCI/PCIE bus
  * using either the MCFG table from ACPI or the legacy IO Ports
  */
-int discoverBus() {
+int discoverPCIE() {
     // no MCFG table found, so read w/ the old regs
     if (MCFG.h.Signature[0] == '\0') {
 
+    }
+
+
+    /*
+     * Source for PCIE config space: https://support.microchip.com/s/article/What-is-PCIe-Config-Space
+     */
+    // brute force w/ ecam firmware / bios should've alr defined all
+    for (int i = 0; i < MAX_MCFG_ENTRIES; ++i) {
+        if (MCFG.conf_space_addrs[i].conf_base_addr == 0)
+            continue;
+
+        ECAM *ecam =  &MCFG.conf_space_addrs[i];
+        uint64_t base = ecam->conf_base_addr;
+        uint64_t start_bus = ecam->start_pci;
+
+        for (int bus = ecam->start_pci; bus < ecam->end_pci; ++bus) {
+            for (int dev_n = 0; dev_n < 32; ++dev_n) {
+                // get the start addr of the device block
+                volatile pci_hdr_common_t * dev = (pci_hdr_common_t *) ecam_addr(base, start_bus, bus, dev_n, 0, 0);
+                uint16_t vendor = dev->vendor_id;
+                if (vendor == 0xFFFF)
+                    continue;       // no device here
+
+                uint8_t header = dev->header_type;
+                uint8_t functions = (header & 0x80) ? 8 : 1;        // bit 7 is multifunction bit
+
+                for (int fn = 0; fn < functions; ++fn) {
+
+                }
+            }
+        }
     }
 
     return 0;
