@@ -19,21 +19,29 @@ struct interrupt_frame {
 }__attribute__((packed));
 _Static_assert(sizeof(struct interrupt_frame) == 200, "asm/C frame mismatch");
 
+void Stack_segment_fault(struct interrupt_frame *frame) {
+    Iprintf("Stack segfault");
+    Iprintf("RF: %x\n", frame->rflags);
+    Iprintf("RIP: %x\n", frame->rip);
+    Iprintf("CS: %x\n", frame->cs);
+    Iprintf("RSP: %x\n", frame->rsp);
+    Iprintf("SS: (%x)\n", frame->ss);
+}
 
 void page_fault_handler(struct interrupt_frame *frame){
-    cons_mprintf("#Page Fault detected: %x\nerror: %x\n", frame->cr2, frame->error_code);
+    Iprintf("#Page Fault detected: %x\nerror: %x\n", frame->cr2, frame->error_code);
     //TODO: stop user process
     __asm__ volatile ("cli; hlt"); // Completely hangs the computer
 }
 
 void general_protection_fault_handler(struct interrupt_frame *frame){
-    cons_mprintf( "#General Fault detected\nsegment: (%i)\nerror: (%i)\nRAX (%x)\nCR2 (%x)\nCR3: (%x)\nCR4: (%x)", frame->ss, frame->error_code, frame->rax, frame->cr2, frame->cr3, frame->cr4);
+    Iprintf( "#General Fault detected\nsegment: (%i)\nerror: (%i)\nRAX (%x)\nCR2 (%x)\nCR3: (%x)\nCR4: (%x)", frame->ss, frame->error_code, frame->rax, frame->cr2, frame->cr3, frame->cr4);
 
     uint8_t * instruction_data = (uint8_t*)frame->rip;
-    cons_mprintf("rip: b1=%x,b2=%x,b3=%x\n", instruction_data[0],instruction_data[1],instruction_data[2]);
-    cons_mprintf("fulldata=");
+    Iprintf("rip: b1=%x,b2=%x,b3=%x\n", instruction_data[0],instruction_data[1],instruction_data[2]);
+    Iprintf("fulldata=");
     for (int i = 0; i < 10; i++) {
-        cons_mprintf("%x ", instruction_data[i]);
+        Iprintf("%x ", instruction_data[i]);
     }
 
     //TODO: stop user process
@@ -44,7 +52,7 @@ void undefined_instruction_handler(struct interrupt_frame *frame) {
     cursor cur = (cursor) {0,0};
     uint8_t *fault_instr = (uint8_t *)frame->rip;
 
-    cons_mprintf( "undefined instruction: %i", *fault_instr);
+    Iprintf( "undefined instruction: %i", *fault_instr);
 
     if (frame->cs == 0) {
         // ring 0 (kernel mode #UD) is not recoverable (FOR NOW MUHAHAHAHA)
@@ -59,7 +67,7 @@ void c_isr(
 )
 {
     cursor cur = {0,0};
-    cons_mprintf("Registered w/ fault handler: %i\n", frame->vector);
+    Iprintf("Registered w/ fault handler: %x\n", frame->vector);
     switch (frame->vector) {
         case 0:
             // Divide error
@@ -67,6 +75,11 @@ void c_isr(
 
         case 8:
             undefined_instruction_handler(frame);
+            break;
+
+
+        case 12:
+            Stack_segment_fault(frame);
             break;
 
         case 13:
