@@ -190,7 +190,7 @@ void cons_write_str(char *str) {
     write_str(str, &curs);
 }
 
-void cons_mprintf(char *format, ...) {
+void Iprintf(char *format, ...) {
     va_list args;
     va_start(args, format);
     vprintf(&curs, format, args);
