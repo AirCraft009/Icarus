@@ -23,8 +23,10 @@
 #define MMIO_PHYS_TO_VIRT(p) ((uintptr_t)(p) + KERNEL_MMIO)
 #define MMIO_VIRT_TO_PHYS(p) ((uintptr_t)(p) - KERNEL_MMIO)
 
-static inline uint64_t read_cr3(void)
-{
+#define PCI_INDEX_PORT 0xCF8
+#define PCI_DATA_PORT 0xCFC
+
+static inline uint64_t read_cr3(void){
     uint64_t value;
     __asm__ volatile ("mov %%cr3, %0" : "=r"(value));
     return value;
@@ -32,6 +34,27 @@ static inline uint64_t read_cr3(void)
 
 static inline void write_cr3(uint64_t value) {
     __asm__ volatile ("mov %0, %%cr3" : : "r"(value) : "memory");
+}
+
+
+static inline void pci_set_index(uint32_t index){
+    __asm__ volatile ("outl %0, %1"
+                      :
+                      : "a"(index), "Nd"(PCI_INDEX_PORT));
+}
+
+static inline void pci_write_val(uint32_t value){
+    __asm__ volatile ("outl %0, %1"
+                      :
+                      : "a"(value), "Nd"(PCI_DATA_PORT));
+}
+
+static inline uint32_t pci_read_val(){
+    uint32_t value;
+    __asm__ volatile ("inl %1, %0"
+                      :
+                      : "a"(value), "Nd"(PCI_DATA_PORT));
+    return value;
 }
 
 static inline void invlpg(void *addr) {
