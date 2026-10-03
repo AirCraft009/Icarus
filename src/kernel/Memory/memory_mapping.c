@@ -69,7 +69,7 @@ int page_in_regions(mem_map *mmap, page_map_l4_entry * pml4) {
 int handle_mb2_mmap(struct multiboot_tag *mmap_tag, page_map_l4_entry *pml4) {
     //phys addr of method 0x107812
     MemmapStart = (uint64_t) &_kernel_end;
-    cons_mprintf("INIT_MMAP: %x == %x -> %x\n", _kernel_start_phys, &_kernel_end, &_kernel_end_phys);
+    Iprintf("INIT_MMAP: %x == %x -> %x\n", _kernel_start_phys, &_kernel_end, &_kernel_end_phys);
 
     mmap = (mem_map *) MemmapStart;
     mmap->region_count = 0;
@@ -95,11 +95,9 @@ int handle_mb2_mmap(struct multiboot_tag *mmap_tag, page_map_l4_entry *pml4) {
             uint64_t start = ALIGN_UP(mmap_entry->addr, DEFAULT_PAGE_SIZE);
             uint64_t end = ALIGN_DOWN(mmap_entry->addr + mmap_entry->len, DEFAULT_PAGE_SIZE);
             if (end > start) {
-                cons_mprintf("addrF: %x - %x = len: %i\n", start, end, end - start);
+                Iprintf("addrF: %x - %x = len: %i\n", start, end, end - start);
                 memmap_register_region(mmap, start, end);
             }
-        }else {
-            cons_mprintf("section %i\n", mmap_entry->type);
         }
     }
     //mmap->bitmap.size = 525987;
@@ -112,7 +110,7 @@ int handle_mb2_mmap(struct multiboot_tag *mmap_tag, page_map_l4_entry *pml4) {
     );
 
     if (err != 0) {
-        cons_mprintf("ERROR: set_mem_region returned %d\n", err);
+        Iprintf("ERROR: set_mem_region returned %d\n", err);
         return -1;
     }
 
@@ -144,7 +142,7 @@ int page_in(page_map_l4_entry *pml4, const void *virt_addr, const void *phys_add
     if (pml4_entry->present == 0) {
         phys_addr_t pdpt = map_alloc_kframe(mmap, DEFAULT_PAGE_SIZE);
         if (pdpt == FRAME_ALLOC_FAILED) {
-            cons_mprintf("ERROR PML4!\n");
+            Iprintf("ERROR PML4!\n");
             return -1;
         }
         Imemset((void *) KERNEL_PHYS_TO_VIRT(pdpt), 0, DEFAULT_PAGE_SIZE);
@@ -161,13 +159,14 @@ int page_in(page_map_l4_entry *pml4, const void *virt_addr, const void *phys_add
         pdpt_entry->huge     = 1;
         pdpt_entry->page_ppn = ((uint64_t) phys_addr) >> 12;
         pdpt_entry->present  = 1;
+        invlpg(virt_addr);
         return 0;
     }
 
     if (pdpt_entry->present == 0) {
         phys_addr_t pd = map_alloc_kframe(mmap, DEFAULT_PAGE_SIZE);
         if (pd == FRAME_ALLOC_FAILED) {
-            cons_mprintf("ERROR PDPT!\n");
+            Iprintf("ERROR PDPT!\n");
             return -1;
         }
         Imemset((void *) KERNEL_PHYS_TO_VIRT(pd), 0, DEFAULT_PAGE_SIZE);
@@ -184,13 +183,14 @@ int page_in(page_map_l4_entry *pml4, const void *virt_addr, const void *phys_add
         pd_entry->huge     = 1;
         pd_entry->page_ppn = ((uint64_t) phys_addr) >> 12;
         pd_entry->present  = 1;
+        invlpg(virt_addr);
         return 0;
     }
 
     if (pd_entry->present == 0) {
         phys_addr_t pt = map_alloc_kframe(mmap, DEFAULT_PAGE_SIZE);
         if (pt == FRAME_ALLOC_FAILED) {
-            cons_mprintf("ERROR PD!\n");
+            Iprintf("ERROR PD!\n");
             return -1;
         }
         Imemset((void *) KERNEL_PHYS_TO_VIRT(pt), 0, DEFAULT_PAGE_SIZE);
@@ -207,41 +207,41 @@ int page_in(page_map_l4_entry *pml4, const void *virt_addr, const void *phys_add
     pt_entry->dirty    = 0;
     pt_entry->page_ppn = ((uint64_t) phys_addr) >> 12;
     pt_entry->present  = 1;
-
+    invlpg(virt_addr);
     return 0;
 }
 
 phys_addr_t test_walk_table(page_map_l4_entry *pml4, const phys_addr_t *virt_addr) {
-    cons_mprintf("Walking addr (%x)\n", virt_addr);
+    Iprintf("Walking addr (%x)\n", virt_addr);
     page_map_l4_entry *pml4_entry = &pml4[VA_PML4_INDEX(virt_addr)];
     if (pml4_entry->present == 0) {
-        cons_mprintf("PML4 table: PDPT NOT PRESENT AT(%i)\n",  VA_PML4_INDEX(virt_addr));
+        Iprintf("PML4 table: PDPT NOT PRESENT AT(%i)\n",  VA_PML4_INDEX(virt_addr));
         return INVALID_PHYS_ADDR;
     }
 
     pdpt_entry_t *pdpt_entry = &((pdpt_entry_t *) KERNEL_PHYS_TO_VIRT(pml4_entry->page_ppn << 12))[VA_PDPT_INDEX(virt_addr)];
     if (pdpt_entry->present == 0) {
-        cons_mprintf("PDPT table: PD NOT PRESENT AT(%i)\n",  VA_PDPT_INDEX(virt_addr));
+        Iprintf("PDPT table: PD NOT PRESENT AT(%i)\n",  VA_PDPT_INDEX(virt_addr));
         return INVALID_PHYS_ADDR;
     }
 
     pd_entry_t *pd_entry = &((pd_entry_t *) KERNEL_PHYS_TO_VIRT(pdpt_entry->page_ppn << 12))[VA_PD_INDEX(virt_addr)];
     if (pd_entry->huge == 1 && pd_entry->present == 1) {
-        cons_mprintf("Ending walk at PD (%x)\n", pd_entry->page_ppn << 12);
+        Iprintf("Ending walk at PD (%x)\n", pd_entry->page_ppn << 12);
         return pd_entry->page_ppn << 12;
     }
-    cons_mprintf("PD: (%x) = (%x)\n", virt_addr, *pd_entry);
+    Iprintf("PD: (%x) = (%x)\n", virt_addr, *pd_entry);
     if (pd_entry->present == 0) {
-        cons_mprintf("PD table: PT NOT PRESENT AT (%i)\n",  VA_PD_INDEX(virt_addr));
+        Iprintf("PD table: PT NOT PRESENT AT (%i)\n",  VA_PD_INDEX(virt_addr));
         return INVALID_PHYS_ADDR;
     }
 
     PageTableEntry *pt_entry = &((PageTableEntry *) KERNEL_PHYS_TO_VIRT(pd_entry->page_ppn << 12))[VA_PT_INDEX(virt_addr)];
     if (pt_entry->present == 0) {
-        cons_mprintf("PT: NO ACTUAL FRAME AT (%i)\n",  VA_PT_INDEX(virt_addr));
+        Iprintf("PT: NO ACTUAL FRAME AT (%i)\n",  VA_PT_INDEX(virt_addr));
         return INVALID_PHYS_ADDR;
     }
-    cons_mprintf("4KIB entry: %x\n", pt_entry->page_ppn << 12);
+    Iprintf("4KIB entry: %x\n", pt_entry->page_ppn << 12);
     return pt_entry->page_ppn << 12;
 }
 
@@ -252,6 +252,14 @@ int page_out(page_map_l4_entry *pml4, uint64_t virt_addr) {
     }
 
     pdpt_entry_t *pdpt_entry = &((pdpt_entry_t *) KERNEL_PHYS_TO_VIRT(pml4_entry->page_ppn << 12))[VA_PDPT_INDEX(virt_addr)];
+
+    if (pdpt_entry->huge == 1 && pdpt_entry->present == 0) {
+        *(uint64_t *) pml4_entry = 0;
+        *(uint64_t *) pdpt_entry = 0;
+        invlpg((void *) virt_addr);
+        return 0;
+    }
+
     if (pdpt_entry->present == 0) {
         return -2;
     }
@@ -259,7 +267,9 @@ int page_out(page_map_l4_entry *pml4, uint64_t virt_addr) {
     pd_entry_t *pd_entry = &((pd_entry_t *) KERNEL_PHYS_TO_VIRT(pdpt_entry->page_ppn << 12))[VA_PD_INDEX(virt_addr)];
     if (pd_entry->huge == 1 && pd_entry->present == 0) {
         *(uint64_t *) pml4_entry = 0;
+        *(uint64_t *) pdpt_entry = 0;
         *(uint64_t *) pd_entry = 0;
+        invlpg((void *) virt_addr);
         return 0;
     }
 
@@ -269,7 +279,9 @@ int page_out(page_map_l4_entry *pml4, uint64_t virt_addr) {
 
     PageTableEntry *pt_entry = &((PageTableEntry *) KERNEL_PHYS_TO_VIRT(pd_entry->page_ppn << 12))[VA_PT_INDEX(virt_addr)];
     *(uint64_t *) pml4_entry = 0;
+    *(uint64_t *) pdpt_entry = 0;
     *(uint64_t *) pd_entry = 0;
     *(uint64_t *) pt_entry = 0;
+    invlpg((void *) virt_addr);
     return 0;
 }
