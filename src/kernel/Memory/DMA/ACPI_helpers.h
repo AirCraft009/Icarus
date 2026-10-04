@@ -6,6 +6,7 @@
 #define ICARUS_ACPI_TABLES_H
 #pragma once
 #include <stdint.h>
+#include <assert.h>
 
 #define MAX_MCFG_ENTRIES 16
 
@@ -105,15 +106,15 @@ typedef struct {
     uint8_t start_pci; 	            //Start PCI bus number decoded by this host bridge
     uint8_t end_pci; 	            //End PCI bus number decoded by this host bridge
     uint32_t reserved;
-} ECAM;
+} __attribute__((packed)) ECAM;
 
 typedef struct ACPI_MCFG {
     struct ACPISDTHeader h;
+    uint64_t reserved;
     ECAM conf_space_addrs[MAX_MCFG_ENTRIES];
-}mcfg;
+}__attribute__((packed)) mcfg;
 
-#include <stdint.h>
-#include <assert.h>
+static_assert(offsetof(mcfg, conf_space_addrs) == 44, "conf_base_addr misaligned");
 
 typedef struct __attribute__((packed)) {
     uint16_t vendor_id;
@@ -177,19 +178,8 @@ static_assert(sizeof(pci_hdr_common_t) == 0x10, "common");
 static_assert(sizeof(pci_hdr0_t) == 0x40, "type 0");
 static_assert(sizeof(pci_hdr1_t) == 0x40, "type 1");
 
-_Static_assert(sizeof(pci_hdr0_t) == 0x40, "bad header size");
-_Static_assert(offsetof(pci_hdr0_t, bar) == 0x10, "bad BAR offset");
-
-static inline volatile void *ecam_addr(uint64_t base, uint8_t start_bus,
-                                       uint8_t bus, uint8_t dev,
-                                       uint8_t func, uint16_t off)
-{
-    return (volatile void *)(base +
-        (((uint64_t)(bus - start_bus) << 20) |
-         ((uint64_t)dev << 15) |
-         ((uint64_t)func << 12) |
-         off));
-}
+static_assert(sizeof(pci_hdr0_t) == 0x40, "bad header size");
+static_assert(offsetof(pci_hdr0_t, bar) == 0x10, "bad BAR offset");
 
 typedef struct {
     uint64_t base;      // physical address
@@ -208,4 +198,69 @@ typedef struct pci_dev {
     uint8_t  cap_ptr;         // 0 if none
     pci_bar_t bar[6];         // decoded
 } pci_dev_t;
+
+static inline volatile void *ecam_addr(uint64_t base, uint8_t start_bus,
+                                       uint8_t bus, uint8_t dev,
+                                       uint8_t func, uint16_t off)
+{
+    return (volatile void *)(base +
+        (((uint64_t)(bus - start_bus) << 20) |
+         ((uint64_t)dev << 15) |
+         ((uint64_t)func << 12) |
+         off));
+}
+
+
+// ALL THE BARs https://vlsitrainers.com/pcie-base-address-registers-bars/
+#define BAR_TYPE_BIT 1
+#define BAR_PREFETCH_BIT 2
+
+#define BAR_TYPE_32BIT 0
+#define BAR_TYPE_LEGACY 1
+#define BAR_TYPE_64BIT 2
+
+#define BAR_FLAG_MASK 0xFFFFFFF0
+
+
+static inline bool bar_is_64bit(volatile uint32_t *bar) {
+    return (bar[0] >> BAR_TYPE_BIT) == BAR_TYPE_64BIT;
+}
+
+/**
+ *
+ * @return the physical addr of the BAR value
+ */
+static inline uint64_t decode_phys_BAR(volatile uint32_t * bar) {
+    uint32_t bar_l = bar[0];
+
+    if (bar_l & 1) {
+        // old legacy IO BAR (invalid for now)
+        return FRAME_ALLOC_FAILED;
+    }
+
+    uint32_t bar_type = (bar_l >> BAR_TYPE_BIT) & 0x3;
+    if (bar_type == BAR_TYPE_LEGACY) {
+        //not used in this OS bc idk what it does
+        return FRAME_ALLOC_FAILED;
+    }
+
+    if (bar_type == BAR_TYPE_32BIT) {
+        return bar_l & BAR_FLAG_MASK;
+    }
+
+    uint32_t bar_h = bar[1];
+    return (uint64_t) bar_h << 32 | (bar_l & BAR_FLAG_MASK);
+}
+
+static inline void encode_phys_BAR(volatile uint32_t * bar, uint64_t bar_val) {
+    // assume this is a 64 bit value bc why else would you use this method???
+
+    bar[0] = bar_val & 0xFFFFFFFF;
+    bar[1] = bar_val >> 32;
+}
+
+
+
+
+
 #endif //ICARUS_ACPI_TABLES_H

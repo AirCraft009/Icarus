@@ -99,6 +99,20 @@ void vprintf(cursor *cur, char *format, va_list args) {
                     }
                     break;
                 }
+                case 'u': {
+                    int int_arg = va_arg(args, int);
+                    char buf[20];
+                    int len = 0;
+                    unsigned int uval = (unsigned int)int_arg;
+                    do {
+                        buf[len++] = '0' + uval % 10;
+                        uval /= 10;
+                    } while (uval > 0);
+                    for (int i = len - 1; i >= 0; i--) {
+                        write_c(buf[i], cur);
+                    }
+                    break;
+                }
                 case 'h': {
                     int int16_arg = va_arg(args, int); /* promoted */
                     char hbuf[20];
