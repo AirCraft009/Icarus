@@ -114,7 +114,12 @@ int handle_multiboot2 (uint32_t magic, boot_info *info, page_map_l4_entry *pml4)
 		return -1;
 	}
 
-	//execute after mmap cause it needs to map the addr of possible acpi tables first
+	//handle_ACPI();
+
+	return 0;
+}
+
+void handle_ACPI() {
 	if (Istrncmp(rsdp_new.Signature, "\0", 1) != 0) {
 		handle_new_acpi(&rsdp_new);
 	}
@@ -123,8 +128,5 @@ int handle_multiboot2 (uint32_t magic, boot_info *info, page_map_l4_entry *pml4)
 	}
 	else {
 		Iprintf( "No RSDP found (ACPI devices are non functional)\n");
-		return 0;
 	}
-
-	return 0;
 }

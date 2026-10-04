@@ -39,11 +39,10 @@ void kmain(uint32_t magic, struct multiboot_info *mboot) {
     Iprintf("RAAAAHH\n");
     write_cr3((uint64_t) KERNEL_VIRT_TO_PHYS(&Kernel_PML4_TABLE[0]));
 
-
     Iprintf("KERNEL SETUP CONCLUDED: %x\n", &Kernel_PML4_TABLE[0]);
-
     allocator = init_alloc(DEFAULT_PAGE_SIZE * 510, (void *) KERNEL_HEAP_ADDR);
 
+    handle_ACPI();
     //__asm__ volatile ("sti");
     // cons_mprintf("KERNEL ENDING");
     while (1){}

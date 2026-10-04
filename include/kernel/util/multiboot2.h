@@ -449,6 +449,7 @@ struct XSDP_t {
 
 
 int handle_multiboot2 (uint32_t magic, boot_info *info, page_map_l4_entry *pml4);
+void handle_ACPI();
 
 #endif /*  ! ASM_FILE */
 

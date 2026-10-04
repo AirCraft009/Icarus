@@ -21,6 +21,8 @@
 #define SIGNATURE "RSD PTR "
 #include "ACPI_tables.h"
 
+
+
 struct XSDT {
     struct ACPISDTHeader h;
     uint64_t PointerToOtherSDT[];
@@ -93,9 +95,11 @@ int categoriseTablesRSDT(struct RSDT *rsdt)
  * using either the MCFG table from ACPI or the legacy IO Ports
  */
 int discoverPCIE() {
+    Iprintf("discovering PCIE\n");
+
     // no MCFG table found, so read w/ the old regs
     if (MCFG.h.Signature[0] == '\0') {
-
+        Iprintf("reading via legacy IO ports\n");
     }
 
 
@@ -110,9 +114,12 @@ int discoverPCIE() {
         ECAM *ecam =  &MCFG.conf_space_addrs[i];
         uint64_t base = ecam->conf_base_addr;
         uint64_t start_bus = ecam->start_pci;
+        Iprintf("entering at MCFG[%i] = %x, %x\n", i);
 
         for (int bus = ecam->start_pci; bus < ecam->end_pci; ++bus) {
             for (int dev_n = 0; dev_n < 32; ++dev_n) {
+
+                Iprintf("reading conf at bus: (%x) dev: (%x)\n", bus, dev_n);
                 // get the start addr of the device block
                 volatile pci_hdr_common_t * dev = (pci_hdr_common_t *) ecam_addr(base, start_bus, bus, dev_n, 0, 0);
                 uint16_t vendor = dev->vendor_id;
@@ -121,9 +128,23 @@ int discoverPCIE() {
 
                 uint8_t header = dev->header_type;
                 uint8_t functions = (header & 0x80) ? 8 : 1;        // bit 7 is multifunction bit
+                uint8_t type = header & 0x3;
 
-                for (int fn = 0; fn < functions; ++fn) {
 
+                if (type == 0) {
+                    Iprintf("config of Endpoint\n");
+                    volatile pci_hdr0_t * endpoint = (volatile pci_hdr0_t *) dev;
+
+                    for (int bar = 0; bar < 6; ++bar) {
+                        phys_addr_t phys_bar_addr = endpoint->bar[bar];
+                        virt_addr_t *virt_bar_addr = (virt_addr_t *) map_mmio(phys_bar_addr, 4, WRITEABLE | CACHE_DISABLED);
+                        *virt_bar_addr = 0xFFFFFFFF;
+                        uint64_t size = *virt_bar_addr;
+                        Iprintf("found PCI bar %x\n", bar);
+                        Iprintf("bar requests size %x\n", size);
+                    }
+                }else {
+                    Iprintf("config of Bridge-dev\n");
                 }
             }
         }
@@ -171,15 +192,21 @@ int handle_old_acpi(struct RSDP_t * rsdp) {
     int version = rsdp->Revision + 1;
 
     struct RSDT * root_phys = (struct RSDT *) (rsdp->RsdtAddress);
-    if (map_mmio((phys_addr_t) root_phys, DEFAULT_PAGE_SIZE, WRITEABLE | CACHE_DISABLED) == FRAME_ALLOC_FAILED) {
+    Iprintf("root physical address: %p\n", root_phys);
+    virt_addr_t ret = map_mmio((phys_addr_t) root_phys, DEFAULT_PAGE_SIZE, WRITEABLE | CACHE_DISABLED);
+    Iprintf("root physical address: %p\n", ret);
+    if (ret == FRAME_ALLOC_FAILED) {
         Iprintf("error while mapping mmio\n");
         return -1;
     }
+    Iprintf("mapped mmio\n");
 
     if (categoriseTablesRSDT((struct RSDT *) MMIO_PHYS_TO_VIRT(root_phys)) != 0) {
         Iprintf("categorise tables (failed checksum)\n");
         return -1;
     }
+
+    discoverPCIE();
 
     return 0;
 }

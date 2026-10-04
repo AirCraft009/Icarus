@@ -191,4 +191,21 @@ static inline volatile void *ecam_addr(uint64_t base, uint8_t start_bus,
          off));
 }
 
+typedef struct {
+    uint64_t base;      // physical address
+    uint64_t size;
+    bool     is_io;
+    bool     prefetchable;
+    bool     is_64bit;
+} pci_bar_t;
+
+typedef struct pci_dev {
+    uint8_t  bus, dev, fn;
+    volatile uint32_t *cfg;   // ECAM address of this function
+    uint16_t vendor_id, device_id;
+    uint8_t  class_code, subclass, prog_if, revision;
+    uint8_t  header_type;
+    uint8_t  cap_ptr;         // 0 if none
+    pci_bar_t bar[6];         // decoded
+} pci_dev_t;
 #endif //ICARUS_ACPI_TABLES_H
