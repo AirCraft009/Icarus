@@ -94,13 +94,11 @@ static __inline__ char * init_cpuid(void)
     unsigned int eax, ebx, ecx, edx;
     __cpuid(0, eax, ebx, ecx, edx);
 
-    char vendor[13];
-    Imemccpy(vendor + 0, &ebx, 4);   // note the order: EBX, EDX, ECX
-    Imemccpy(vendor + 4, &edx, 4);
-    Imemccpy(vendor + 8, &ecx, 4);
-    vendor[12] = '\0';
+    Imemccpy(CPUID_TABLE.vendor + 0, &ebx, 4);   // note the order: EBX, EDX, ECX
+    Imemccpy(CPUID_TABLE.vendor + 4, &edx, 4);
+    Imemccpy(CPUID_TABLE.vendor + 8, &ecx, 4);
+    CPUID_TABLE.vendor[12] = '\0';
 
-    Imemccpy((void *) CPUID_TABLE.vendor, vendor, 13);
     CPUID_TABLE.max_leaf = eax;
     CPUID_TABLE.features = edx;
     return CPUID_TABLE.vendor;

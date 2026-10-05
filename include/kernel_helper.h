@@ -4,6 +4,8 @@
 
 #ifndef ICARUS_KERNEL_HELPER_H
 #define ICARUS_KERNEL_HELPER_H
+#pragma once
+
 
 #include <stdint.h>
 
@@ -26,30 +28,30 @@
 #define PCI_INDEX_PORT 0xCF8
 #define PCI_DATA_PORT 0xCFC
 
-static inline uint64_t read_cr3(void){
+static __inline uint64_t read_cr3(void){
     uint64_t value;
     __asm__ volatile ("mov %%cr3, %0" : "=r"(value));
     return value;
 }
 
-static inline void write_cr3(uint64_t value) {
+static __inline void write_cr3(uint64_t value) {
     __asm__ volatile ("mov %0, %%cr3" : : "r"(value) : "memory");
 }
 
 
-static inline void pci_set_index(uint32_t index){
+static __inline void pci_set_index(uint32_t index){
     __asm__ volatile ("outl %0, %1"
                       :
                       : "a"(index), "Nd"(PCI_INDEX_PORT));
 }
 
-static inline void pci_write_val(uint32_t value){
+static __inline void pci_write_val(uint32_t value){
     __asm__ volatile ("outl %0, %1"
                       :
                       : "a"(value), "Nd"(PCI_DATA_PORT));
 }
 
-static inline uint32_t pci_read_val(){
+static __inline uint32_t pci_read_val(){
     uint32_t value;
     __asm__ volatile ("inl %1, %0"
                       :
@@ -57,12 +59,12 @@ static inline uint32_t pci_read_val(){
     return value;
 }
 
-static inline void invlpg(void *addr) {
+static __inline void invlpg(void *addr) {
     __asm__ volatile ("invlpg (%0)" : : "r"(addr) : "memory");
 }
 
 
-void cpuSetMSR(uint32_t msr, uint32_t lo, uint32_t hi) {
+static __inline void cpuSetMSR(uint32_t msr, uint32_t lo, uint32_t hi) {
     __asm__ __volatile__(
         "wrmsr"
         :
@@ -70,11 +72,11 @@ void cpuSetMSR(uint32_t msr, uint32_t lo, uint32_t hi) {
     );
 }
 
-void cpuGetMSR(uint32_t msr, uint32_t lo, uint32_t hi) {
+static __inline void cpuGetMSR(uint32_t msr, uint32_t *lo, uint32_t *hi) {
     __asm__ __volatile__(
-        "wrmsr"
-        : /* Keine Ausgaberegister */
-        : "c"(msr), "a"(lo), "d"(hi)
+        "rdmsr"
+        : "=a"(*lo), "=d"(*hi)
+        : "c"(msr)
     );
 }
 #endif //ICARUS_KERNEL_HELPER_H

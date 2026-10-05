@@ -41,7 +41,7 @@ static void gdt_set_entry(int i, uint32_t base, uint32_t limit,
     gdt[i].base_high     = (base >> 24) & 0xFF;
 }
 
-static inline void gdt_flush(uint64_t gdt_ptr_addr) {
+static __inline void gdt_flush(uint64_t gdt_ptr_addr) {
     __asm__ volatile (
         "lgdt (%0)                 \n"
         "mov $0x10, %%ax           \n" // kernel data selector
@@ -61,7 +61,7 @@ static inline void gdt_flush(uint64_t gdt_ptr_addr) {
     );
 }
 
-static inline void tss_flush(void) {
+static __inline void tss_flush(void) {
     __asm__ volatile (
         "mov $0x28, %%ax   \n" // TSS selector
         "ltr %%ax          \n"

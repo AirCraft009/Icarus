@@ -36,7 +36,6 @@ struct __attribute__((packed)) RSDT {
 static struct FADT FACP = {0};
 static struct ACPI_MCFG MCFG = {0};
 
-
 uint8_t calculate_checksum(uint8_t *buffer, uint64_t length) {
     uint8_t sum = 0;
     for (size_t i = 0; i < length; i++) {
@@ -89,6 +88,11 @@ int categoriseTablesRSDT(struct RSDT *rsdt)
             //Iprintf("found MCFG: %x\n", ((struct ACPI_MCFG *) h)->conf_space_addrs[0].segment_group_num);
             CHECKSUM(&MCFG, h->Length);
         }
+        else if (!Istrncmp(h->Signature, "APIC", 4)) {
+            Iprintf("found APIC(MADT): %x\n", h);
+            CHECKSUM(&MCFG, h->Length);
+        }
+
         // TODO: expand for other Tables
     }
     return 0;

@@ -113,8 +113,13 @@ typedef struct ACPI_MCFG {
     uint64_t reserved;
     ECAM conf_space_addrs[MAX_MCFG_ENTRIES];
 }__attribute__((packed)) mcfg;
-
 static_assert(offsetof(mcfg, conf_space_addrs) == 44, "conf_base_addr misaligned");
+
+typedef struct ACPI_APIC_common {
+    struct ACPISDTHeader h;
+    uint32_t loc_apic_addr;
+    uint32_t flags;
+} __attribute__((packed)) apic_common;
 
 typedef struct __attribute__((packed)) {
     uint16_t vendor_id;
@@ -199,7 +204,7 @@ typedef struct pci_dev {
     pci_bar_t bar[6];         // decoded
 } pci_dev_t;
 
-static inline volatile void *ecam_addr(uint64_t base, uint8_t start_bus,
+static __inline volatile void *ecam_addr(uint64_t base, uint8_t start_bus,
                                        uint8_t bus, uint8_t dev,
                                        uint8_t func, uint16_t off)
 {
@@ -222,7 +227,7 @@ static inline volatile void *ecam_addr(uint64_t base, uint8_t start_bus,
 #define BAR_FLAG_MASK 0xFFFFFFF0
 
 
-static inline bool bar_is_64bit(volatile uint32_t *bar) {
+static __inline bool bar_is_64bit(volatile uint32_t *bar) {
     return (bar[0] >> BAR_TYPE_BIT) == BAR_TYPE_64BIT;
 }
 
@@ -230,7 +235,7 @@ static inline bool bar_is_64bit(volatile uint32_t *bar) {
  *
  * @return the physical addr of the BAR value
  */
-static inline uint64_t decode_phys_BAR(volatile uint32_t * bar) {
+static __inline uint64_t decode_phys_BAR(volatile uint32_t * bar) {
     uint32_t bar_l = bar[0];
 
     if (bar_l & 1) {
@@ -252,7 +257,7 @@ static inline uint64_t decode_phys_BAR(volatile uint32_t * bar) {
     return (uint64_t) bar_h << 32 | (bar_l & BAR_FLAG_MASK);
 }
 
-static inline void encode_phys_BAR(volatile uint32_t * bar, uint64_t bar_val) {
+static __inline void encode_phys_BAR(volatile uint32_t * bar, uint64_t bar_val) {
     // assume this is a 64 bit value bc why else would you use this method???
 
     bar[0] = bar_val & 0xFFFFFFFF;

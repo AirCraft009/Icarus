@@ -4,6 +4,7 @@
 #include "kernel_helper.h"
 #include "page_definitions.h"
 #include "kernel/GDT/gdt.h"
+#include "kernel/interrupts/APIC.h"
 #include "kernel/interrupts/IDT.h"
 #include "kernel/util/mem_utils.h"
 #include "kernel/util/shellio.h"
@@ -47,6 +48,8 @@ void kmain(uint32_t magic, struct multiboot_info *mboot) {
 
     Iprintf("---------------MODEL-----------------\n");
     Iprintf("%s\n", init_cpuid());
+    enable_apic();
+    Iprintf("set up APIC");
     //__asm__ volatile ("sti");
     // cons_mprintf("KERNEL ENDING");
     while (1){}
