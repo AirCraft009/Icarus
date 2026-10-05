@@ -62,6 +62,11 @@ int categoriseTablesXSDT(struct XSDT *xsdt)
             Iprintf("found MCFG: %x\n", ((struct ACPI_MCFG *) h)->conf_space_addrs[0].segment_group_num);
             CHECKSUM(&MCFG, h->Length);
         }
+        else if (!Istrncmp(h->Signature, "APIC", 4)) {
+            //Imemccpy(&MCFG, h, h->Length);
+            Iprintf("found APIC: %x\n", h);
+            CHECKSUM(&MCFG, h->Length);
+        }
         // TODO: expand for other Tables
     }
     return 0;

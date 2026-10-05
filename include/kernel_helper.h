@@ -60,4 +60,21 @@ static inline uint32_t pci_read_val(){
 static inline void invlpg(void *addr) {
     __asm__ volatile ("invlpg (%0)" : : "r"(addr) : "memory");
 }
+
+
+void cpuSetMSR(uint32_t msr, uint32_t lo, uint32_t hi) {
+    __asm__ __volatile__(
+        "wrmsr"
+        :
+        : "c"(msr), "a"(lo), "d"(hi)
+    );
+}
+
+void cpuGetMSR(uint32_t msr, uint32_t lo, uint32_t hi) {
+    __asm__ __volatile__(
+        "wrmsr"
+        : /* Keine Ausgaberegister */
+        : "c"(msr), "a"(lo), "d"(hi)
+    );
+}
 #endif //ICARUS_KERNEL_HELPER_H

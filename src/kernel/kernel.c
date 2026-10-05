@@ -8,7 +8,8 @@
 #include "kernel/util/mem_utils.h"
 #include "kernel/util/shellio.h"
 #include "Memory/memory_mapping.h"
-#include "../../include/kernel/util/multiboot2.h"
+#include "kernel/util/multiboot2.h"
+#include "kernel/util/cpuid_helpers.h"
 #include "kernel/Memory/alloc.h"
 #include "kernel/Memory/PMM/mem_map.h"
 
@@ -43,6 +44,9 @@ void kmain(uint32_t magic, struct multiboot_info *mboot) {
     allocator = init_alloc(DEFAULT_PAGE_SIZE * 510, (void *) KERNEL_HEAP_ADDR);
 
     handle_ACPI();
+
+    Iprintf("---------------MODEL-----------------\n");
+    Iprintf("%s\n", init_cpuid());
     //__asm__ volatile ("sti");
     // cons_mprintf("KERNEL ENDING");
     while (1){}

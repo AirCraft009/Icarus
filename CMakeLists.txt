@@ -43,6 +43,9 @@ add_executable(Icarus_kernel
         src/kernel/Memory/DMA/MMIO.c
         include/kernel/Memory/DMA/MMIO.h
         src/kernel/Memory/DMA/ACPI_helpers.h
+        src/kernel/interrupts/APIC.c
+        include/kernel/interrupts/APIC.h
+        include/kernel/util/cpuid_helpers.h
 )
 
 target_include_directories(Icarus_kernel PRIVATE include
