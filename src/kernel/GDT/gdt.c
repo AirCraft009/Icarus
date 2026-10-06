@@ -1,5 +1,5 @@
 // gdt.c
-#include "../../../include/kernel/GDT/gdt.h"
+#include "kernel/GDT/gdt.h"
 #include "kernel/GDT/gdt.h"
 #include "TSS.h"
 #include "kernel/util/mem_utils.h"

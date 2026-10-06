@@ -2,8 +2,8 @@
 
 #include <stddef.h>
 #include <stdint.h>
-#include "../../../include/kernel/util/shellio.h"
-#include "../../../include/kernel/Memory/memory_mapping.h"
+#include "kernel/util/shellio.h"
+#include "kernel/Memory/memory_mapping.h"
 
 #include "kernel/Memory/DMA/ACPI.h"
 #include "kernel/util/mem_utils.h"

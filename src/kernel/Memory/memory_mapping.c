@@ -2,7 +2,7 @@
 // Created by cocon on 20.09.2026.
 //
 
-#include "../../../include/kernel/Memory/memory_mapping.h"
+#include "kernel/Memory/memory_mapping.h"
 
 #include <stdint.h>
 

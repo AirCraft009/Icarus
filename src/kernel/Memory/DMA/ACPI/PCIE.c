@@ -2,9 +2,9 @@
 // Created by cocon on 06.10.2026.
 //
 
-#include "PCIE.h"
+#include "kernel/Memory/DMA/PCIE.h"
 
-#include "ACPI_helpers.h"
+#include "kernel/Memory/DMA/ACPI_helpers.h"
 #include "kernel/Memory/DMA/ACPI.h"
 #include "kernel/Memory/DMA/MMIO.h"
 #include "kernel/util/shellio.h"
