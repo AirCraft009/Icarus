@@ -79,4 +79,23 @@ static __inline void cpuGetMSR(uint32_t msr, uint32_t *lo, uint32_t *hi) {
         : "c"(msr)
     );
 }
+
+
+// outb and inb from https://www.osdev.org/howtos/2/
+
+/* Input a byte from a port */
+static __inline unsigned char inportb(unsigned int port)
+{
+    unsigned char ret;
+    asm volatile ("inb %%dx,%%al":"=a" (ret):"d" (port));
+    return ret;
+}
+
+/* Output a byte to a port */
+/* July 6, 2001 added space between :: to make code compatible with gpp */
+
+static __inline void outportb(unsigned int port,unsigned char value)
+{
+    asm volatile ("outb %%al,%%dx": :"d" (port), "a" (value));
+}
 #endif //ICARUS_KERNEL_HELPER_H

@@ -3,12 +3,10 @@
 //
 
 #include "kernel/interrupts/APIC.h"
-
-#include <cpuid.h>
-#include <stdbool.h>
 #include <stdint.h>
 
 #include "kernel_helper.h"
+#include "kernel/interrupts/PIC.h"
 
 
 // Code from OsDev Wiki (https://wiki.osdev.org/APIC)
@@ -43,6 +41,7 @@ void enable_apic() {
 
     /* Hardware enable the Local APIC if it wasn't enabled */
     cpu_set_apic_base(cpu_get_apic_base());
+    disable_PIC();
 
     /* Set the Spurious Interrupt Vector Register bit 8 to start receiving interrupts */
     //write_reg(0xF0, ReadRegister(0xF0) | 0x100);
