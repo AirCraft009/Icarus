@@ -18,7 +18,7 @@ add_executable(Icarus_kernel
         src/kernel/util/shellio.c
         include/kernel/util/shellio.h
         src/kernel/Memory/memory_mapping.c
-        src/kernel/Memory/memory_mapping.h
+        include/kernel/Memory/memory_mapping.h
         src/kernel/GDT/TSS.c
         src/kernel/GDT/TSS.h
         include/page_definitions.h
@@ -38,16 +38,20 @@ add_executable(Icarus_kernel
         include/kernel/util/font.h
         src/kernel/Drivers/USB3.c
         include/kernel/Drivers/USB3.h
-        src/kernel/Memory/DMA/ACPI.c
+        src/kernel/Memory/DMA/ACPI/ACPI.c
         include/kernel/Memory/DMA/ACPI.h
         src/kernel/Memory/DMA/MMIO.c
         include/kernel/Memory/DMA/MMIO.h
-        src/kernel/Memory/DMA/ACPI_helpers.h
+        src/kernel/Memory/DMA/ACPI/ACPI_helpers.h
         src/kernel/interrupts/APIC/APIC.c
         include/kernel/interrupts/APIC.h
         include/kernel/util/cpuid_helpers.h
         src/kernel/interrupts/APIC/PIC.c
         include/kernel/interrupts/PIC.h
+        src/kernel/Memory/DMA/ACPI/PCIE.c
+        src/kernel/Memory/DMA/ACPI/PCIE.h
+        src/kernel/Memory/DMA/ACPI/MADT.c
+        src/kernel/Memory/DMA/ACPI/MADT.h
 )
 
 target_include_directories(Icarus_kernel PRIVATE include

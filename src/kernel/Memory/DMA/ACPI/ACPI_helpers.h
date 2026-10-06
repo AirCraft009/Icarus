@@ -7,119 +7,9 @@
 #pragma once
 #include <stdint.h>
 #include <assert.h>
+#include "kernel/Memory/PMM/mem_map.h"
+#include "kernel/Memory/DMA/ACPI.h"
 
-#define MAX_MCFG_ENTRIES 16
-
-// all structs from osdev wiki
-struct ACPISDTHeader {
-    char Signature[4];
-    uint32_t Length;
-    uint8_t Revision;
-    uint8_t Checksum;
-    char OEMID[6];
-    char OEMTableID[8];
-    uint32_t OEMRevision;
-    uint32_t CreatorID;
-    uint32_t CreatorRevision;
-};
-
-typedef struct
-{
-    uint8_t AddressSpace;
-    uint8_t BitWidth;
-    uint8_t BitOffset;
-    uint8_t AccessSize;
-    uint64_t Address;
-} GenericAddressStructure;
-
-struct FADT
-{
-    struct   ACPISDTHeader h;
-    uint32_t FirmwareCtrl;
-    uint32_t Dsdt;
-
-    // field used in ACPI 1.0; no longer in use, for compatibility only
-    uint8_t  Reserved;
-
-    uint8_t  PreferredPowerManagementProfile;
-    uint16_t SCI_Interrupt;
-    uint32_t SMI_CommandPort;
-    uint8_t  AcpiEnable;
-    uint8_t  AcpiDisable;
-    uint8_t  S4BIOS_REQ;
-    uint8_t  PSTATE_Control;
-    uint32_t PM1aEventBlock;
-    uint32_t PM1bEventBlock;
-    uint32_t PM1aControlBlock;
-    uint32_t PM1bControlBlock;
-    uint32_t PM2ControlBlock;
-    uint32_t PMTimerBlock;
-    uint32_t GPE0Block;
-    uint32_t GPE1Block;
-    uint8_t  PM1EventLength;
-    uint8_t  PM1ControlLength;
-    uint8_t  PM2ControlLength;
-    uint8_t  PMTimerLength;
-    uint8_t  GPE0Length;
-    uint8_t  GPE1Length;
-    uint8_t  GPE1Base;
-    uint8_t  CStateControl;
-    uint16_t WorstC2Latency;
-    uint16_t WorstC3Latency;
-    uint16_t FlushSize;
-    uint16_t FlushStride;
-    uint8_t  DutyOffset;
-    uint8_t  DutyWidth;
-    uint8_t  DayAlarm;
-    uint8_t  MonthAlarm;
-    uint8_t  Century;
-
-    // reserved in ACPI 1.0; used since ACPI 2.0+
-    uint16_t BootArchitectureFlags;
-
-    uint8_t  Reserved2;
-    uint32_t Flags;
-
-    // 12 byte structure; see below for details
-    GenericAddressStructure ResetReg;
-
-    uint8_t  ResetValue;
-    uint8_t  Reserved3[3];
-
-    // 64bit pointers - Available on ACPI 2.0+
-    uint64_t                X_FirmwareControl;
-    uint64_t                X_Dsdt;
-
-    GenericAddressStructure X_PM1aEventBlock;
-    GenericAddressStructure X_PM1bEventBlock;
-    GenericAddressStructure X_PM1aControlBlock;
-    GenericAddressStructure X_PM1bControlBlock;
-    GenericAddressStructure X_PM2ControlBlock;
-    GenericAddressStructure X_PMTimerBlock;
-    GenericAddressStructure X_GPE0Block;
-    GenericAddressStructure X_GPE1Block;
-};
-
-typedef struct {
-    uint64_t conf_base_addr;        //Base address of enhanced configuration mechanism
-    uint16_t segment_group_num;     //PCI Segment Group Number
-    uint8_t start_pci; 	            //Start PCI bus number decoded by this host bridge
-    uint8_t end_pci; 	            //End PCI bus number decoded by this host bridge
-    uint32_t reserved;
-} __attribute__((packed)) ECAM;
-
-typedef struct ACPI_MCFG {
-    struct ACPISDTHeader h;
-    uint64_t reserved;
-    ECAM conf_space_addrs[MAX_MCFG_ENTRIES];
-}__attribute__((packed)) mcfg;
-static_assert(offsetof(mcfg, conf_space_addrs) == 44, "conf_base_addr misaligned");
-
-typedef struct ACPI_APIC_common {
-    struct ACPISDTHeader h;
-    uint32_t loc_apic_addr;
-    uint32_t flags;
-} __attribute__((packed)) apic_common;
 
 typedef struct __attribute__((packed)) {
     uint16_t vendor_id;
@@ -214,6 +104,79 @@ static __inline volatile void *ecam_addr(uint64_t base, uint8_t start_bus,
          ((uint64_t)func << 12) |
          off));
 }
+
+
+typedef struct {
+    uint8_t apic_entry_type;
+    uint8_t tag_size;
+} __attribute__((packed)) apic_tag_common;
+
+typedef struct {
+    uint16_t polarity           : 2;
+    uint16_t trigger_mode       : 2;
+    uint16_t reserved           : 12;
+}__attribute__((packed)) apic_flags;
+
+typedef struct ACPI_APIC {
+    struct ACPISDTHeader h;
+    uint32_t loc_apic_addr;
+    uint32_t flags;
+    apic_tag_common tags[];
+} __attribute__((packed)) MADT;
+
+// apic type 0
+typedef struct {
+    uint8_t ACPI_proc_id;
+    uint8_t APIC_id;
+    uint32_t flags;
+}__attribute__((packed)) apic_tag_type0;
+
+// apic type 1
+typedef struct {
+    uint8_t ACPI_IO_id;
+    uint8_t reserved;
+    uint32_t IO_apic_id;
+    uint32_t GSIB;      //global system interrupt base
+}__attribute__((packed)) apic_tag_type1;
+
+// apic type 2
+typedef struct {
+    uint8_t bus_source;
+    uint8_t IRQ_source;
+    uint32_t GSI;
+    apic_flags flags;      //global system interrupt
+}__attribute__((packed)) apic_tag_type2;
+
+// apic type 3
+typedef struct {
+    uint8_t NMI_source;
+    uint8_t reserved;
+    apic_flags flags;
+    uint32_t GSI;      //global system interrupt
+}__attribute__((packed)) apic_tag_type3;
+
+// apic type 4
+typedef struct {
+    uint8_t ACPI_proc_id;       // 0xFF is all processors
+    apic_flags flags;
+    uint8_t LINT;               //Local Interrupt Pin  (0 or 1)
+}__attribute__((packed)) apic_tag_type4;
+
+// apic type 5
+typedef struct {
+    uint16_t reserved;
+    uint64_t LAPIC_addr;
+}__attribute__((packed)) apic_tag_type5;
+
+// apic type 9
+typedef struct {
+    uint16_t Reserved;
+    uint32_t x2_LAPIC_id;
+    uint32_t flags;
+    uint32_t ACPI_id;
+}__attribute__((packed)) apic_tag_type9;
+
+extern struct ACPI_MCFG MCFG;
 
 
 // ALL THE BARs https://vlsitrainers.com/pcie-base-address-registers-bars/

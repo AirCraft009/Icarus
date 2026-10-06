@@ -16,6 +16,7 @@
 #include <stdint.h>
 
 #include "kernel_helper.h"
+#include "kernel/util/mem_utils.h"
 
 
 const uint16_t COLS = 80;
@@ -70,7 +71,7 @@ void vprintf(cursor *cur, char *format, va_list args) {
         return;
     }
 
-    //Imemset((void*)(videoMemStart + cur->y * COLS * 2), 0, 10);
+    
     bool format_next = false;
     while (*format) {
         char c = *format++;

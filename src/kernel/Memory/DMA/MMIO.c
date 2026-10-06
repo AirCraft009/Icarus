@@ -5,7 +5,7 @@
 #include "kernel/Memory/DMA/MMIO.h"
 
 #include "kernel_helper.h"
-#include "../memory_mapping.h"
+#include "../../../../include/kernel/Memory/memory_mapping.h"
 #include "kernel/Memory/PMM/mem_map.h"
 #include "kernel/util/shellio.h"
 

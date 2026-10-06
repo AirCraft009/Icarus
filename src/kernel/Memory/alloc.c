@@ -13,7 +13,7 @@
 #include <stdint.h>
 
 #include "kernel_helper.h"
-#include "memory_mapping.h"
+#include "../../../include/kernel/Memory/memory_mapping.h"
 #include "page_definitions.h"
 #include "kernel/Memory/PMM/mem_map.h"
 

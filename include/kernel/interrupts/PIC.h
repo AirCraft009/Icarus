@@ -5,5 +5,5 @@
 #ifndef ICARUS_PIC_H
 #define ICARUS_PIC_H
 #pragma once
-__inline void disable_PIC();
+void disable_PIC();
 #endif //ICARUS_PIC_H

@@ -8,7 +8,7 @@
 #include "kernel/interrupts/IDT.h"
 #include "kernel/util/mem_utils.h"
 #include "kernel/util/shellio.h"
-#include "Memory/memory_mapping.h"
+#include "../../include/kernel/Memory/memory_mapping.h"
 #include "kernel/util/multiboot2.h"
 #include "kernel/util/cpuid_helpers.h"
 #include "kernel/Memory/alloc.h"
