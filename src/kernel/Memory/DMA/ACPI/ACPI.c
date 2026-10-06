@@ -9,10 +9,12 @@
 #include "kernel/Memory/DMA/MMIO.h"
 #include "kernel/util/mem_utils.h"
 #include "kernel/util/shellio.h"
-#include "ACPI_helpers.h"
-#include "MADT.h"
-#include "PCIE.h"
+#include "kernel/Memory/DMA/ACPI_helpers.h"
+#include "kernel/Memory/DMA/MADT.h"
+#include "kernel/Memory/DMA/PCIE.h"
 
+
+madt_info *APIC_INFO;
 // GOLD!!! https://www.singlix.com/trdos/archive/OSDev_Wiki/RSDP.pdf
 
 #define CHECKSUM(buff, p)  \
@@ -47,9 +49,7 @@ uint8_t calculate_checksum(uint8_t *buffer, uint64_t length) {
 
 
 int handle_table(struct ACPISDTHeader *h) {
-    //Iprintf("Header: %s\n", h->Signature );
     if (!Istrncmp(h->Signature, "FACP", 4)){
-        //Iprintf("found FADT\n");
         Imemccpy(&FACP, h, MIN(h->Length, sizeof(struct FADT)));
         CHECKSUM(&FACP, h->Length);
     }
@@ -60,14 +60,14 @@ int handle_table(struct ACPISDTHeader *h) {
     }
     else if (!Istrncmp(h->Signature, "APIC", 4)) {
         Iprintf("found APIC(MADT): %x\n", h);
-        handle_MADT(h);
+        APIC_INFO = (madt_info *) handle_MADT(h);
+        Iprintf("PLEASE WORK: (%i)\n", APIC_INFO->cpu_count);
         CHECKSUM(&MCFG, h->Length);
     }
     return 0;
 }
 
-int categoriseTablesXSDT(struct XSDT *xsdt)
-{
+int categoriseTablesXSDT(struct XSDT *xsdt){
     int entries = (xsdt->h.Length - sizeof(xsdt->h)) / 8;
 
     for (int i = 0; i < entries; i++) {
@@ -79,8 +79,7 @@ int categoriseTablesXSDT(struct XSDT *xsdt)
 }
 
 
-int categoriseTablesRSDT(struct RSDT *rsdt)
-{
+int categoriseTablesRSDT(struct RSDT *rsdt){
     int entries = (rsdt->h.Length - sizeof(struct ACPISDTHeader)) / 4;
 
     for (int i = 0; i < entries; i++) {
@@ -100,16 +99,12 @@ int handle_new_acpi(struct XSDP_t * xsdp) {
     if (Istrncmp(xsdp->Signature, SIGNATURE, sizeof(xsdp->Signature)) != 0)
         return -1;
 
-    // checksum for RSDP (first 20 bytes)
     CHECKSUM( xsdp, 20);
-
     Iprintf("OEM: %s\n", xsdp->OEMID);
     int version = xsdp->Revision + 1;
     // ignore xsdp->RsdtAddress it's deprecated in all new versions
 
-    //checksum for XsdP (all bytes)
     CHECKSUM (xsdp, xsdp->Length)
-
     void * root_phys = (void *)  xsdp->XsdtAddress;
     if (map_mmio((phys_addr_t) root_phys, DEFAULT_PAGE_SIZE, WRITEABLE | CACHE_DISABLED) == FRAME_ALLOC_FAILED) {
         Iprintf("error while mapping mmio\n");
@@ -127,9 +122,7 @@ int handle_old_acpi(struct RSDP_t * rsdp) {
     if (Istrncmp(rsdp->Signature, SIGNATURE, sizeof(rsdp->Signature)) != 0)
         return -1;
 
-    // checksum for RSDP (first 20 bytes)
     CHECKSUM(rsdp, 20);
-
     Iprintf("OEM: %s\n", rsdp->OEMID);
     int version = rsdp->Revision + 1;
 
@@ -144,9 +137,6 @@ int handle_old_acpi(struct RSDP_t * rsdp) {
         Iprintf("categorise tables (failed checksum)\n");
         return -1;
     }
-
-    //Iprintf("SIGNATURE: %s", MCFG.h.Signature);
     discoverPCIE();
-
     return 0;
 }

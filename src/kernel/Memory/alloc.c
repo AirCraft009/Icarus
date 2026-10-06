@@ -13,7 +13,7 @@
 #include <stdint.h>
 
 #include "kernel_helper.h"
-#include "../../../include/kernel/Memory/memory_mapping.h"
+#include "kernel/Memory/memory_mapping.h"
 #include "page_definitions.h"
 #include "kernel/Memory/PMM/mem_map.h"
 
@@ -141,7 +141,7 @@ int map_frame_into_heap(alloc_t * allocator, page_map_l4_entry *pml4,  struct_pa
 /**
  * first fit allocator
  */
-void * imalloc_alocator(alloc_t * allocator, uint64_t size) {
+void * Imalloc_alocator(alloc_t * allocator, uint64_t size) {
     size += META_DATA_SIZE;      // make the total size
     size = ALIGN_UP(size, HEAP_ALIGNMENT);
 
@@ -182,8 +182,8 @@ void * imalloc_alocator(alloc_t * allocator, uint64_t size) {
     }
 }
 
-void *imalloc(uint64_t size) {
-    return imalloc_alocator((alloc_t *) KERNEL_HEAP_ADDR, size);
+void *Imalloc(uint64_t size) {
+    return Imalloc_alocator((alloc_t *) KERNEL_HEAP_ADDR, size);
 }
 
 void free(void * addr) {
