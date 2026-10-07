@@ -19,7 +19,7 @@ typedef struct { uint32_t gsi; apic_flags flags; } nmi_info;
 typedef struct { uint8_t acpi_id; uint8_t lint; apic_flags flags; } lapic_nmi_info;
 
 typedef struct madt_info {
-    uint64_t lapic_addr;        // physical address of the LAPIC registers
+    uint64_t lapic_addr;        // physical address of the LAPIC registers  (mapped into MMIO space)
     uint32_t madt_flags;        // bit0: legacy dual 8259 PICs also exist (lwk just mask it no matter cause it can't hurt yk
     uint32_t cpu_count, ioapic_count, iso_count, nmi_count, lapic_nmi_count;
 

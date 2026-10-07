@@ -4,8 +4,11 @@
 
 #include "kernel/Memory/DMA/MADT.h"
 
+#include "kernel_helper.h"
 #include "kernel/Memory/DMA/ACPI_helpers.h"
 #include "kernel/Memory/alloc.h"
+#include "kernel/Memory/memory_mapping.h"
+#include "kernel/Memory/DMA/MMIO.h"
 #include "kernel/util/mem_utils.h"
 
 
@@ -105,5 +108,6 @@ uint64_t handle_MADT(struct ACPISDTHeader *header) {
         p += len;
     }
 
+    map_mmio(info->lapic_addr, DEFAULT_PAGE_SIZE, WRITEABLE | CACHE_DISABLED);
     return (uint64_t) info ;
 }

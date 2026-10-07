@@ -16,6 +16,7 @@
 #define IA32_APIC_BASE_MSR_ENABLE 0x800
 #define PIC1		0x20		/* IO base address for master PIC */
 #define PIC2		0xA0		/* IO base address for slave PIC */
+#define SPURIOUS_INT_VEC 0xF0
 
 /* Set the physical address for local APIC registers */
 void cpu_set_apic_base(uintptr_t apic) {
@@ -44,5 +45,5 @@ void enable_apic() {
     disable_PIC();
 
     /* Set the Spurious Interrupt Vector Register bit 8 to start receiving interrupts */
-    //write_reg(0xF0, ReadRegister(0xF0) | 0x100);
+    
 }

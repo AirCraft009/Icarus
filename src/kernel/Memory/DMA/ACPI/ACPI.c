@@ -61,7 +61,7 @@ int handle_table(struct ACPISDTHeader *h) {
     else if (!Istrncmp(h->Signature, "APIC", 4)) {
         Iprintf("found APIC(MADT): %x\n", h);
         APIC_INFO = (madt_info *) handle_MADT(h);
-        Iprintf("PLEASE WORK: (%i)\n", APIC_INFO->cpu_count);
+        Iprintf("PLEASE WORK: (%i)\n", APIC_INFO->lapic_addr);
         CHECKSUM(&MCFG, h->Length);
     }
     return 0;
