@@ -64,6 +64,20 @@ void lapic_write(uint32_t reg_offset, uint32_t value) {
     *reg = value;
 }
 
+void ioapic_write(uintptr_t base, uint8_t reg, uint32_t val) {
+    *(volatile uint32_t*)(base + 0x00) = reg;   // select register
+    *(volatile uint32_t*)(base + 0x10) = val;   // write value
+}
+
+/**
+ *  Route I/O APIC pin 'pin' to core 'apic_id' with vector 'vec'
+ **/
+void ioapic_route(uintptr_t base, int pin, uint8_t vec, uint8_t apic_id,
+                  bool active_low, bool level) {
+    uint32_t low = vec | (active_low << 13) | (level << 15);  // unmasked
+    ioapic_write(base, 0x11 + 2*pin, (uint32_t)apic_id << 24);  // high half first
+    ioapic_write(base, 0x10 + 2*pin, low);                      // low half last
+}
 
 /**
  *  initializes the APIC by:

@@ -85,9 +85,9 @@ typedef struct {
     char vendor[13];
     uint32_t max_leaf;
     uint64_t features;
-} cpu_info;
+} cpuid_info;
 
-static cpu_info CPUID_TABLE;
+static cpuid_info CPUID_TABLE;
 
 static __inline__ char * init_cpuid(void)
 {

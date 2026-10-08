@@ -12,6 +12,7 @@
 #include "kernel/util/multiboot2.h"
 #include "kernel/util/cpuid_helpers.h"
 #include "kernel/Memory/alloc.h"
+#include "kernel/Memory/DMA/MADT.h"
 #include "kernel/Memory/PMM/mem_map.h"
 
 extern uint64_t *gdt_descriptor;
@@ -54,6 +55,9 @@ void kmain(uint32_t magic, struct multiboot_info *mboot) {
     // cons_mprintf("KERNEL ENDING");
     lapic_write(0x380, 0xFFFFFFFF);
     Iprintf("Timer-start: (%x)\n", lapic_read(0x380));
+    for (int i = 0; i < APIC_INFO->iso_count; ++i) {
+        Iprintf("wiring: (%x - > %x)\n", APIC_INFO->isos[i].gsi, APIC_INFO->isos[i].source_irq);
+    }
     while (1) {
         Iprintf("\rTIMER: (%x)", lapic_read(0x390));
     }

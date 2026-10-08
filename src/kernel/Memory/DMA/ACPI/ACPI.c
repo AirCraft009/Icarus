@@ -48,19 +48,18 @@ uint8_t calculate_checksum(uint8_t *buffer, uint64_t length) {
 
 int handle_table(struct ACPISDTHeader *h) {
     if (!Istrncmp(h->Signature, "FACP", 4)){
-        Imemccpy(&FACP, h, MIN(h->Length, sizeof(struct FADT)));
         CHECKSUM(&FACP, h->Length);
+        Imemccpy(&FACP, h, MIN(h->Length, sizeof(struct FADT)));
+        if (h->Length < sizeof(struct FADT)) {FACP.Reserved = 0;}
+        else FACP.Reserved = 1;
     }
     else if (!Istrncmp(h->Signature, "MCFG", 4)) {
-        Imemccpy(&MCFG, h, h->Length);
-        Iprintf("found MCFG: (%x)\n", &MCFG);
         CHECKSUM(&MCFG, h->Length);
+        Imemccpy(&MCFG, h, h->Length);
     }
     else if (!Istrncmp(h->Signature, "APIC", 4)) {
-        Iprintf("found APIC(MADT): %x\n", h);
-        handle_MADT(h);
-        Iprintf("PLEASE WORK: (%i)\n", APIC_INFO->lapic_addr);
         CHECKSUM(&MCFG, h->Length);
+        handle_MADT(h);
     }
     return 0;
 }

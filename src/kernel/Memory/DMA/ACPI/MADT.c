@@ -110,7 +110,9 @@ uint64_t handle_MADT(struct ACPISDTHeader *header) {
     }
 
     map_mmio(info->lapic_addr, DEFAULT_PAGE_SIZE, WRITEABLE | CACHE_DISABLED);
-    map_mmio(info->ioapics[0].addr, DEFAULT_PAGE_SIZE, WRITEABLE | CACHE_DISABLED);
+    for (uint32_t i = 0; i < info->ioapic_count; ++i) {
+        map_mmio(info->ioapics[i].addr, DEFAULT_PAGE_SIZE, WRITEABLE | CACHE_DISABLED);
+    }
     APIC_INFO = info;
     return 0;
 }

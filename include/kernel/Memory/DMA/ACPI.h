@@ -58,6 +58,7 @@ struct FADT
     uint32_t Dsdt;
 
     // field used in ACPI 1.0; no longer in use, for compatibility only
+    // In this OS it'll serve to repr wether ACPI is v1(0) or v2(1)
     uint8_t  Reserved;
 
     uint8_t  PreferredPowerManagementProfile;
