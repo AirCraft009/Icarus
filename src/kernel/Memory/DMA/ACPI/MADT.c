@@ -11,6 +11,7 @@
 #include "kernel/Memory/DMA/MMIO.h"
 #include "kernel/util/mem_utils.h"
 
+madt_info * APIC_INFO;
 
 
 uint64_t handle_MADT(struct ACPISDTHeader *header) {
@@ -109,5 +110,7 @@ uint64_t handle_MADT(struct ACPISDTHeader *header) {
     }
 
     map_mmio(info->lapic_addr, DEFAULT_PAGE_SIZE, WRITEABLE | CACHE_DISABLED);
-    return (uint64_t) info ;
+    map_mmio(info->ioapics[0].addr, DEFAULT_PAGE_SIZE, WRITEABLE | CACHE_DISABLED);
+    APIC_INFO = info;
+    return 0;
 }

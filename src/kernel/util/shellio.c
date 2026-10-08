@@ -55,6 +55,10 @@ void write_c(char c, cursor *cur) {
         new_lines(1, cur);
         return;
     }
+    if (c == '\r') {
+        cur->x = 0;
+        return;
+    }
     char * vidptr = (char *) videoMemStart + (cur->x + cur->y * COLS) * 2;
     *vidptr = c;
     move_cursor(1, cur);

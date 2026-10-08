@@ -31,6 +31,8 @@ typedef struct madt_info {
     lapic_nmi_info *lapic_nmis;
 } madt_info;
 
+extern madt_info * APIC_INFO;
+
 uint64_t handle_MADT(struct ACPISDTHeader *header);
 
 #endif //ICARUS_MADT_H

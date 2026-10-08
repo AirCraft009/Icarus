@@ -13,8 +13,6 @@
 #include "kernel/Memory/DMA/MADT.h"
 #include "kernel/Memory/DMA/PCIE.h"
 
-
-madt_info *APIC_INFO;
 // GOLD!!! https://www.singlix.com/trdos/archive/OSDev_Wiki/RSDP.pdf
 
 #define CHECKSUM(buff, p)  \
@@ -60,7 +58,7 @@ int handle_table(struct ACPISDTHeader *h) {
     }
     else if (!Istrncmp(h->Signature, "APIC", 4)) {
         Iprintf("found APIC(MADT): %x\n", h);
-        APIC_INFO = (madt_info *) handle_MADT(h);
+        handle_MADT(h);
         Iprintf("PLEASE WORK: (%i)\n", APIC_INFO->lapic_addr);
         CHECKSUM(&MCFG, h->Length);
     }

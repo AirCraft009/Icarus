@@ -49,9 +49,13 @@ void kmain(uint32_t magic, struct multiboot_info *mboot) {
     Iprintf("---------------MODEL-----------------\n");
     Iprintf("%s\n", init_cpuid());
     enable_apic();
-    Iprintf("set up APIC");
+    Iprintf("set up APIC\n");
     //__asm__ volatile ("sti");
     // cons_mprintf("KERNEL ENDING");
-    while (1){}
+    lapic_write(0x380, 0xFFFFFFFF);
+    Iprintf("Timer-start: (%x)\n", lapic_read(0x380));
+    while (1) {
+        Iprintf("\rTIMER: (%x)", lapic_read(0x390));
+    }
 }
 //235372403 = 256809072
