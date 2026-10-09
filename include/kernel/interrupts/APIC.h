@@ -8,7 +8,11 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#include "kernel/Memory/PMM/mem_map.h"
+#define LAPIC_TIMER_DIV      0x3E0
+#define LAPIC_LVT_TIMER      0x320
+#define LAPIC_LVT_MASKED     0x10000
+#define LAPIC_TIMER_INITCNT  0x380
+#define LAPIC_TIMER_CURCNT   0x390
 
 typedef struct {
     uint64_t APIC_addr;
@@ -20,7 +24,7 @@ typedef struct {
 
 extern void *LAPIC_ADDR;
 
-void enable_apic();
+int enable_apic();
 void lapic_write(uint32_t reg_offset, uint32_t value);
 uint32_t lapic_read(uint32_t reg_offset);
 

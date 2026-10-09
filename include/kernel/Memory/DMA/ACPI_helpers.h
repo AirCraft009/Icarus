@@ -177,6 +177,7 @@ typedef struct {
 }__attribute__((packed)) apic_tag_type9;
 
 extern struct ACPI_MCFG MCFG;
+extern struct FADT_TABLE FADT;
 
 
 // ALL THE BARs https://vlsitrainers.com/pcie-base-address-registers-bars/

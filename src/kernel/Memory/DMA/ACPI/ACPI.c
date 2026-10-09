@@ -34,7 +34,7 @@ struct __attribute__((packed)) RSDT {
 };
 
 // zero init so that ACPI v1 doesn't read uninit slop
-static struct FADT FACP = {0};
+struct FADT_TABLE FADT = {0};
 struct ACPI_MCFG MCFG = {0};
 
 uint8_t calculate_checksum(uint8_t *buffer, uint64_t length) {
@@ -48,10 +48,10 @@ uint8_t calculate_checksum(uint8_t *buffer, uint64_t length) {
 
 int handle_table(struct ACPISDTHeader *h) {
     if (!Istrncmp(h->Signature, "FACP", 4)){
-        CHECKSUM(&FACP, h->Length);
-        Imemccpy(&FACP, h, MIN(h->Length, sizeof(struct FADT)));
-        if (h->Length < sizeof(struct FADT)) {FACP.Reserved = 0;}
-        else FACP.Reserved = 1;
+        CHECKSUM(&FADT, h->Length);
+        Imemccpy(&FADT, h, MIN(h->Length, sizeof(struct FADT_TABLE)));
+        if (h->Length < sizeof(struct FADT_TABLE)) {FADT.FullLength = 0;}
+        else FADT.FullLength = 1;
     }
     else if (!Istrncmp(h->Signature, "MCFG", 4)) {
         CHECKSUM(&MCFG, h->Length);

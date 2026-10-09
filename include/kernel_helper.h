@@ -98,4 +98,21 @@ static __inline void outportb(unsigned int port,unsigned char value)
 {
     asm volatile ("outb %%al,%%dx": :"d" (port), "a" (value));
 }
+
+
+static __inline uint32_t inportl(unsigned int port)
+{
+    uint32_t ret;
+    __asm__ volatile ("inl %1, %0"
+                  :
+                  : "a"(ret), "Nd"(port));
+    return ret;
+}
+
+static __inline void outportl(unsigned int port,uint32_t value)
+{
+    __asm__ volatile ("outl %0, %1"
+                  :
+                  : "a"(value), "Nd"(port));
+}
 #endif //ICARUS_KERNEL_HELPER_H

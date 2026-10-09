@@ -52,8 +52,6 @@ add_executable(Icarus_kernel
         include/kernel/Memory/DMA/PCIE.h
         src/kernel/Memory/DMA/ACPI/MADT.c
         include/kernel/Memory/DMA/MADT.h
-        src/kernel/Memory/DMA/ACPI/PM_timer.c
-        include/kernel/Memory/DMA/PM_timer.h
 )
 
 target_include_directories(Icarus_kernel PRIVATE include

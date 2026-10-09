@@ -41,15 +41,15 @@
 
 #define PERM_BIT(p, shift)  (((p) >> (shift)) & 0x1)
 
-/* Intermediate entries: a 1 propagates up the tree, a 0 never clears anything.
- * NX / PWT / PCD are deliberately NOT touched here. */
+// Intermediate entries: a 1 propagates up the tree, a 0 never clears anything.
+// NX / PWT / PCD are deliberately NOT touched here.
 #define APPLY_UPPER_PERMS(e, p)                                   \
     do {                                                          \
         if (PERM_BIT(p, USER_ACCESS_SHIFT)) (e)->user_access = 1; \
         if (PERM_BIT(p, WRITEABLE_SHIFT))   (e)->writeable   = 1; \
     } while (0)
 
-/* Leaf entry apply what the caller asked for. */
+// Leaf entry apply what the caller asked for.
 #define APPLY_LEAF_PERMS(e, p)                                                    \
     do {                                                                          \
         (e)->user_access         = PERM_BIT(p, USER_ACCESS_SHIFT);                \
