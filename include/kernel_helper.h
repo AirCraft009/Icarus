@@ -103,9 +103,9 @@ static __inline void outportb(unsigned int port,unsigned char value)
 static __inline uint32_t inportl(unsigned int port)
 {
     uint32_t ret;
-    __asm__ volatile ("inl %1, %0"
-                  :
-                  : "a"(ret), "Nd"(port));
+    __asm__ volatile ("inl %w1, %0"
+                      : "=a"(ret)
+                      : "Nd"(port));
     return ret;
 }
 

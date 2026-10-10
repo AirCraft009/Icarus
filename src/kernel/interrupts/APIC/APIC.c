@@ -104,7 +104,7 @@ static uint32_t pm_read(uint64_t addr, bool is32, bool isMMIO) {
 uint32_t calibrate_lapic_ticks_per_ms(uint64_t pm_addr, bool is32, bool isMMIO) {
     uint32_t mask = is32 ? 0xFFFFFFFF : 0xFFFFFF;
     uint32_t wait = PM_TIMER_HZ / 100;            // minimum window: 10 ms
-
+     
     lapic_write(LAPIC_TIMER_DIV, 0x3);
     lapic_write(LAPIC_LVT_TIMER, LAPIC_LVT_MASKED);
 
@@ -114,6 +114,7 @@ uint32_t calibrate_lapic_ticks_per_ms(uint64_t pm_addr, bool is32, bool isMMIO) 
     uint32_t elapsed;
     do {
         elapsed = (pm_read(pm_addr, is32, isMMIO) - start) & mask;
+        //Iprintf("STEP5.%x\n", elapsed);
     } while (elapsed < wait);
 
     uint32_t cur = lapic_read(LAPIC_TIMER_CURCNT);
@@ -138,24 +139,19 @@ int enable_apic() {
 
     /* Hardware enable the Local APIC if it wasn't enabled */
     //cpu_set_apic_base(cpu_get_apic_base());
-    Iprintf("DISABLING PCI\n");
     disable_PIC();
-    Iprintf("DISABLING PCI\n");
 
     /* Set the Spurious Interrupt Vector Register bit 8 to start receiving interrupts */
     void * apic = (void *) MMIO_PHYS_TO_VIRT(APIC_INFO->lapic_addr);
-    Iprintf("Wrote to SPURIOUS\n");
     *(uint32_t *) (apic + SPURIOUS_INT_VEC) = (1 << 8) | 0xFF;
-    Iprintf("Wrote to SPURIOUS\n");
     LAPIC_ADDR = apic;
 
     // check if the X_PMTimerBlock is accessible
     if (!FADT.FullLength) {
         if (FADT.PMTimerBlock == 0)     // check for a null port
             return -1;
-        Iprintf("CALIBRATING: IO-PORT -> ACPIV1, 32BIT: %i\n", (FADT.Flags >> 8) & 0x1);
+        //Iprintf("CALIBRATING: IO-PORT(%x) -> ACPIV1, 32BIT: %i\n", FADT.PMTimerBlock, (FADT.Flags >> 8) & 0x1);
         calibrate_lapic_ticks_per_ms((uint16_t) FADT.PMTimerBlock, (FADT.Flags >> 8) & 0x1, false);
-        Iprintf("CALIBRATION SUCCESS\n");
         return 0;
     }
     if (FADT.X_PMTimerBlock.Address == 0)
