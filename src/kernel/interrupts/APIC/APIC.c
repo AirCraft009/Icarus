@@ -7,6 +7,7 @@
 
 #include "kernel_helper.h"
 #include "kernel/interrupts/PIC.h"
+#include "kernel/Memory/alloc.h"
 #include "kernel/Memory/memory_mapping.h"
 #include "kernel/Memory/DMA/MADT.h"
 #include "kernel/Memory/DMA/MMIO.h"
@@ -23,11 +24,20 @@
 #define SPURIOUS_INT_VEC 0xF0
 #define ADDR_SPACE_IO 1
 #define ADDR_SPACE_MMIO 0
+#define IO_APIC_MODERN 0x20
+#define IO_REG_SEL 0x0
+#define IO_WIN 0x10
+#define IOAPICVER 0x1
+#define REDIR_ENTR_COUNT 16
+#define PM_TIMER_HZ 3579545
+
 
 void *LAPIC_ADDR;
+io_apic_descriptor * io_apic_infos;
 uint32_t LAPIC_TICKS_PER_MS;
 
 /* Set the physical address for local APIC registers */
+
 void cpu_set_apic_base(uintptr_t apic) {
     uint32_t eax = (apic & 0xfffff0000) | IA32_APIC_BASE_MSR_ENABLE;
     uint32_t edx = (apic >> 32) & 0x0f;
@@ -65,13 +75,17 @@ uint32_t lapic_read(uint32_t reg_offset) {
  */
 void lapic_write(uint32_t reg_offset, uint32_t value) {
     volatile uint32_t* reg = (volatile uint32_t*)(LAPIC_ADDR + reg_offset);
-
     *reg = value;
 }
 
 void ioapic_write(uintptr_t base, uint8_t reg, uint32_t val) {
-    *(volatile uint32_t*)(base + 0x00) = reg;   // select register
-    *(volatile uint32_t*)(base + 0x10) = val;   // write value
+    *(volatile uint32_t*)(base + IO_REG_SEL) = reg;   // select register
+    *(volatile uint32_t*)(base + IO_WIN) = val;   // write value
+}
+
+uint32_t ioapic_read(uintptr_t base, uint8_t reg) {
+    *(volatile uint32_t*)(base + IO_REG_SEL) = reg;   // select register
+    return *(volatile uint32_t*)(base + IO_WIN);   // write value
 }
 
 /**
@@ -83,8 +97,6 @@ void ioapic_route(uintptr_t base, int pin, uint8_t vec, uint8_t apic_id,
     ioapic_write(base, 0x11 + 2*pin, (uint32_t)apic_id << 24);  // high half first
     ioapic_write(base, 0x10 + 2*pin, low);                      // low half last
 }
-
-#define PM_TIMER_HZ 3579545
 
 
 /**
@@ -175,5 +187,41 @@ int enable_apic() {
     LAPIC_TICKS_PER_MS = lapic_ticks_per_ms();
     if (!LAPIC_TICKS_PER_MS)
         return -1;
+    return 0;
+}
+
+
+uint32_t enable_io_apic(uint64_t io_apic_addr, io_apic_info *info) {
+
+    info->base_address = io_apic_addr;
+    info->redirection_count = (ioapic_read(io_apic_addr, IOAPICVER) >> REDIR_ENTR_COUNT & 0xFF) -1;
+
+    return info->redirection_count * sizeof(io_apic_redirection_entry_t);
+}
+
+/**
+ * enable all io_apics of the system
+ */
+int enable_io_apics() {
+    uint64_t total_size = sizeof(io_apic_infos) * APIC_INFO->ioapic_count;
+
+
+    for (int i = 0; i < APIC_INFO->ioapic_count; ++i) {
+        // read the redirection count and calc the size
+        // entry count are bits 16...23 of reg IOAPICVER
+        total_size +=
+            ((ioapic_read(
+                MMIO_PHYS_TO_VIRT(APIC_INFO->ioapics[i].addr),
+                IOAPICVER) >> REDIR_ENTR_COUNT & 0xFF) -1)
+            * sizeof(io_apic_redirection_entry_t);
+    }
+
+    io_apic_infos = (io_apic_descriptor *) Imalloc(sizeof(io_apic_descriptor) + total_size);
+
+    io_apic_info * info = io_apic_infos->apics;
+    for (int i = 0; i < APIC_INFO->ioapic_count; ++i) {
+        uint32_t info_size = enable_io_apic(MMIO_PHYS_TO_VIRT(APIC_INFO->ioapics[i].addr), info);
+        info = (io_apic_info *)((uint8_t *) info + info_size);
+    }
     return 0;
 }

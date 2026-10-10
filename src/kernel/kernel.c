@@ -50,15 +50,16 @@ void kmain(uint32_t magic, struct multiboot_info *mboot) {
     Iprintf("---------------MODEL-----------------\n");
     Iprintf("%s\n", init_cpuid());
     enable_apic();
+    enable_io_apics();
     Iprintf("set up APIC\n");
     //__asm__ volatile ("sti");
     // cons_mprintf("KERNEL ENDING");
-    lapic_write(0x380, 0xFFFFFFFF);
-    Iprintf("Timer-start: (%x)\n", lapic_read(0x380));
-    for (int i = 0; i < APIC_INFO->iso_count; ++i) {
-        Iprintf("wiring: (%x - > %x)\n", APIC_INFO->isos[i].gsi, APIC_INFO->isos[i].source_irq);
-    }
 
+    Iprintf("Ticks per Ms: (%i)", LAPIC_TICKS_PER_MS);
+    __asm__ volatile ("sti");
+    lapic_write(LAPIC_TIMER_INITCNT, 0x0);
+    lapic_write(LAPIC_LVT_TIMER, 32 | LAPIC_TIMER_PERIODIC);
+    lapic_write(LAPIC_TIMER_INITCNT, LAPIC_TICKS_PER_MS * 500);
     while (1)
         ;
 }

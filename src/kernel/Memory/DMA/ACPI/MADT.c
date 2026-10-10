@@ -83,7 +83,6 @@ uint64_t handle_MADT(struct ACPISDTHeader *header) {
             }
             case 2: {
                 apic_tag_type2 *r = (apic_tag_type2 *)p;
-                Iprintf("GSI: %x, IRQ: %x\n", r->GSI, r->IRQ_source);
                 iso_info *o = &info->isos[info->iso_count++];
                 o->bus = r->bus_source; o->source_irq = r->IRQ_source;
                 o->gsi = r->GSI; o->flags = r->flags;

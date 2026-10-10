@@ -3,6 +3,7 @@
 //
 #include <stdint.h>
 
+#include "kernel/interrupts/APIC.h"
 #include "kernel/util/shellio.h"
 
 
@@ -62,11 +63,16 @@ void undefined_instruction_handler(struct interrupt_frame *frame) {
     //TODO: stop user process
 }
 
+
+void timer_interrupt_handler(struct interrupt_frame *frame) {
+    Iprintf("#Timer interrupt\n");
+    lapic_write(LAPIC_EOI, 0);
+}
+
 void c_isr(
     struct interrupt_frame *frame
 )
 {
-    cursor cur = {0,0};
     Iprintf("Registered w/ fault handler: %x\n", frame->vector);
     switch (frame->vector) {
         case 0:
@@ -92,10 +98,12 @@ void c_isr(
 
         case 32:
             // Timer IRQ
+            timer_interrupt_handler(frame);
             break;
 
         default:
             // Unhandled interrupt
             break;
     }
+    return;
 }
