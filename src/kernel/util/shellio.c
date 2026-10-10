@@ -145,7 +145,7 @@ void vprintf(cursor *cur, char *format, va_list args) {
                     while (llen--) write_c(lbuf[llen], cur);
                     break;
                 }
-                case 'x': {   /* 64-bit hex, good for pointers */
+                case 'x': {   // 64-bit hex, good for pointers
                     uint64_t v = va_arg(args, uint64_t);
                     char xbuf[16];
                     int xlen = 0;

@@ -25,6 +25,7 @@
 #define ADDR_SPACE_MMIO 0
 
 void *LAPIC_ADDR;
+uint32_t LAPIC_TICKS_PER_MS;
 
 /* Set the physical address for local APIC registers */
 void cpu_set_apic_base(uintptr_t apic) {
@@ -88,8 +89,6 @@ void ioapic_route(uintptr_t base, int pin, uint8_t vec, uint8_t apic_id,
 
 /**
  *
- *
- *
  * @param addr a 64bit addr to mmio or a port
  * @param is32 is PM a 24bit or 32bit timer
  * @param isMMIO is it a port access or MMIO access
@@ -104,7 +103,7 @@ static uint32_t pm_read(uint64_t addr, bool is32, bool isMMIO) {
 uint32_t calibrate_lapic_ticks_per_ms(uint64_t pm_addr, bool is32, bool isMMIO) {
     uint32_t mask = is32 ? 0xFFFFFFFF : 0xFFFFFF;
     uint32_t wait = PM_TIMER_HZ / 100;            // minimum window: 10 ms
-     
+
     lapic_write(LAPIC_TIMER_DIV, 0x3);
     lapic_write(LAPIC_LVT_TIMER, LAPIC_LVT_MASKED);
 
@@ -126,6 +125,33 @@ uint32_t calibrate_lapic_ticks_per_ms(uint64_t pm_addr, bool is32, bool isMMIO) 
 }
 
 
+/**
+ * get the ticks per ms for the lapic timer
+ * independent of the system (MMIO or IO) - Space
+ */
+uint32_t lapic_ticks_per_ms() {
+
+    // check if the X_PMTimerBlock is accessible
+    if (!FADT.FullLength) {
+        if (FADT.PMTimerBlock == 0)     // check for a null port
+            return 0;
+        //Iprintf("CALIBRATING: IO-PORT(%x) -> ACPIV1, 32BIT: %i\n", FADT.PMTimerBlock, (FADT.Flags >> 8) & 0x1);
+        return calibrate_lapic_ticks_per_ms((uint16_t) FADT.PMTimerBlock, (FADT.Flags >> 8) & 0x1, false);
+    }
+    if (FADT.X_PMTimerBlock.Address == 0)
+        return 0;
+
+    GenericAddressStructure x_timer = FADT.X_PMTimerBlock;
+    if (x_timer.AddressSpace == ADDR_SPACE_IO) {
+        return calibrate_lapic_ticks_per_ms((uint16_t) x_timer.Address,(FADT.Flags >> 8) & 0x1, false);
+    }
+
+    // MMIO mapped space so (ig we first map)
+    map_mmio(x_timer.Address, DEFAULT_PAGE_SIZE, WRITEABLE | CACHE_DISABLED);
+    return calibrate_lapic_ticks_per_ms(MMIO_PHYS_TO_VIRT(x_timer.Address), (FADT.Flags >> 8) & 0x1, true);
+}
+
+
 
 /**
  *  initializes the APIC by:
@@ -133,7 +159,7 @@ uint32_t calibrate_lapic_ticks_per_ms(uint64_t pm_addr, bool is32, bool isMMIO) 
  *      - writing to Spurious int vec
  * currently is a strange mix between x1 & x2
  * I might migrate later???
- */
+ **/
 int enable_apic() {
     /* Section 11.4.1 of 3rd volume of Intel SDM recommends mapping the base address page as strong uncacheable for correct APIC operation. */
 
@@ -146,25 +172,8 @@ int enable_apic() {
     *(uint32_t *) (apic + SPURIOUS_INT_VEC) = (1 << 8) | 0xFF;
     LAPIC_ADDR = apic;
 
-    // check if the X_PMTimerBlock is accessible
-    if (!FADT.FullLength) {
-        if (FADT.PMTimerBlock == 0)     // check for a null port
-            return -1;
-        //Iprintf("CALIBRATING: IO-PORT(%x) -> ACPIV1, 32BIT: %i\n", FADT.PMTimerBlock, (FADT.Flags >> 8) & 0x1);
-        calibrate_lapic_ticks_per_ms((uint16_t) FADT.PMTimerBlock, (FADT.Flags >> 8) & 0x1, false);
-        return 0;
-    }
-    if (FADT.X_PMTimerBlock.Address == 0)
+    LAPIC_TICKS_PER_MS = lapic_ticks_per_ms();
+    if (!LAPIC_TICKS_PER_MS)
         return -1;
-
-    GenericAddressStructure x_timer = FADT.X_PMTimerBlock;
-    if (x_timer.AddressSpace == ADDR_SPACE_IO) {
-        calibrate_lapic_ticks_per_ms((uint16_t) x_timer.Address,(FADT.Flags >> 8) & 0x1, false);
-        return 0;
-    }
-
-    // MMIO mapped space so (ig we first map)
-    map_mmio(x_timer.Address, DEFAULT_PAGE_SIZE, WRITEABLE | CACHE_DISABLED);
-    calibrate_lapic_ticks_per_ms(MMIO_PHYS_TO_VIRT(x_timer.Address), (FADT.Flags >> 8) & 0x1, true);
     return 0;
 }

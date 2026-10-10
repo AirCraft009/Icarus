@@ -126,6 +126,7 @@ typedef struct ACPI_APIC {
 
 // apic type 0
 typedef struct {
+    apic_tag_common head;
     uint8_t ACPI_proc_id;
     uint8_t APIC_id;
     uint32_t flags;
@@ -133,6 +134,7 @@ typedef struct {
 
 // apic type 1
 typedef struct {
+    apic_tag_common head;
     uint8_t ACPI_IO_id;
     uint8_t reserved;
     uint32_t IO_apic_id;
@@ -141,6 +143,7 @@ typedef struct {
 
 // apic type 2
 typedef struct {
+    apic_tag_common head;
     uint8_t bus_source;
     uint8_t IRQ_source;
     uint32_t GSI;
@@ -149,6 +152,7 @@ typedef struct {
 
 // apic type 3
 typedef struct {
+    apic_tag_common head;
     uint8_t NMI_source;
     uint8_t reserved;
     apic_flags flags;
@@ -157,6 +161,7 @@ typedef struct {
 
 // apic type 4
 typedef struct {
+    apic_tag_common head;
     uint8_t ACPI_proc_id;       // 0xFF is all processors
     apic_flags flags;
     uint8_t LINT;               //Local Interrupt Pin  (0 or 1)
@@ -164,12 +169,14 @@ typedef struct {
 
 // apic type 5
 typedef struct {
+    apic_tag_common head;
     uint16_t reserved;
     uint64_t LAPIC_addr;
 }__attribute__((packed)) apic_tag_type5;
 
 // apic type 9
 typedef struct {
+    apic_tag_common head;
     uint16_t Reserved;
     uint32_t x2_LAPIC_id;
     uint32_t flags;

@@ -23,6 +23,7 @@ typedef struct {
 
 
 extern void *LAPIC_ADDR;
+extern uint32_t LAPIC_TICKS_PER_MS;
 
 int enable_apic();
 void lapic_write(uint32_t reg_offset, uint32_t value);

@@ -58,8 +58,8 @@ void kmain(uint32_t magic, struct multiboot_info *mboot) {
     for (int i = 0; i < APIC_INFO->iso_count; ++i) {
         Iprintf("wiring: (%x - > %x)\n", APIC_INFO->isos[i].gsi, APIC_INFO->isos[i].source_irq);
     }
-    while (1) {
-        Iprintf("\rTIMER: (%x)", lapic_read(0x390));
-    }
+
+    while (1)
+        ;
 }
 //235372403 = 256809072
