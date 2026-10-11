@@ -42,7 +42,7 @@ uint64_t handle_MADT(struct ACPISDTHeader *header) {
 
     size_t total = sizeof(madt_info)
                  + n_cpu  * sizeof(cpu_info)
-                 + n_io   * sizeof(ioapic_info)
+                 + n_io   * sizeof(ioapic_conf)
                  + n_iso  * sizeof(iso_info)
                  + n_nmi  * sizeof(nmi_info)
                  + n_lnmi * sizeof(lapic_nmi_info);
@@ -55,7 +55,7 @@ uint64_t handle_MADT(struct ACPISDTHeader *header) {
 
     uint8_t *cur = (uint8_t *)(info + 1);
     info->cpus       = (cpu_info *)cur;       cur += n_cpu  * sizeof(cpu_info);
-    info->ioapics    = (ioapic_info *)cur;    cur += n_io   * sizeof(ioapic_info);
+    info->ioapics    = (ioapic_conf *)cur;    cur += n_io   * sizeof(ioapic_conf);
     info->isos       = (iso_info *)cur;       cur += n_iso  * sizeof(iso_info);
     info->nmis       = (nmi_info *)cur;       cur += n_nmi  * sizeof(nmi_info);
     info->lapic_nmis = (lapic_nmi_info *)cur;
@@ -77,7 +77,7 @@ uint64_t handle_MADT(struct ACPISDTHeader *header) {
             }
             case 1: {
                 apic_tag_type1 *r = (apic_tag_type1 *)p;
-                ioapic_info *io = &info->ioapics[info->ioapic_count++];
+                ioapic_conf *io = &info->ioapics[info->ioapic_count++];
                 io->id = r->ACPI_IO_id; io->addr = r->IO_apic_id; io->gsi_base = r->GSIB;
                 break;
             }

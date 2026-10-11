@@ -27,13 +27,16 @@
 #define IO_APIC_MODERN 0x20
 #define IO_REG_SEL 0x0
 #define IO_WIN 0x10
+#define IOAPICID 0x0
 #define IOAPICVER 0x1
-#define REDIR_ENTR_COUNT 16
+#define IOAPIC_REDIR_ENTR_COUNT_SHIFT 16
+#define IOAPICID_SHIFT 24
+#define IOAPIC_RELOC_BASE_INDEX 0x10
 #define PM_TIMER_HZ 3579545
 
 
 void *LAPIC_ADDR;
-io_apic_descriptor * io_apic_infos;
+ioapic_descriptor * ioapic_infos;
 uint32_t LAPIC_TICKS_PER_MS;
 
 /* Set the physical address for local APIC registers */
@@ -79,23 +82,37 @@ void lapic_write(uint32_t reg_offset, uint32_t value) {
 }
 
 void ioapic_write(uintptr_t base, uint8_t reg, uint32_t val) {
-    *(volatile uint32_t*)(base + IO_REG_SEL) = reg;   // select register
-    *(volatile uint32_t*)(base + IO_WIN) = val;   // write value
+    *(volatile uint32_t*)(base + IO_REG_SEL) = reg;     // select register
+    *(volatile uint32_t*)(base + IO_WIN) = val;         // write value
 }
 
-uint32_t ioapic_read(uintptr_t base, uint8_t reg) {
-    *(volatile uint32_t*)(base + IO_REG_SEL) = reg;   // select register
-    return *(volatile uint32_t*)(base + IO_WIN);   // write value
+uint32_t ioapic_read(const uintptr_t base, const uint8_t reg) {
+    *(volatile uint32_t*)(base + IO_REG_SEL) = reg;     // select register
+    return *(volatile uint32_t*)(base + IO_WIN);
 }
 
 /**
  *  Route I/O APIC pin 'pin' to core 'apic_id' with vector 'vec'
+ *  everything not included is zeroed
  **/
 void ioapic_route(uintptr_t base, int pin, uint8_t vec, uint8_t apic_id,
                   bool active_low, bool level) {
-    uint32_t low = vec | (active_low << 13) | (level << 15);  // unmasked
-    ioapic_write(base, 0x11 + 2*pin, (uint32_t)apic_id << 24);  // high half first
-    ioapic_write(base, 0x10 + 2*pin, low);                      // low half last
+    uint32_t low = vec | (active_low << 13) | (level << 15);                                      // unmasked
+    ioapic_write(base, (IOAPIC_RELOC_BASE_INDEX + 1) + 2*pin, (uint32_t)apic_id << 24);   // high half first
+    ioapic_write(base, IOAPIC_RELOC_BASE_INDEX + 2*pin, low);                                 // low half last
+}
+
+/**
+ *
+ * Route or change anything for a specific pin
+ *
+ * @param base the base addr of the ioapic to addr
+ * @param pin the pin to edit
+ * @param redir the redirection_entry
+ */
+void ioapic_set(uintptr_t base, int pin, ioapic_redirection_entry_t redir) {
+    ioapic_write(base, (IOAPIC_RELOC_BASE_INDEX + 1) + 2*pin, redir.high_w);    // high half first
+    ioapic_write(base, IOAPIC_RELOC_BASE_INDEX + 2*pin, redir.low_w);           // low half last
 }
 
 
@@ -191,19 +208,36 @@ int enable_apic() {
 }
 
 
-uint32_t enable_io_apic(uint64_t io_apic_addr, io_apic_info *info) {
+uint32_t enable_io_apic(uint64_t ioapic_addr, ioapic_info *info) {
 
-    info->base_address = io_apic_addr;
-    info->redirection_count = (ioapic_read(io_apic_addr, IOAPICVER) >> REDIR_ENTR_COUNT & 0xFF) -1;
+    info->base_address = ioapic_addr;
+    info->redirection_count = (ioapic_read(ioapic_addr, IOAPICVER) >> IOAPIC_REDIR_ENTR_COUNT_SHIFT & 0xFF) + 1;
+    //version are bits 0 ... 7
+    info->ioapic_version = (ioapic_read(ioapic_addr, IOAPICVER) & 0xFF);
+    info->ioapic_id = (ioapic_read(ioapic_addr, IOAPICID) >> IOAPICID_SHIFT & 0xF);
+    info->total_size = sizeof(ioapic_info) + sizeof(ioapic_redirection_entry_t) * info->redirection_count;
 
-    return info->redirection_count * sizeof(io_apic_redirection_entry_t);
+    int reloc_reg = IOAPIC_RELOC_BASE_INDEX;
+    for (int i = 0; i < info->redirection_count; ++i) {
+        //read vals first bc apparently C doesn't enforce order in struct assigment
+        uint32_t low = ioapic_read(ioapic_addr, reloc_reg++);
+        uint32_t high = ioapic_read(ioapic_addr, reloc_reg++);
+
+        info->redirection_table[i] = (ioapic_redirection_entry_t)
+        {
+            .low_w = low,
+            .high_w = high
+        };
+    }
+
+    return info->total_size;
 }
 
 /**
  * enable all io_apics of the system
  */
 int enable_io_apics() {
-    uint64_t total_size = sizeof(io_apic_infos) * APIC_INFO->ioapic_count;
+    uint64_t total_size = sizeof(ioapic_info) * APIC_INFO->ioapic_count;
 
 
     for (int i = 0; i < APIC_INFO->ioapic_count; ++i) {
@@ -212,16 +246,16 @@ int enable_io_apics() {
         total_size +=
             ((ioapic_read(
                 MMIO_PHYS_TO_VIRT(APIC_INFO->ioapics[i].addr),
-                IOAPICVER) >> REDIR_ENTR_COUNT & 0xFF) -1)
-            * sizeof(io_apic_redirection_entry_t);
+                IOAPICVER) >> IOAPIC_REDIR_ENTR_COUNT_SHIFT & 0xFF) -1)
+            * sizeof(ioapic_redirection_entry_t);
     }
 
-    io_apic_infos = (io_apic_descriptor *) Imalloc(sizeof(io_apic_descriptor) + total_size);
+    ioapic_infos = (ioapic_descriptor *) Imalloc(sizeof(ioapic_descriptor) + total_size);
 
-    io_apic_info * info = io_apic_infos->apics;
+    ioapic_info * info = ioapic_infos->apics;
     for (int i = 0; i < APIC_INFO->ioapic_count; ++i) {
         uint32_t info_size = enable_io_apic(MMIO_PHYS_TO_VIRT(APIC_INFO->ioapics[i].addr), info);
-        info = (io_apic_info *)((uint8_t *) info + info_size);
+        info = (ioapic_info *)((uint8_t *) info + info_size);
     }
     return 0;
 }

@@ -57,9 +57,9 @@ void kmain(uint32_t magic, struct multiboot_info *mboot) {
 
     Iprintf("Ticks per Ms: (%i)", LAPIC_TICKS_PER_MS);
     __asm__ volatile ("sti");
-    lapic_write(LAPIC_TIMER_INITCNT, 0x0);
-    lapic_write(LAPIC_LVT_TIMER, 32 | LAPIC_TIMER_PERIODIC);
-    lapic_write(LAPIC_TIMER_INITCNT, LAPIC_TICKS_PER_MS * 500);
+    // lapic_write(LAPIC_TIMER_INITCNT, 0x0);
+    // lapic_write(LAPIC_LVT_TIMER, 32 | LAPIC_TIMER_PERIODIC);
+    // lapic_write(LAPIC_TIMER_INITCNT, LAPIC_TICKS_PER_MS * 500);
     while (1)
         ;
 }

@@ -27,6 +27,10 @@
  */
 typedef union IOAPICRedirectionEntry{
     struct __attribute__((packed)) {
+        uint32_t low_w;
+        uint32_t high_w;
+    };
+    struct __attribute__((packed)) {
         struct __attribute__((packed))
         {
             uint32_t vector       : 8;
@@ -45,26 +49,23 @@ typedef union IOAPICRedirectionEntry{
             uint32_t destination  : 8;
         };
     };
-    struct __attribute__((packed)) {
-        uint32_t low_w;
-        uint32_t high_w;
-    };
-}__attribute__((packed)) io_apic_redirection_entry_t;
+}__attribute__((packed)) ioapic_redirection_entry_t;
 
 typedef struct {
     uint64_t base_address;
-    uint8_t io_apic_id;
-    uint8_t io_apic_version;
+    uint32_t total_size;
+    uint8_t ioapic_id;
+    uint8_t ioapic_version;
     uint8_t redirection_count;      // how many entries can this ioApic hold
-    io_apic_redirection_entry_t redirection_table[];
-} io_apic_info;
+    ioapic_redirection_entry_t redirection_table[];
+} ioapic_info;
 
 typedef struct {
     uint64_t count;
-    io_apic_info apics[];
-} io_apic_descriptor;
+    ioapic_info apics[];
+} ioapic_descriptor;
 
-extern io_apic_descriptor * io_apic_infos;
+extern ioapic_descriptor * ioapic_infos;
 extern void *LAPIC_ADDR;
 extern uint32_t LAPIC_TICKS_PER_MS;
 

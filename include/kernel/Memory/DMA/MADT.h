@@ -12,7 +12,7 @@
 
 //flags bit0 = enabled, bit1 = can be enabled later ("online capable")
 typedef struct { uint8_t acpi_id, apic_id; uint32_t flags; } cpu_info;
-typedef struct { uint8_t id; uint32_t addr; uint32_t gsi_base; } ioapic_info;
+typedef struct { uint8_t id; uint32_t addr; uint32_t gsi_base; } ioapic_conf;
 typedef struct { uint8_t bus, source_irq; uint32_t gsi; apic_flags flags; } iso_info;
 typedef struct { uint32_t gsi; apic_flags flags; } nmi_info;
 // acpi_id 0xFF means "applies to all CPUs"
@@ -25,7 +25,7 @@ typedef struct madt_info {
 
     // These point into the same allocation, right after this struct
     cpu_info       *cpus;
-    ioapic_info    *ioapics;
+    ioapic_conf    *ioapics;
     iso_info       *isos;
     nmi_info       *nmis;
     lapic_nmi_info *lapic_nmis;
