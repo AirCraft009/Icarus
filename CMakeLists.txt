@@ -36,7 +36,7 @@ add_executable(Icarus_kernel
         src/kernel/Memory/alloc.c
         include/kernel/Memory/alloc.h
         include/kernel/util/font.h
-        src/kernel/Drivers/USB3.c
+        src/kernel/Drivers/USB/USB3.c
         include/kernel/Drivers/USB3.h
         src/kernel/Memory/DMA/ACPI/ACPI.c
         include/kernel/Memory/DMA/ACPI.h
@@ -52,6 +52,8 @@ add_executable(Icarus_kernel
         include/kernel/Memory/DMA/PCIE.h
         src/kernel/Memory/DMA/ACPI/MADT.c
         include/kernel/Memory/DMA/MADT.h
+        src/kernel/Drivers/PS2/PS2_Keyboard.c
+        src/kernel/Drivers/PS2/PS2_Keyboard.h
 )
 
 target_include_directories(Icarus_kernel PRIVATE include
