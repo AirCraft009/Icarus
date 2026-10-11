@@ -10,6 +10,7 @@
 #include "kernel/util/shellio.h"
 #include "../../include/kernel/Memory/memory_mapping.h"
 #include "kernel/Drivers/PS2/PS2_Controller.h"
+#include "kernel/Drivers/PS2/PS2_Keyboard.h"
 #include "kernel/util/multiboot2.h"
 #include "kernel/util/cpuid_helpers.h"
 #include "kernel/Memory/alloc.h"
@@ -64,6 +65,7 @@ void kmain(uint32_t magic, struct multiboot_info *mboot) {
     // lapic_write(LAPIC_LVT_TIMER, 32 | LAPIC_TIMER_PERIODIC);
     // lapic_write(LAPIC_TIMER_INITCNT, LAPIC_TICKS_PER_MS * 500);
 
+    init_keyboard_ps2();
 
     //TODO: build a table to hold all important subtables and system_statistics
     while (1)

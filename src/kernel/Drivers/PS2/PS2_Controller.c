@@ -98,7 +98,7 @@ void flush_out_buff() {
 /**
  *
  */
-static int ps2_read_timeout() {
+int ps2_read_timeout() {
     for (int i = 0; i < PS2_TIMEOUT; i++)
         if (inportb(PS2_STATUS_REG) & 1)
             return inportb(PS2_DATA_PORT);
@@ -199,6 +199,8 @@ int init_ps2_controller() {
         conf_byte |= 1 << 1;
     }
     write_ps2_2bcommand(0x60 | (uint16_t) conf_byte << 8);
+
+    flush_out_buff();
 
     // reset devices
     if (port1_ok) {

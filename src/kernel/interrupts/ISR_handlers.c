@@ -3,6 +3,8 @@
 //
 #include <stdint.h>
 
+#include "kernel/Drivers/PS2/PS2_Controller.h"
+#include "kernel/Drivers/PS2/PS2_Keyboard.h"
 #include "kernel/interrupts/APIC.h"
 #include "kernel/util/shellio.h"
 
@@ -69,11 +71,16 @@ void timer_interrupt_handler(struct interrupt_frame *frame) {
     lapic_write(LAPIC_EOI, 0);
 }
 
+void keyboard_interrupt_handler(struct interrupt_frame *frame) {
+    Iprintf("\r%c", kbd_translate(ps2_read_timeout()));
+    lapic_write(LAPIC_EOI, 0);
+}
+
 void c_isr(
     struct interrupt_frame *frame
 )
 {
-    Iprintf("Registered w/ fault handler: %x\n", frame->vector);
+    //Iprintf("Registered w/ fault handler: %x\n", frame->vector);
     switch (frame->vector) {
         case 0:
             // Divide error
@@ -99,6 +106,10 @@ void c_isr(
         case 32:
             // Timer IRQ
             timer_interrupt_handler(frame);
+            break;
+
+        case 33:
+            keyboard_interrupt_handler(frame);
             break;
 
         default:

@@ -71,6 +71,8 @@ extern uint32_t LAPIC_TICKS_PER_MS;
 
 int enable_apic();
 int enable_io_apics();
+void ioapic_route(uintptr_t base, int pin, uint8_t vec, uint8_t apic_id, bool active_low, bool level);
+void ioapic_set(uintptr_t base, int pin, ioapic_redirection_entry_t redir);
 void lapic_write(uint32_t reg_offset, uint32_t value);
 uint32_t lapic_read(uint32_t reg_offset);
 
