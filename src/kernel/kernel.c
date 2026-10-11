@@ -9,6 +9,7 @@
 #include "kernel/util/mem_utils.h"
 #include "kernel/util/shellio.h"
 #include "../../include/kernel/Memory/memory_mapping.h"
+#include "kernel/Drivers/PS2/PS2_Controller.h"
 #include "kernel/util/multiboot2.h"
 #include "kernel/util/cpuid_helpers.h"
 #include "kernel/Memory/alloc.h"
@@ -47,19 +48,24 @@ void kmain(uint32_t magic, struct multiboot_info *mboot) {
 
     handle_ACPI();
 
+
     Iprintf("---------------MODEL-----------------\n");
     Iprintf("%s\n", init_cpuid());
     enable_apic();
     enable_io_apics();
     Iprintf("set up APIC\n");
-    //__asm__ volatile ("sti");
-    // cons_mprintf("KERNEL ENDING");
+
+    if (init_ps2_controller() != 0)
+        Iprintf("The PS2 Controller doesn't work\n");
 
     Iprintf("Ticks per Ms: (%i)", LAPIC_TICKS_PER_MS);
     __asm__ volatile ("sti");
     // lapic_write(LAPIC_TIMER_INITCNT, 0x0);
     // lapic_write(LAPIC_LVT_TIMER, 32 | LAPIC_TIMER_PERIODIC);
     // lapic_write(LAPIC_TIMER_INITCNT, LAPIC_TICKS_PER_MS * 500);
+
+
+    //TODO: build a table to hold all important subtables and system_statistics
     while (1)
         ;
 }
