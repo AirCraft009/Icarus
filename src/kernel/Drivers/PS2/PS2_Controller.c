@@ -24,7 +24,7 @@
 #define PS2_STATUS_PARITY_ERR   7
 
 #define PS2_TIMEOUT 100000
-PS2_info_t ps2_info;
+PS2_info_t ps2_info = {0};
 
 /**
  * write a single byte command to the ps2 controller (not device)
@@ -99,14 +99,14 @@ void flush_out_buff() {
  *
  */
 static int ps2_read_timeout() {
-    for (int i = 0; i < 100000; i++)
+    for (int i = 0; i < PS2_TIMEOUT; i++)
         if (inportb(PS2_STATUS_REG) & 1)
             return inportb(PS2_DATA_PORT);
     return -1;
 }
 
 static int ps2_write_timeout(uint8_t b) {
-    for (int i = 0; i < 100000; i++)
+    for (int i = 0; i < PS2_TIMEOUT; i++)
         if (!(inportb(PS2_STATUS_REG) & 2)) {
             outportb(PS2_DATA_PORT, b);
             return 0;
@@ -209,6 +209,11 @@ int init_ps2_controller() {
         int r = ps2_reset_dev(2);
         if (r != 0) port2_ok = 0;
     }
+
+    ps2_info.config = conf_byte;
+    ps2_info.enabled = true;
+    ps2_info.exists = true;
+    ps2_info.is_dual_channel = dual;
 
     return 0;
 }
