@@ -97,6 +97,8 @@ uint32_t ioapic_read(const uintptr_t base, const uint8_t reg) {
  **/
 void ioapic_route(uintptr_t base, int pin, uint8_t vec, uint8_t apic_id,
                   bool active_low, bool level) {
+
+    //TODO: update shared state
     uint32_t low = vec | (active_low << 13) | (level << 15);                                      // unmasked
     ioapic_write(base, (IOAPIC_RELOC_BASE_INDEX + 1) + 2*pin, (uint32_t)apic_id << 24);   // high half first
     ioapic_write(base, IOAPIC_RELOC_BASE_INDEX + 2*pin, low);                                 // low half last
@@ -111,6 +113,7 @@ void ioapic_route(uintptr_t base, int pin, uint8_t vec, uint8_t apic_id,
  * @param redir the redirection_entry
  */
 void ioapic_set(uintptr_t base, int pin, ioapic_redirection_entry_t redir) {
+    //TODO: update shared state
     ioapic_write(base, (IOAPIC_RELOC_BASE_INDEX + 1) + 2*pin, redir.high_w);    // high half first
     ioapic_write(base, IOAPIC_RELOC_BASE_INDEX + 2*pin, redir.low_w);           // low half last
 }
