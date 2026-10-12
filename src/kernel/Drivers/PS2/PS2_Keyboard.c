@@ -7,6 +7,7 @@
 #include "kernel/Drivers/PS2/PS2_Controller.h"
 #include "kernel/interrupts/APIC.h"
 #include "./PS2_Scancode.h"
+#include "kernel/util/shellio.h"
 
 typedef struct {
     bool shift;
@@ -23,7 +24,7 @@ static ps2_kb_state ps2_state = {0};
  * takes shift, caps, and extended (arrows, right ctrl etc.)
  */
 char kbd_translate(uint8_t sc) {
-    //Iprintf("sc: %x\n", sc);
+    //Iprintf("sc: %x", sc);
     if (sc == 0xE0) {
         ps2_state.extended = true;
         return 0;
@@ -42,12 +43,13 @@ char kbd_translate(uint8_t sc) {
     bool release = ps2_state.release;
     ps2_state.release = false;
 
-    if (sc == 0x2A || sc == 0x36) {
+    if (sc == 0x12 || sc == 0x59) {
         ps2_state.shift = !release;
+        //Iprintf("SHIFTY: %i", ps2_state.shift);
         return 0;
     }
 
-    if (sc == 0x3A && release)  {
+    if (sc == 0x58 && release)  {
         ps2_state.caps = ! ps2_state.caps;
         return 0;
     }
