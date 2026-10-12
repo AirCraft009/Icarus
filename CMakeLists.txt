@@ -57,6 +57,10 @@ add_executable(Icarus_kernel
         src/kernel/Drivers/PS2/PS2_Controller.c
         include/kernel/Drivers/PS2/PS2_Controller.h
         src/kernel/Drivers/PS2/PS2_Scancode.h
+        include/kernel/Processes/process_control_block.h
+        include/kernel/util/cpu_regs.h
+        src/kernel/Processes/Scheduling/scheduler.c
+        src/kernel/Processes/Scheduling/scheduler.h
 )
 
 target_include_directories(Icarus_kernel PRIVATE include

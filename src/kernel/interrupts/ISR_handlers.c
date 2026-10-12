@@ -7,13 +7,13 @@
 #include "kernel/Drivers/PS2/PS2_Keyboard.h"
 #include "kernel/interrupts/APIC.h"
 #include "kernel/util/shellio.h"
+#include "kernel/util/cpu_regs.h"
 
 
 struct interrupt_frame {
     // pushed by isr_common
     uint64_t cr4, cr3, cr2;                       // faulting address (valid on #PF)
-    uint64_t r15, r14, r13, r12, r11, r10, r9, r8;
-    uint64_t rbp, rdi, rsi, rdx, rcx, rbx, rax;
+    cpu_reg_frame gpo_regs;
     // pushed by the stub
     uint64_t vector;
     uint64_t error_code;                // 0 if the CPU didn't push one
@@ -38,7 +38,7 @@ void page_fault_handler(struct interrupt_frame *frame){
 }
 
 void general_protection_fault_handler(struct interrupt_frame *frame){
-    Iprintf( "#General Fault detected\nsegment: (%i)\nerror: (%i)\nRAX (%x)\nCR2 (%x)\nCR3: (%x)\nCR4: (%x)", frame->ss, frame->error_code, frame->rax, frame->cr2, frame->cr3, frame->cr4);
+    Iprintf( "#General Fault detected\nsegment: (%i)\nerror: (%i)\nRAX (%x)\nCR2 (%x)\nCR3: (%x)\nCR4: (%x)", frame->ss, frame->error_code, frame->gpo_regs.rax, frame->cr2, frame->cr3, frame->cr4);
 
     uint8_t * instruction_data = (uint8_t*)frame->rip;
     Iprintf("rip: b1=%x,b2=%x,b3=%x\n", instruction_data[0],instruction_data[1],instruction_data[2]);
