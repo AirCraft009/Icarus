@@ -72,7 +72,9 @@ void timer_interrupt_handler(struct interrupt_frame *frame) {
 }
 
 void keyboard_interrupt_handler(struct interrupt_frame *frame) {
-    Iprintf("\r%c", kbd_translate(ps2_read_timeout()));
+    char c = kbd_translate(ps2_read_timeout());
+    if (c != 0)
+        Iprintf("%c",c);
     lapic_write(LAPIC_EOI, 0);
 }
 

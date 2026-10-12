@@ -56,6 +56,7 @@ add_executable(Icarus_kernel
         include/kernel/Drivers/PS2/PS2_Keyboard.h
         src/kernel/Drivers/PS2/PS2_Controller.c
         include/kernel/Drivers/PS2/PS2_Controller.h
+        src/kernel/Drivers/PS2/PS2_Scancode.h
 )
 
 target_include_directories(Icarus_kernel PRIVATE include
