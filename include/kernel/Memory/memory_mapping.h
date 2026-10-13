@@ -10,6 +10,16 @@
 #define PAGE_S 4096
 #define HUGE_PS 2097152
 #define SUPER_PS 1073741824
+
+typedef enum {
+    DEFAULT_PAGE,
+    HUGE_PAGE,
+    SUPER_PAGE,
+} PAGE_SIZES;
+
+#define PAGE_TYPE_TO_SIZE (type) ((type == SUPER_PAGE) ? SUPER_PS : (type == HUGE_PAGE) ? HUGE_PAGE : DEFAULT_PAGE)
+
+
 #define VA_INDEX_MASK        0x1FFULL   /* 9 bits per level */
 
 #define VA_PML4_INDEX(va)    ((((uint64_t)(va)) >> 39) & VA_INDEX_MASK)

@@ -17,11 +17,13 @@ typedef enum {
     PROCESS_TERMINATED
 } process_state_t;
 
+typedef uint64_t PID_t;
+
 
 typedef struct PROCESS_CONTROL_BLOCK {
-    uint32_t pid;                   // Process ID
-    uint32_t parent_pid;            // Parent Process ID
-    cpu_reg_frame registers;         // Saved CPU registers for context switching
+    PID_t pid;                   // Process ID
+    PID_t parent_pid;            // Parent Process ID
+    cpu_reg_frame registers;     // Saved CPU registers for context switching
     process_state_t state;             // Current state of the process
     uint8_t priority;               // Scheduling priority
 
