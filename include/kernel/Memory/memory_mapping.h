@@ -17,7 +17,7 @@ typedef enum {
     SUPER_PAGE,
 } PAGE_SIZES;
 
-#define PAGE_TYPE_TO_SIZE (type) ((type == SUPER_PAGE) ? SUPER_PS : (type == HUGE_PAGE) ? HUGE_PAGE : DEFAULT_PAGE)
+#define PAGE_TYPE_TO_SIZE(type) ((type == SUPER_PAGE) ? SUPER_PS : (type == HUGE_PAGE) ? HUGE_PS : PAGE_S)
 
 
 #define VA_INDEX_MASK        0x1FFULL   /* 9 bits per level */

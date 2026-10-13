@@ -9,6 +9,7 @@
 #include <stddef.h>
 
 #include "kernel_helper.h"
+#include "kernel/Memory/memory_mapping.h"
 #include "kernel/util/BitMap.h"
 #include "kernel/util/mem_utils.h"
 #include "kernel/util/shellio.h"
@@ -109,15 +110,18 @@ void show_mem_map(mem_map *mmap, bool verbose) {
  * allocate count frames
  *
  * @param count amount of pages allocated < 512
- * @param page_size size of each allocated page
+ * @param page_type size of each allocated page
  * @return NULL on fail
  */
-struct_page_t *ialloc_frames(uint64_t count, uint64_t page_size) {
+struct_page_t *ialloc_frames(uint64_t count, uint64_t page_type) {
     //TODO: make structpage a linkedlist so that arbitrary amount of pages can be allocated
     if (count > 510)        // rn this bc the struct_page only has space for 510 entries  (will build a linked list later)
         return (struct_page_t *) FRAME_ALLOC_FAILED;
+
+    uint64_t page_size = PAGE_TYPE_TO_SIZE(page_type);
+    Iprintf("page: %x\n", page_size);
     mem_map * mmap = (mem_map *) &_kernel_end;
-    struct_page_t *info_page = (struct_page_t *) KERNEL_PHYS_TO_VIRT(map_alloc_kframe(mmap, page_size));
+    struct_page_t *info_page = (struct_page_t *) KERNEL_PHYS_TO_VIRT(map_alloc_kframe(mmap,  page_size));
     info_page->page_count = count;
     info_page->page_addr[0] = (phys_addr_t) KERNEL_VIRT_TO_PHYS(info_page);
     info_page->page_size = page_size;

@@ -20,7 +20,7 @@
 extern uint64_t *gdt_descriptor;
 
 
-static page_map_l4_entry Kernel_PML4_TABLE[512] __attribute__((aligned(4096)));
+static page_map_l4_entry Kernel_PML4_TABLE[512] __attribute__((aligned(4096))) = {0};
 static alloc_t * allocator;
 
 
