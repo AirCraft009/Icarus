@@ -4,14 +4,56 @@
 
 #include "scheduler.h"
 
+#include <stddef.h>
+
 #include "kernel/Processes/processes.h"
 
-// holds the pcb currently being switched to
-tcb_t *cur_pcb;
-// holds the pcb that is last in the waiting queue
-tcb_t *last_pcb;
+// holds the tcb currently at the top of the queue
+tcb_t *top_tcb;
+// holds the tcb that is last in the waiting queue
+tcb_t *last_tcb;
 
 
+/**
+ * returns the next thread in the queue.
+ * modifies state of
+ * - top & last_tcb
+ * - entries around selection
+ */
+tcb_t * scheduler_pick_next_thread() {
+    tcb_t *active_tcb = top_tcb;
+    tcb_t *pointing_tcb = NULL;                  // tcb preceding active_tcb
 
+    while (active_tcb) {
+        if (active_tcb->active_priority != 0) {
+            --active_tcb->active_priority;             // sneaky speed??
+            pointing_tcb = active_tcb;
+            active_tcb = active_tcb->next;
+            continue;
+        }
+        if (active_tcb == top_tcb)
+            pointing_tcb = NULL;
+        goto selected_task;
+    }
+    // nothing found for 0 priority so choose first in queue
+    active_tcb = top_tcb;
+    pointing_tcb = NULL;            // no prev
+
+    selected_task:
+        active_tcb->active_priority = active_tcb->priority + 1;
+        active_tcb->state = PROCESS_RUNNING;
+
+        if (pointing_tcb == NULL)
+            top_tcb = active_tcb->next;
+        else
+            pointing_tcb->next = active_tcb->next;
+
+        // put it last in queue
+        last_tcb->next = active_tcb;
+        last_tcb = active_tcb;
+
+
+    return active_tcb;
+}
 
 
