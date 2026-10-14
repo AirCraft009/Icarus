@@ -1,7 +1,7 @@
 ## ICARUS
 
-An operating system made in one month \
-I hope the name is obvious enough
+A x64 operating system (Am I like that?)\
+I hope the name is obv enough
 
 ## dependencies
 
