@@ -19,6 +19,11 @@ typedef enum {
 
 typedef uint64_t PID_t;
 
+/**
+ * in virt addr space every tasks mem space starts at the same position
+ */
+#define PROCESS_VIRT_ADDR 0x0000000000400000
+
 
 typedef struct PROCESS_CONTROL_BLOCK {
     PID_t pid;                   // Process ID
@@ -29,7 +34,6 @@ typedef struct PROCESS_CONTROL_BLOCK {
 
     // Memory management information
     page_map_l4_entry *page_table;  // physical addr of pml4 table
-    virt_addr_t memory_base;        // Base address in memory
     uint64_t memory_limit;          // size of memory allocated
 
     // Accounting
