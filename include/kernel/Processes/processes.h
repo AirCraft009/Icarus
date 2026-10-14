@@ -10,7 +10,7 @@
 
 // Define possible process states
 typedef enum {
-    PROCESS_NEW,
+    PROCESS_NEW,        // signifies that the thread doesn't yet have any memory backing it
     PROCESS_READY,
     PROCESS_RUNNING,
     PROCESS_WAITING,
@@ -25,15 +25,16 @@ typedef uint64_t TID_t;
  */
 #define PROCESS_VIRT_ADDR 0x0000000000400000
 
-
-
 typedef struct THREAD_CONTROL_BLOCK {
     PID_t pid;                   // Process ID
     PID_t parent_pid;            // Parent Process ID
     TID_t tid;                   // thread ID
     cpu_reg_frame regsiters;
     process_state_t state;       // Current state of the process
+    uint16_t priority;           // constant priority
+    uint16_t active_priority;    // priority in the active switch cycle
     bool privileged;
+
 
     // Memory management information
     page_map_l4_entry *page_table;  // physical addr of pml4 table

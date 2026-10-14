@@ -107,7 +107,8 @@ void show_mem_map(mem_map *mmap, bool verbose) {
 
 
 /**
- * allocate count frames
+ * allocate frames.
+ * tries to allocate at least 1 frame even on 0 requested
  *
  * @param count amount of pages allocated < 512
  * @param page_type size of each allocated page
