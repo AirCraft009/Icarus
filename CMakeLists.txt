@@ -57,11 +57,11 @@ add_executable(Icarus_kernel
         src/kernel/Drivers/PS2/PS2_Controller.c
         include/kernel/Drivers/PS2/PS2_Controller.h
         src/kernel/Drivers/PS2/PS2_Scancode.h
-        include/kernel/Processes/process_control_block.h
+        include/kernel/Processes/processes.h
         include/kernel/util/cpu_regs.h
         src/kernel/Processes/Scheduling/scheduler.c
         src/kernel/Processes/Scheduling/scheduler.h
-        src/kernel/Processes/process_control_block.c
+        src/kernel/Processes/processes.c
         src/kernel/Memory/paging.c
         include/kernel/Memory/paging.h
 )

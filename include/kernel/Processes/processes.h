@@ -18,6 +18,7 @@ typedef enum {
 } process_state_t;
 
 typedef uint64_t PID_t;
+typedef uint64_t TID_t;
 
 /**
  * in virt addr space every tasks mem space starts at the same position
@@ -25,12 +26,14 @@ typedef uint64_t PID_t;
 #define PROCESS_VIRT_ADDR 0x0000000000400000
 
 
-typedef struct PROCESS_CONTROL_BLOCK {
+
+typedef struct THREAD_CONTROL_BLOCK {
     PID_t pid;                   // Process ID
     PID_t parent_pid;            // Parent Process ID
-    cpu_reg_frame registers;     // Saved CPU registers for context switching
-    process_state_t state;             // Current state of the process
-    uint8_t priority;               // Scheduling priority
+    TID_t tid;                   // thread ID
+    cpu_reg_frame regsiters;
+    process_state_t state;       // Current state of the process
+    bool privileged;
 
     // Memory management information
     page_map_l4_entry *page_table;  // physical addr of pml4 table
@@ -40,8 +43,8 @@ typedef struct PROCESS_CONTROL_BLOCK {
     uint64_t cpu_time_used;
     uint64_t arrival_time;     // Time process was created
 
-    // Pointer to link PCBs in a scheduler queue
-    struct PROCESS_CONTROL_BLOCK* next;
-} pcb_t;
+    // Pointer to link TCBs in a scheduler queue
+    struct THREAD_CONTROL_BLOCK* next;
+} tcb_t;
 
 #endif //ICARUS_PROCESS_CONTROL_BLOCK_H
