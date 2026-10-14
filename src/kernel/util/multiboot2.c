@@ -109,6 +109,7 @@ int handle_multiboot2 (uint32_t magic, boot_info *info, page_map_l4_entry *pml4)
 		return -1;
 	}
 
+
 	if (handle_mb2_mmap(mmap, pml4)) {
 		Iprintf("Error while parsing MB2 mmap tag and building physical mem alloc\n");
 		return -1;

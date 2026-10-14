@@ -75,9 +75,7 @@ typedef enum {
 #include "kernel/Memory/PMM/mem_map.h"
 
 int handle_mb2_mmap(struct multiboot_tag *mmap_tag, page_map_l4_entry *pml4);
-int page_in(page_map_l4_entry *pml4, const void *virt_addr, const void *phys_addr, uint64_t pageSize, uint64_t permissions);
 phys_addr_t test_walk_table(page_map_l4_entry *pml4, const phys_addr_t *virt_addr);
 
-void manual_map_test(page_map_l4_entry *pml4_raw);
 
 #endif //ICARUS_MEMORY_MAPPING_H

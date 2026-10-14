@@ -14,6 +14,7 @@
 #include "kernel/util/multiboot2.h"
 #include "kernel/util/cpuid_helpers.h"
 #include "kernel/Memory/alloc.h"
+#include "kernel/Memory/paging.h"
 #include "kernel/Memory/DMA/MADT.h"
 #include "kernel/Memory/PMM/mem_map.h"
 
@@ -36,6 +37,7 @@ void kmain(uint32_t magic, struct multiboot_info *mboot) {
     gdt_init();
     //parse the struct given to use from the multiboot2 header
     //init the bitmap for free memory
+    paging_init();
     if (handle_multiboot2(magic, mboot, &Kernel_PML4_TABLE[0]) != 0) {
         Iprintf("init_multiboot2 failed, error while parsing mulitboot2 struct\n");
         __asm__ volatile ("cli; hlt"); // Completely hangs the computer

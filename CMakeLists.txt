@@ -61,6 +61,9 @@ add_executable(Icarus_kernel
         include/kernel/util/cpu_regs.h
         src/kernel/Processes/Scheduling/scheduler.c
         src/kernel/Processes/Scheduling/scheduler.h
+        src/kernel/Processes/process_control_block.c
+        src/kernel/Memory/paging.c
+        include/kernel/Memory/paging.h
 )
 
 target_include_directories(Icarus_kernel PRIVATE include
