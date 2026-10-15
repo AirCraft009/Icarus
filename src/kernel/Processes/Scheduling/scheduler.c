@@ -8,6 +8,7 @@
 
 #include "kernel/interrupts/ISR.h"
 #include "kernel/Processes/thread.h"
+#include "kernel/util/mem_utils.h"
 
 extern void _set_registers(tcb_t *tcb);
 
@@ -70,6 +71,19 @@ tcb_t * scheduler_pick_next_thread() {
  */
 void context_switch(tcb_t *next_tcb, struct interrupt_frame *frame) {
     __asm volatile ("cli");
+    Imemccpy(
+        &running_tcb->regsiters,
+        &frame->gpo_regs,
+        sizeof(cpu_reg_frame)
+    );
+    Imemccpy(
+        (void *) &running_tcb->regsiters + sizeof(cpu_reg_frame),
+        &frame->cpu_regs,
+        sizeof(cpu_push_frame)
+        );
+
+    // change pml4 table
+    
     _set_registers(next_tcb);
     __asm volatile ("sti");
 }
