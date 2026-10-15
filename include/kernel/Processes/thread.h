@@ -9,7 +9,7 @@
 #include "kernel/util/cpu_regs.h"
 
 // Define possible process states
-typedef enum {
+typedef enum PROCESS_STATE {
     PROCESS_NEW,        // signifies that the thread doesn't yet have any memory backing it
     PROCESS_READY,
     PROCESS_RUNNING,
@@ -21,19 +21,33 @@ typedef uint64_t PID_t;
 typedef uint64_t TID_t;
 
 /**
- * in virt addr space every tasks mem space starts at the same position
+ * in virt addr space every tasks code segment starts at the same position
  */
-#define PROCESS_VIRT_ADDR 0x0000000000400000
+#define PROCESS_CODE_VIRT_ADDR 0x0000048000000000            // entry 9 in the pml4 table bc I is the 9th letter in the alphabet
+#define PROCESS_MAPPINGS_VIRT_ADDR 0x0000090000000000            // entry 18 in the pml4 table bc I is the 9th letter in the alphabet
+#define PROCESS_STACK_VIRT_ADDR 0x00007C8000000000
+
+typedef enum {
+    CODE,
+    MAPPING,
+    STACK,
+}ADDR_SUB_SPACE;
+
+#define SUB_SPACE_TO_ADDR(sub_space) ((sub_space == CODE)? PROCESS_CODE_VIRT_ADDR : (sub_space == MAPPING)? PROCESS_MAPPINGS_VIRT_ADDR : PROCESS_STACK_VIRT_ADDR)
+
 
 typedef struct THREAD_CONTROL_BLOCK {
     PID_t pid;                   // Process ID
     PID_t parent_pid;            // Parent Process ID
     TID_t tid;                   // thread ID
     cpu_reg_frame regsiters;
+    // _Atomic bc it is a flag for the scheduler
+    // e.g the transition from New -> Ready
     process_state_t state;       // Current state of the process
     uint16_t priority;           // constant priority
     uint16_t active_priority;    // priority in the active switch cycle
     bool privileged;
+
 
 
     // Memory management information
