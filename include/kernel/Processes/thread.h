@@ -40,7 +40,7 @@ typedef struct THREAD_CONTROL_BLOCK {
     PID_t pid;                   // Process ID
     PID_t parent_pid;            // Parent Process ID
     TID_t tid;                   // thread ID
-    cpu_reg_frame regsiters;
+    cpu_regs regsiters;
     // _Atomic bc it is a flag for the scheduler
     // e.g the transition from New -> Ready
     process_state_t state;       // Current state of the process

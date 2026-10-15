@@ -17,7 +17,7 @@ struct interrupt_frame {
     uint64_t vector;
     uint64_t error_code;                // 0 if the CPU didn't push one
     // pushed by the CPU
-    uint64_t rip, cs, rflags, rsp, ss;
+    cpu_push_frame cpu_regs;
 }__attribute__((packed));
 _Static_assert(sizeof(struct interrupt_frame) == 200, "asm/C frame mismatch");
 

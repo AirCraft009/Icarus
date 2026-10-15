@@ -12,4 +12,13 @@ typedef struct {
     uint64_t rbp, rdi, rsi, rdx, rcx, rbx, rax;
 } cpu_reg_frame;
 
+typedef struct {
+    uint64_t rip, cs, rflags, rsp, ss;
+} cpu_push_frame;
+
+typedef struct {
+    cpu_reg_frame gpo;
+    cpu_push_frame psp;
+}cpu_regs;
+
 #endif //ICARUS_CPU_REGS_H
