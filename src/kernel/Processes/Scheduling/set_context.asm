@@ -1,7 +1,10 @@
-global _set_registers
+global _switch_threads
 
-_set_registers:
-    ; edi has the ptr to the tcb struct
+_switch_threads:
+
+    ; set_registers
+    ;
+    ; rdi has the ptr to the tcb struct
     ; layout:
     ;
     ;typedef struct THREAD_CONTROL_BLOCK {
@@ -11,12 +14,22 @@ _set_registers:
     ;
     ;   ---- offset 24 ------->
     ;   uint64_t r15, r14, r13, r12, r11, r10, r9, r8;
+    ;   ---- offset 88 ------->
     ;   uint64_t rbp, rdi, rsi, rdx, rcx, rbx, rax;
+    ;   ---- offset 144 ------>
     ;   uint64_t rip, cs, rflags, rsp, ss;
     ;
     ;    additional info ...
     ;}
 
+    ; build the iretq frame straight from the TCB (push order: SS first, RIP last)
+    push qword [rdi + 176]       ; ss
+    push qword [rdi + 168]       ; rsp
+    push qword [rdi + 160]       ; rflags (IF must be set for user threads)
+    push qword [rdi + 152]       ; cs
+    push qword [rdi + 144]       ; rip
+
+    ; set registers to the value of last execution
     mov r15, qword [rdi + 24]
     mov r14, qword [rdi + 32]
     mov r13, qword [rdi + 40]
@@ -26,11 +39,17 @@ _set_registers:
     mov r9,  qword [rdi + 72]
     mov r8,  qword [rdi + 80]
     mov rbp, qword [rdi + 88]
-    mov rdi, qword [rdi + 96]
     mov rsi, qword [rdi + 104]
     mov rdx, qword [rdi + 112]
     mov rcx, qword [rdi + 120]
     mov rbx, qword [rdi + 128]
     mov rax, qword [rdi + 136]
-    ; ignore rip
+    mov rdi, qword [rdi + 96]           ; restore rdi last bc this destroys the ptr to tcb
+
+    ; now switch
+    iretq
+
+
+
+
 

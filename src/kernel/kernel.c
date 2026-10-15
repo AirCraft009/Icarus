@@ -24,6 +24,16 @@ extern uint64_t *gdt_descriptor;
 static page_map_l4_entry Kernel_PML4_TABLE[512] __attribute__((aligned(4096))) = {0};
 static alloc_t * allocator;
 
+// 20 bytes, position independent, no stack use
+static const uint8_t fill_vga[] = {
+    0xFC,                          // cld
+    0xBF, 0x00, 0x80, 0x0B, 0x00,  // mov edi, 0xB8000
+    0xB9, 0xE8, 0x03, 0x00, 0x00,  // mov ecx, 1000        (1000 dwords = 4000 bytes = 80x25x2)
+    0xB8, 0xFF, 0xFF, 0xFF, 0xFF,  // mov eax, 0xFFFFFFFF
+    0xF3, 0xAB,                    // rep stosd
+    0xEB, 0xEC                     // jmp -20 (back to cld, refills forever)
+};
+
 
 void kmain(uint32_t magic, struct multiboot_info *mboot) {
     cursor *cur = init_shellio("ICARUS\n");

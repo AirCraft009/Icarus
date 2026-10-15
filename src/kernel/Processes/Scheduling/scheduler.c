@@ -6,11 +6,13 @@
 
 #include <stddef.h>
 
+#include "kernel_helper.h"
 #include "kernel/interrupts/ISR.h"
+#include "kernel/Memory/alloc.h"
 #include "kernel/Processes/thread.h"
 #include "kernel/util/mem_utils.h"
 
-extern void _set_registers(tcb_t *tcb);
+extern void _switch_threads(tcb_t *tcb);
 
 // holds the tcb currently at the top of the queue
 tcb_t *top_tcb;
@@ -82,9 +84,12 @@ void context_switch(tcb_t *next_tcb, struct interrupt_frame *frame) {
         sizeof(cpu_push_frame)
         );
 
-    // change pml4 table
-    
-    _set_registers(next_tcb);
-    __asm volatile ("sti");
+    // change pml4 table (it still has the kernel mappings so the current code should stay fine)
+    write_cr3((uint64_t) next_tcb->page_table);
+    _switch_threads(next_tcb);
+}
+
+void scheduler_init() {
+    top_tcb = Imalloc(sizeof(tcb_t));
 }
 

@@ -33,6 +33,13 @@ tcb_t * create_thread(PID_t parent, bool is_priviledged, uint16_t priority) {
     tcb->pid = PID_GEN ++;
     tcb->parent_pid = parent;
 
+    // set the cpu registers
+    tcb->regsiters.psp.rflags = 0x202;              // default value bit 1 reserved always(1); bit 9 allow interrupts
+    tcb->regsiters.psp.rip = PROCESS_CODE_VIRT_ADDR;
+    tcb->regsiters.psp.rsp = PROCESS_CODE_VIRT_ADDR;
+    tcb->regsiters.psp.cs = is_priviledged? 0x08 : 0x23;
+    tcb->regsiters.psp.ss = is_priviledged? 0x10 : 0x1b;
+
     page_map_l4_entry * proc_pml4 = Imalloc(sizeof(page_map_l4_entry) * 512);
     // current pml4 js has the higher mapped kernel, by copying its zeroing lower and higher mapping the kernel
     page_map_l4_entry * cur_pml4 = (page_map_l4_entry *) read_cr3();
@@ -52,7 +59,7 @@ tcb_t * create_thread(PID_t parent, bool is_priviledged, uint16_t priority) {
  * doesn't change the state
  *
  * @param thread the tcb of the thread in question
- * @param permissions permission for mapped pages (user-accessible etc...)
+ * @param permissions permission for mapped pages (user access is defined by the type of thread)
  * @return 0 on success -1 if paging failed
  */
 int thread_supply_mem(tcb_t thread, ADDR_SUB_SPACE sub_space, struct_page_t * info_page, uint64_t permissions) {
@@ -62,7 +69,7 @@ int thread_supply_mem(tcb_t thread, ADDR_SUB_SPACE sub_space, struct_page_t * in
             (void *) (SUB_SPACE_TO_ADDR(sub_space) + thread.memory_limit),
             (void *) info_page->page_addr[i],
             info_page->page_size,
-            permissions
+            permissions | (thread.privileged << USER_ACCESS_SHIFT)
         ) != 0)
             return -1;
         thread.memory_limit += info_page->page_size;
@@ -78,7 +85,7 @@ int thread_supply_mem(tcb_t thread, ADDR_SUB_SPACE sub_space, struct_page_t * in
  *
  * @param thread the tcb of the thread in question
  * @param sub_space what space the memory should be supplied to / mapped into
- * @param permissions permission for mapped pages (user-accessible etc...)
+ * @param permissions permission for mapped pages (user access is defined by the type of thread)
  * @return the addr of the struct page (direct kernel mapping) or FRAME_ALLOC_FAILED
  */
 virt_addr_t thread_supply_new_mem(tcb_t thread, ADDR_SUB_SPACE sub_space,  uint64_t pages, PAGE_SIZE p_size, uint64_t permissions) {
@@ -96,9 +103,4 @@ virt_addr_t thread_supply_new_mem(tcb_t thread, ADDR_SUB_SPACE sub_space,  uint6
         return FRAME_ALLOC_FAILED;
 
     return KERNEL_PHYS_TO_VIRT(info);
-}
-
-
-void capture_cpu_context(tcb_t *tcb) {
-
 }
