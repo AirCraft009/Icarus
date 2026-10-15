@@ -60,11 +60,12 @@ add_executable(Icarus_kernel
         include/kernel/Processes/thread.h
         include/kernel/util/cpu_regs.h
         src/kernel/Processes/Scheduling/scheduler.c
-        src/kernel/Processes/Scheduling/scheduler.h
+        include/kernel/Processes/Scheduling/scheduler.h
         src/kernel/Processes/thread.c
         src/kernel/Memory/paging.c
         include/kernel/Memory/paging.h
         include/kernel/interrupts/ISR.h
+        src/kernel/Processes/Scheduling/set_context.asm
 )
 
 target_include_directories(Icarus_kernel PRIVATE include

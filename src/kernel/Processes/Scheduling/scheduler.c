@@ -2,7 +2,7 @@
 // Created by cocon on 13.10.2026.
 //
 
-#include "scheduler.h"
+#include "kernel/Processes/Scheduling/scheduler.h"
 
 #include <stddef.h>
 
@@ -20,6 +20,8 @@ tcb_t *top_tcb;
 tcb_t *last_tcb;
 // the currently switched to pcb
 tcb_t *running_tcb;
+
+uint64_t thread_count = 0;
 
 
 /**
@@ -89,7 +91,17 @@ void context_switch(tcb_t *next_tcb, struct interrupt_frame *frame) {
     _switch_threads(next_tcb);
 }
 
-void scheduler_init() {
-    top_tcb = Imalloc(sizeof(tcb_t));
+void scheduler_add_thread(tcb_t *tcb) {
+    __asm volatile ("cli");
+    last_tcb->next = tcb;
+    last_tcb = tcb;
+    last_tcb->next = NULL;
+    __asm volatile ("sti");
+}
+
+void schedule(struct interrupt_frame *frame) {
+    __asm volatile ("cli");                 // no interrupts while handling (should be fine anyway but who knows man)
+    tcb_t * next = scheduler_pick_next_thread();
+    context_switch(next, frame);
 }
 

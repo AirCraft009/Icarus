@@ -17,6 +17,8 @@
 #include "kernel/Memory/paging.h"
 #include "kernel/Memory/DMA/MADT.h"
 #include "kernel/Memory/PMM/mem_map.h"
+#include "kernel/Processes/thread.h"
+#include "kernel/Processes/Scheduling/scheduler.h"
 
 extern uint64_t *gdt_descriptor;
 
@@ -35,6 +37,7 @@ static const uint8_t fill_vga[] = {
 };
 
 
+//235372403 = 256809072
 void kmain(uint32_t magic, struct multiboot_info *mboot) {
     cursor *cur = init_shellio("ICARUS\n");
 
@@ -72,15 +75,30 @@ void kmain(uint32_t magic, struct multiboot_info *mboot) {
         Iprintf("The PS2 Controller doesn't work\n");
 
     Iprintf("Ticks per Ms: (%i)", LAPIC_TICKS_PER_MS);
-    __asm__ volatile ("sti");
-    // lapic_write(LAPIC_TIMER_INITCNT, 0x0);
-    // lapic_write(LAPIC_LVT_TIMER, 32 | LAPIC_TIMER_PERIODIC);
-    // lapic_write(LAPIC_TIMER_INITCNT, LAPIC_TICKS_PER_MS * 500);
+    // TODO: TESTING BC OF THREADS
+    page_in(Kernel_PML4_TABLE, (void *)0xB8000, (void *)0xB8000, DEFAULT_PAGE_SIZE, WRITEABLE | USER_ACCESS);
 
+    Iprintf("THIS HAS TO BE FINE\n");
+    tcb_t * thread1 = create_thread(0, false, 1);
+    Iprintf("THIS HAS TO BE FINE\n");
+    virt_addr_t addr = thread_supply_new_mem(thread1, SPACE_CODE, 2, DEFAULT_PAGE, WRITEABLE);
+    Iprintf("THIS HAS TO BE FINE\n");
+    Imemccpy(&addr, fill_vga, sizeof(fill_vga));
+    Iprintf("THIS HAS TO BE FINE\n");
+    scheduler_add_thread(thread1);
+
+    Iprintf("THIS HAS TO BE FINE\n");
+    __asm__ volatile ("sti");
     init_keyboard_ps2();
+
+    Iprintf("THIS HAS TO BE FINE\n");
+    lapic_write(LAPIC_TIMER_INITCNT, 0x0);
+    lapic_write(LAPIC_LVT_TIMER, 32 | LAPIC_TIMER_PERIODIC);
+    lapic_write(LAPIC_TIMER_INITCNT, LAPIC_TICKS_PER_MS * 500);
+    Iprintf("THIS HAS TO BE FINE\n");
+
 
     //TODO: build a table to hold all important subtables and system_statistics
     while (1)
         ;
 }
-//235372403 = 256809072

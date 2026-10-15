@@ -28,12 +28,12 @@ typedef uint64_t TID_t;
 #define PROCESS_STACK_VIRT_ADDR 0x00007C8000000000
 
 typedef enum {
-    CODE,
-    MAPPING,
-    STACK,
+    SPACE_CODE,
+    SPACE_MAPPING,
+    SPACE_STACK,
 }ADDR_SUB_SPACE;
 
-#define SUB_SPACE_TO_ADDR(sub_space) ((sub_space == CODE)? PROCESS_CODE_VIRT_ADDR : (sub_space == MAPPING)? PROCESS_MAPPINGS_VIRT_ADDR : PROCESS_STACK_VIRT_ADDR)
+#define SUB_SPACE_TO_ADDR(sub_space) ((sub_space == SPACE_CODE)? PROCESS_CODE_VIRT_ADDR : (sub_space == SPACE_MAPPING)? PROCESS_MAPPINGS_VIRT_ADDR : PROCESS_STACK_VIRT_ADDR)
 
 
 typedef struct THREAD_CONTROL_BLOCK {
@@ -61,5 +61,9 @@ typedef struct THREAD_CONTROL_BLOCK {
     // Pointer to link TCBs in a scheduler queue
     struct THREAD_CONTROL_BLOCK* next;
 } tcb_t;
+
+tcb_t * create_thread(PID_t parent, bool is_priviledged, uint16_t priority);
+int thread_supply_mem(tcb_t *thread, ADDR_SUB_SPACE sub_space, struct_page_t * info_page, uint64_t permissions);
+virt_addr_t thread_supply_new_mem(tcb_t *thread, ADDR_SUB_SPACE sub_space,  uint64_t pages, PAGE_SIZE p_size, uint64_t permissions);
 
 #endif //ICARUS_PROCESS_CONTROL_BLOCK_H
