@@ -6,6 +6,7 @@
 
 #include "kernel_helper.h"
 #include "kernel/Memory/memory_mapping.h"
+#include "kernel/Memory/paging.h"
 #include "kernel/Memory/PMM/mem_map.h"
 #include "kernel/util/shellio.h"
 

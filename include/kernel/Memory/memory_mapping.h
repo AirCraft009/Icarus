@@ -4,21 +4,14 @@
 
 #ifndef ICARUS_MEMORY_MAPPING_H
 #define ICARUS_MEMORY_MAPPING_H
-
 #pragma once
+#include "page_definitions.h"
+#include "kernel/util/multiboot2.h"
+#include "kernel/Memory/PMM/mem_map.h"
 
 #define PAGE_S 4096
 #define HUGE_PS 2097152
 #define SUPER_PS 1073741824
-
-typedef enum {
-    DEFAULT_PAGE,
-    HUGE_PAGE,
-    SUPER_PAGE,
-} PAGE_SIZES;
-
-#define PAGE_TYPE_TO_SIZE(type) ((type == SUPER_PAGE) ? SUPER_PS : (type == HUGE_PAGE) ? HUGE_PS : PAGE_S)
-
 
 #define VA_INDEX_MASK        0x1FFULL   /* 9 bits per level */
 
@@ -68,11 +61,6 @@ typedef enum {
         (e)->cache_disabled      = PERM_BIT(p, CACHE_DISABLED_SHIFT);             \
         (e)->execution_disabled  = PERM_BIT(p, EXECUTION_DISABLED_SHIFT);         \
     } while (0)
-
-
-#include "../../page_definitions.h"
-#include "../util/multiboot2.h"
-#include "kernel/Memory/PMM/mem_map.h"
 
 int handle_mb2_mmap(struct multiboot_tag *mmap_tag, page_map_l4_entry *pml4);
 phys_addr_t test_walk_table(page_map_l4_entry *pml4, const phys_addr_t *virt_addr);

@@ -84,4 +84,13 @@ typedef struct PageTable {
     uint32_t entry_count;
 } page_table_t;
 
+typedef enum {
+    DEFAULT_PAGE,
+    HUGE_PAGE,
+    SUPER_PAGE,
+} PAGE_SIZE;
+
+#define PAGE_TYPE_TO_SIZE(type) ((type == SUPER_PAGE) ? SUPER_PS : (type == HUGE_PAGE) ? HUGE_PS : PAGE_S)
+
+
 #endif //ICARUS_PAGE_DEFINITIONS_H
