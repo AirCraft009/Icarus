@@ -7,20 +7,11 @@
 #include "kernel/Drivers/PS2/PS2_Keyboard.h"
 #include "kernel/interrupts/APIC.h"
 #include "kernel/util/shellio.h"
+#include "kernel/interrupts/ISR.h"
 #include "kernel/util/cpu_regs.h"
 
 
-struct interrupt_frame {
-    // pushed by isr_common
-    uint64_t cr4, cr3, cr2;                       // faulting address (valid on #PF)
-    cpu_reg_frame gpo_regs;
-    // pushed by the stub
-    uint64_t vector;
-    uint64_t error_code;                // 0 if the CPU didn't push one
-    // pushed by the CPU
-    uint64_t rip, cs, rflags, rsp, ss;
-}__attribute__((packed));
-_Static_assert(sizeof(struct interrupt_frame) == 200, "asm/C frame mismatch");
+
 
 void Stack_segment_fault(struct interrupt_frame *frame) {
     Iprintf("Stack segfault");
