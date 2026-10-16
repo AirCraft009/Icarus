@@ -6,6 +6,7 @@
 #include "../GDT/Tss.h"
 #include "kernel/Memory/PMM/mem_map.h"
 #include "kernel/util/mem_utils.h"
+#include "kernel/util/shellio.h"
 
 
 #define TSS_STACK_PAGES  4            // 16 KiB per stack
@@ -19,6 +20,7 @@ static uint64_t tss_alloc_stack(void) {
     if (phys == FRAME_ALLOC_FAILED) {
         return FRAME_ALLOC_FAILED;
     }
+    Iprintf("TSS - Stack allocated at %x\n", phys);
 
     uint64_t base = (uint64_t)KERNEL_PHYS_TO_VIRT(phys);
     uint64_t top  = base + TSS_STACK_PAGES * DEFAULT_PAGE_SIZE;
@@ -27,15 +29,16 @@ static uint64_t tss_alloc_stack(void) {
 
 void init_tss(tss_t * tss) {
     // Clear everything (reserved fields included)
-    Imemset(tss, 0, sizeof(*tss));
+    Imemset(tss, 0, sizeof(tss_t));
 
     // RSP0: kernel stack used on ring3 for ring0 transitions
     uint64_t rsp0 = tss_alloc_stack();
+    Iprintf("TSS - RSP STACK: (%x)\n", rsp0);
     tss->rsp0 = rsp0;
 
     // RSP1 / RSP2 unused (left at 0) bc only ring 0 & 3 are used
 
-    // IST1 IST7 are interrupt stacks (then I finally don't have to wrry about the #Pf handler using a corrupted stack tg)
+    // interrupt stacks
     tss->ist1 = tss_alloc_stack();
     tss->ist2 = tss_alloc_stack();
     tss->ist3 = tss_alloc_stack();

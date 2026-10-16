@@ -23,6 +23,8 @@ _switch_threads:
     ;}
 
     ; build the iretq frame straight from the TCB (push order: SS first, RIP last)
+    mov word [abs 0xB8002], 0x2F41      ; white on green 'A', second cell
+
     push qword [rdi + 176]       ; ss
     push qword [rdi + 168]       ; rsp
     push qword [rdi + 160]       ; rflags (IF must be set for user threads)
@@ -45,6 +47,9 @@ _switch_threads:
     mov rbx, qword [rdi + 128]
     mov rax, qword [rdi + 136]
     mov rdi, qword [rdi + 96]           ; restore rdi last bc this destroys the ptr to tcb
+
+    ; debug: write a white-on-red '!' to the top-left VGA cell
+    mov word [abs 0xB8000], 0x4F21
 
     ; now switch
     iretq

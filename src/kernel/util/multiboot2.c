@@ -40,7 +40,7 @@ int handle_multiboot2 (uint32_t magic, boot_info *info, page_map_l4_entry *pml4)
 	}
 
 	size = *(unsigned *) addr;
-	Iprintf( "Announced mbi size 0x%d\n", size);
+	// Iprintf( "Announced mbi size 0x%d\n", size);
 	for (tag = (struct multiboot_tag *) (addr + 8);
 	tag->type != MULTIBOOT_TAG_TYPE_END;
 	tag = (struct multiboot_tag *) ((multiboot_uint8_t *) tag
@@ -49,29 +49,29 @@ int handle_multiboot2 (uint32_t magic, boot_info *info, page_map_l4_entry *pml4)
 		switch (tag->type)
 		{
 			case MULTIBOOT_TAG_TYPE_CMDLINE:
-				Iprintf( "Command line = %s\n",
-				((struct multiboot_tag_string *) tag)->string);
+				// Iprintf( "Command line = %s\n",
+				// ((struct multiboot_tag_string *) tag)->string);
 				break;
 			case MULTIBOOT_TAG_TYPE_BOOT_LOADER_NAME:
-				Iprintf( "Boot loader name = %s\n",
-				((struct multiboot_tag_string *) tag)->string);
+				// Iprintf( "Boot loader name = %s\n",
+				// ((struct multiboot_tag_string *) tag)->string);
 				break;
 			case MULTIBOOT_TAG_TYPE_MODULE:
-				Iprintf( "Module at 0x%i-0x%i. Command line %s\n",
-				((struct multiboot_tag_module *) tag)->mod_start,
-				((struct multiboot_tag_module *) tag)->mod_end,
-				((struct multiboot_tag_module *) tag)->cmdline);
+				// Iprintf( "Module at 0x%i-0x%i. Command line %s\n",
+				// ((struct multiboot_tag_module *) tag)->mod_start,
+				// ((struct multiboot_tag_module *) tag)->mod_end,
+				// ((struct multiboot_tag_module *) tag)->cmdline);
 				break;
 			case MULTIBOOT_TAG_TYPE_BASIC_MEMINFO:
-				Iprintf( "mem_lower = %uKB, mem_upper = %uKB\n",
-				((struct multiboot_tag_basic_meminfo *) tag)->mem_lower,
-				((struct multiboot_tag_basic_meminfo *) tag)->mem_upper);
+				// Iprintf( "mem_lower = %uKB, mem_upper = %uKB\n",
+				// ((struct multiboot_tag_basic_meminfo *) tag)->mem_lower,
+				// ((struct multiboot_tag_basic_meminfo *) tag)->mem_upper);
 				break;
 			case MULTIBOOT_TAG_TYPE_BOOTDEV:
-				Iprintf( "Boot device 0x%i,%u,%u\n",
-				((struct multiboot_tag_bootdev *) tag)->biosdev,
-				((struct multiboot_tag_bootdev *) tag)->slice,
-				((struct multiboot_tag_bootdev *) tag)->part);
+				// Iprintf( "Boot device 0x%i,%u,%u\n",
+				// ((struct multiboot_tag_bootdev *) tag)->biosdev,
+				// ((struct multiboot_tag_bootdev *) tag)->slice,
+				// ((struct multiboot_tag_bootdev *) tag)->part);
 				break;
 			case MULTIBOOT_TAG_TYPE_MMAP:
 				mmap = tag;
@@ -83,14 +83,14 @@ int handle_multiboot2 (uint32_t magic, boot_info *info, page_map_l4_entry *pml4)
 				 * however we need the Direct kernel mapping to correctly access and parse the struct
 				 * if we don't want a #PF (I've met him he's not very nice )
 				 */
-				Imemccpy(&rsdp, tag + 1 , sizeof(struct RSDP_t));
+				Imemcpy(&rsdp, tag + 1 , sizeof(struct RSDP_t));
 				// acpi 1.0 (https://edc.intel.com/content/www/us/en/publications/specification-nuc12dcm-nuc12edb/acpi/)
 				// rsdp & xsdp structs ( https://wiki.osdev.org/RSDP#Fields)
 				break;
 
 			case MULTIBOOT_TAG_TYPE_ACPI_NEW:
 				// same as above
-				Imemccpy(&rsdp_new , tag + 1, sizeof(struct XSDP_t));
+				Imemcpy(&rsdp_new , tag + 1, sizeof(struct XSDP_t));
 				break;
 
 			case MULTIBOOT_TAG_TYPE_FRAMEBUFFER:

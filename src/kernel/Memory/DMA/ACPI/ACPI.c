@@ -49,13 +49,13 @@ uint8_t calculate_checksum(uint8_t *buffer, uint64_t length) {
 int handle_table(struct ACPISDTHeader *h) {
     if (!Istrncmp(h->Signature, "FACP", 4)){
         CHECKSUM(&FADT, h->Length);
-        Imemccpy(&FADT, h, MIN(h->Length, sizeof(struct FADT_TABLE)));
+        Imemcpy(&FADT, h, MIN(h->Length, sizeof(struct FADT_TABLE)));
         if (h->Length < sizeof(struct FADT_TABLE)) {FADT.FullLength = 0;}
         else FADT.FullLength = 1;
     }
     else if (!Istrncmp(h->Signature, "MCFG", 4)) {
         CHECKSUM(&MCFG, h->Length);
-        Imemccpy(&MCFG, h, h->Length);
+        Imemcpy(&MCFG, h, h->Length);
     }
     else if (!Istrncmp(h->Signature, "APIC", 4)) {
         CHECKSUM(&MCFG, h->Length);

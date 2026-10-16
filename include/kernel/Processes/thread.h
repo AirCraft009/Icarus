@@ -14,7 +14,8 @@ typedef enum PROCESS_STATE {
     PROCESS_READY,
     PROCESS_RUNNING,
     PROCESS_WAITING,
-    PROCESS_TERMINATED
+    PROCESS_TERMINATED,
+    PROCESS_DENIED
 } process_state_t;
 
 typedef uint64_t PID_t;
@@ -64,6 +65,6 @@ typedef struct THREAD_CONTROL_BLOCK {
 
 tcb_t * create_thread(PID_t parent, bool is_priviledged, uint16_t priority);
 int thread_supply_mem(tcb_t *thread, ADDR_SUB_SPACE sub_space, struct_page_t * info_page, uint64_t permissions);
-virt_addr_t thread_supply_new_mem(tcb_t *thread, ADDR_SUB_SPACE sub_space,  uint64_t pages, PAGE_SIZE p_size, uint64_t permissions);
+struct_page_t * thread_supply_new_mem(tcb_t *thread, ADDR_SUB_SPACE sub_space,  uint64_t pages, PAGE_SIZE p_size, uint64_t permissions);
 
 #endif //ICARUS_PROCESS_CONTROL_BLOCK_H

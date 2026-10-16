@@ -10,5 +10,6 @@
 
 void schedule(struct interrupt_frame *frame);
 void scheduler_add_thread(tcb_t *tcb);
+void scheduler_init(tcb_t * tcb);
 
 #endif //ICARUS_SCHEDULER_H

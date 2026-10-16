@@ -77,7 +77,7 @@ void kmain(uint32_t magic, struct multiboot_info *mboot) {
 
     tcb_t * thread1 = create_thread(0, false, 1);
     struct_page_t *addr = thread_supply_new_mem(thread1, SPACE_CODE, 2, DEFAULT_PAGE, WRITEABLE);
-    Imemccpy((void *) addr, fill_vga, sizeof(fill_vga));
+    Imemcpy((void *) addr, fill_vga, sizeof(fill_vga));
     Iprintf("addr: (%x)\n", addr);
 
     thread1->state = PROCESS_READY;
@@ -87,9 +87,9 @@ void kmain(uint32_t magic, struct multiboot_info *mboot) {
     keyboard_ps2_init();
 
 
-    lapic_write(LAPIC_TIMER_INITCNT, 0x0);
-    lapic_write(LAPIC_LVT_TIMER, 32 | LAPIC_TIMER_PERIODIC);
-    lapic_write(LAPIC_TIMER_INITCNT, LAPIC_TICKS_PER_MS * 500);
+    //lapic_write(LAPIC_TIMER_INITCNT, 0x0);
+    //lapic_write(LAPIC_LVT_TIMER, 32 | LAPIC_TIMER_PERIODIC);
+    //lapic_write(LAPIC_TIMER_INITCNT, LAPIC_TICKS_PER_MS * 500);
 
 
 
