@@ -7,7 +7,7 @@
 #pragma once
 #include <stdint.h>
 
-void init_keyboard_ps2();
+void keyboard_ps2_init();
 char kbd_translate(uint8_t sc);
 
 #endif //ICARUS_KEYBOARD_H

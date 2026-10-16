@@ -49,6 +49,7 @@ uint64_t handle_MADT(struct ACPISDTHeader *header) {
 
     //alocate space for the entire struct
     madt_info *info = (madt_info *)Imalloc(total);
+    Iprintf("total: %x\n", total);
     if (!info)
         return FRAME_ALLOC_FAILED;
     Imemset(info, 0, sizeof(total));

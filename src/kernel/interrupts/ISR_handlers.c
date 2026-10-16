@@ -24,7 +24,7 @@ void Stack_segment_fault(struct interrupt_frame *frame) {
 }
 
 void page_fault_handler(struct interrupt_frame *frame){
-    Iprintf("#Page Fault detected: %x\nerror: %x\n", frame->cr2, frame->error_code);
+    Iprintf("#Page Fault detected: (%x)\nerror: %x\n", frame->cr2, frame->error_code);
     //TODO: stop user process
     __asm__ volatile ("cli; hlt"); // Completely hangs the computer
 }
@@ -60,7 +60,6 @@ void undefined_instruction_handler(struct interrupt_frame *frame) {
 
 void timer_interrupt_handler(struct interrupt_frame *frame) {
     Iprintf("scheduling");
-    lapic_write(LAPIC_EOI, 0);
     schedule(frame);
 }
 

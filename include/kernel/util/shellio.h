@@ -12,7 +12,7 @@ typedef struct Cursor {
     uint16_t y;
 } cursor;
 
-cursor *init_shellio(char * starting_text);
+cursor *shellio_init(char * starting_text);
 void move_cursor(uint16_t offset, cursor *cur);
 void new_lines(uint16_t count, cursor *cur);
 void write_c(char c, cursor *cur);

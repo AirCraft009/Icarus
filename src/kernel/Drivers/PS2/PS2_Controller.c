@@ -142,7 +142,7 @@ static int ps2_reset_dev(int port) {
  * responsible for checking the ps2 controllers functionality
  * & disabling ps2 ports to avoid errors during setup
  */
-int init_ps2_controller() {
+int ps2_controller_init() {
 
     //TODO: actually check the config byte and make sure everything is running accordingly
 

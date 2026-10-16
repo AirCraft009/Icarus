@@ -39,7 +39,7 @@ static const uint8_t fill_vga[] = {
 
 //235372403 = 256809072
 void kmain(uint32_t magic, struct multiboot_info *mboot) {
-    cursor *cur = init_shellio("ICARUS\n");
+    cursor *cur = shellio_init("ICARUS\n");
 
     // initialize the Interrupt Descriptor table
     idt_init();
@@ -57,7 +57,7 @@ void kmain(uint32_t magic, struct multiboot_info *mboot) {
     };
     test_walk_table(&Kernel_PML4_TABLE[0], (phys_addr_t *) KERNEL_PHYS_TO_VIRT(0x0100000));
     write_cr3((uint64_t) KERNEL_VIRT_TO_PHYS(&Kernel_PML4_TABLE[0]));
-    allocator = init_alloc(DEFAULT_PAGE_SIZE * 510, (void *) KERNEL_HEAP_ADDR);
+    allocator = alloc_init(DEFAULT_PAGE_SIZE * 510, (void *) KERNEL_HEAP_ADDR);
 
     handle_ACPI();
 
@@ -68,7 +68,7 @@ void kmain(uint32_t magic, struct multiboot_info *mboot) {
     enable_io_apics();
     //Iprintf("set up APIC\n");
 
-    if (init_ps2_controller() != 0)
+    if (ps2_controller_init() != 0)
         Iprintf("The PS2 Controller doesn't work\n");
 
     Iprintf("Ticks per Ms: (%i)", LAPIC_TICKS_PER_MS);
@@ -76,13 +76,15 @@ void kmain(uint32_t magic, struct multiboot_info *mboot) {
     page_in(Kernel_PML4_TABLE, (void *)0xB8000, (void *)0xB8000, DEFAULT_PAGE_SIZE, WRITEABLE | USER_ACCESS);
 
     tcb_t * thread1 = create_thread(0, false, 1);
-    virt_addr_t addr = thread_supply_new_mem(thread1, SPACE_CODE, 2, DEFAULT_PAGE, WRITEABLE);
-    Imemccpy(&addr, fill_vga, sizeof(fill_vga));
-    scheduler_add_thread(thread1);
+    struct_page_t *addr = thread_supply_new_mem(thread1, SPACE_CODE, 2, DEFAULT_PAGE, WRITEABLE);
+    Imemccpy((void *) addr, fill_vga, sizeof(fill_vga));
+    Iprintf("addr: (%x)\n", addr);
 
-
+    thread1->state = PROCESS_READY;
+    scheduler_init(thread1);
+    //Iprintf("rip: (%x)\n", thread1->regsiters.psp.rip);
     __asm__ volatile ("sti");
-    init_keyboard_ps2();
+    keyboard_ps2_init();
 
 
     lapic_write(LAPIC_TIMER_INITCNT, 0x0);

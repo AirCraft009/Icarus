@@ -216,7 +216,7 @@ void Iprintf(char *format, ...) {
     va_end(args);
 }
 
-cursor *init_shellio(char * starting_text){
+cursor *shellio_init(char * starting_text){
     curs = (cursor) {0,0};
     mprintf( &curs, "Init Shell: %s", starting_text);
     // TODO: loop here after keyboard support is enabled

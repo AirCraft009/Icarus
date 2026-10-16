@@ -17,7 +17,7 @@ typedef struct PS2_INFO_STRUCT {
 
 extern PS2_info_t PS2_info;
 
-int init_ps2_controller();
+int ps2_controller_init();
 int ps2_read_timeout();
 
 #endif //ICARUS_PS2_CONTROLLER_H

@@ -1,2 +1,2 @@
 ./build.sh &&\
-qemu-system-x86_64 -cdrom build/icarus.iso -boot d -m 2048 -machine q35
+qemu-system-x86_64 -cdrom build/icarus.iso -boot d -m 2048 -machine q35 -no-reboot -no-shutdown

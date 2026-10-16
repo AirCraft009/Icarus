@@ -68,7 +68,7 @@ char kbd_translate(uint8_t sc) {
 }
 
 
-void init_keyboard_ps2() {
+void keyboard_ps2_init() {
     ioapic_route(
         ioapic_infos->apics[0].base_address,
         1,
