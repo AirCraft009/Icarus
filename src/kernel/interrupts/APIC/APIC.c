@@ -249,10 +249,9 @@ int enable_io_apics() {
         total_size +=
             ((ioapic_read(
                 MMIO_PHYS_TO_VIRT(APIC_INFO->ioapics[i].addr),
-                IOAPICVER) >> IOAPIC_REDIR_ENTR_COUNT_SHIFT & 0xFF) -1)
+                IOAPICVER) >> IOAPIC_REDIR_ENTR_COUNT_SHIFT & 0xFF) + 1)
             * sizeof(ioapic_redirection_entry_t);
     }
-
     ioapic_infos = (ioapic_descriptor *) Imalloc(sizeof(ioapic_descriptor) + total_size);
 
     ioapic_info * info = ioapic_infos->apics;
