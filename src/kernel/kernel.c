@@ -56,20 +56,17 @@ void kmain(uint32_t magic, struct multiboot_info *mboot) {
         __asm__ volatile ("cli; hlt"); // Completely hangs the computer
     };
     test_walk_table(&Kernel_PML4_TABLE[0], (phys_addr_t *) KERNEL_PHYS_TO_VIRT(0x0100000));
-    Iprintf("RAAAAHH\n");
     write_cr3((uint64_t) KERNEL_VIRT_TO_PHYS(&Kernel_PML4_TABLE[0]));
-
-    Iprintf("KERNEL SETUP CONCLUDED: %x\n", &Kernel_PML4_TABLE[0]);
     allocator = init_alloc(DEFAULT_PAGE_SIZE * 510, (void *) KERNEL_HEAP_ADDR);
 
     handle_ACPI();
 
 
-    Iprintf("---------------MODEL-----------------\n");
-    Iprintf("%s\n", init_cpuid());
+    //.Iprintf("---------------MODEL-----------------\n");
+    //Iprintf("%s\n", init_cpuid());
     enable_apic();
     enable_io_apics();
-    Iprintf("set up APIC\n");
+    //Iprintf("set up APIC\n");
 
     if (init_ps2_controller() != 0)
         Iprintf("The PS2 Controller doesn't work\n");
@@ -78,24 +75,20 @@ void kmain(uint32_t magic, struct multiboot_info *mboot) {
     // TODO: TESTING BC OF THREADS
     page_in(Kernel_PML4_TABLE, (void *)0xB8000, (void *)0xB8000, DEFAULT_PAGE_SIZE, WRITEABLE | USER_ACCESS);
 
-    Iprintf("THIS HAS TO BE FINE\n");
     tcb_t * thread1 = create_thread(0, false, 1);
-    Iprintf("THIS HAS TO BE FINE\n");
     virt_addr_t addr = thread_supply_new_mem(thread1, SPACE_CODE, 2, DEFAULT_PAGE, WRITEABLE);
-    Iprintf("THIS HAS TO BE FINE\n");
     Imemccpy(&addr, fill_vga, sizeof(fill_vga));
-    Iprintf("THIS HAS TO BE FINE\n");
     scheduler_add_thread(thread1);
 
-    Iprintf("THIS HAS TO BE FINE\n");
+
     __asm__ volatile ("sti");
     init_keyboard_ps2();
 
-    Iprintf("THIS HAS TO BE FINE\n");
+
     lapic_write(LAPIC_TIMER_INITCNT, 0x0);
     lapic_write(LAPIC_LVT_TIMER, 32 | LAPIC_TIMER_PERIODIC);
     lapic_write(LAPIC_TIMER_INITCNT, LAPIC_TICKS_PER_MS * 500);
-    Iprintf("THIS HAS TO BE FINE\n");
+
 
 
     //TODO: build a table to hold all important subtables and system_statistics

@@ -29,27 +29,23 @@ static PID_t PID_GEN = 1;
 tcb_t * create_thread(PID_t parent, bool is_priviledged, uint16_t priority) {
     if (priority == UINT16_MAX)     // the active prio is priority + 1 so this would overflow to 0
         return NULL;
+    Iprintf("THIS HAS TO BE FINE1\n");
 
-    Iprintf("THIS HAS TO BE FINE\n");
     tcb_t * tcb = (tcb_t *) Imalloc(sizeof(tcb_t));
-    Iprintf("THIS HAS TO BE FINE\n");
-    Imemset(tcb, 0, sizeof(tcb_t));
-    Iprintf("THIS HAS TO BE FINE\n");
+    Imemset(tcb, 1, sizeof(tcb_t));
     tcb->pid = PID_GEN ++;
     tcb->parent_pid = parent;
-    Iprintf("THIS HAS TO BE FINE\n");
 
     // set the cpu registers
     tcb->regsiters.psp.rflags = 0x202;              // default value bit 1 reserved always(1); bit 9 allow interrupts
     tcb->regsiters.psp.rip = PROCESS_CODE_VIRT_ADDR;
     tcb->regsiters.psp.rsp = PROCESS_CODE_VIRT_ADDR;
-    Iprintf("THIS HAS TO BE FINE\n");
     tcb->regsiters.psp.cs = is_priviledged? 0x08 : 0x23;
-    Iprintf("THIS HAS TO BE FINE\n");
     tcb->regsiters.psp.ss = is_priviledged? 0x10 : 0x1b;
-    Iprintf("THIS HAS TO BE FINE\n");
-    page_map_l4_entry * proc_pml4 = Imalloc(sizeof(page_map_l4_entry) * 512);
-    Iprintf("THIS HAS TO BE FINE\n");
+    Iprintf("THIS HAS TO BE FINE1\n");
+    Iprintf("THIS HAS TO BE FINE1\n");
+    page_map_l4_entry * proc_pml4 = Imalloc(sizeof(page_map_l4_entry));
+    Iprintf("THIS HAS TO BE FINE3\n");
     // current pml4 js has the higher mapped kernel, by copying its zeroing lower and higher mapping the kernel
     page_map_l4_entry * cur_pml4 = (page_map_l4_entry *) read_cr3();
     Imemccpy(proc_pml4, cur_pml4, sizeof(page_map_l4_entry) * 512);

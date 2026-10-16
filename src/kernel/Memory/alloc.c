@@ -17,6 +17,7 @@
 #include "page_definitions.h"
 #include "kernel/Memory/paging.h"
 #include "kernel/Memory/PMM/mem_map.h"
+#include "kernel/util/shellio.h"
 
 
 /**
@@ -44,7 +45,7 @@ alloc_t *init_custom_alloc (uint64_t initial_size, void * heap_start, struct_pag
     // it is at heap_start + 4096 bc the allocator itself is at heap_start
     heap_start = (void *) ALIGN_DOWN((uintptr_t) heap_start, DEFAULT_PAGE_SIZE);
 
-    // idk what is differet but if I write this exact phrase into page_in etc. it just refuses to work so ig it is what it is
+    // idk what is different but if I write this exact phrase into page_in etc. it just refuses to work so ig it is what it is
     void * st =(void *) heap_start + 0x1000;
     if (
         page_in(
@@ -107,6 +108,7 @@ alloc_t *init_custom_alloc (uint64_t initial_size, void * heap_start, struct_pag
     header->allocated = 0;
     header->block_size = initial_size - sizeof(alloc_t);
     header->prev_block_data = 0;
+    Iprintf("init root header(%i) %x\n",header->block_size, header);
     return allocator;
 }
 
@@ -145,45 +147,53 @@ int map_frame_into_heap(alloc_t * allocator, page_map_l4_entry *pml4,  struct_pa
 void * Imalloc_alocator(alloc_t * allocator, uint64_t size) {
     size += META_DATA_SIZE;      // make the total size
     size = ALIGN_UP(size, HEAP_ALIGNMENT);
+    Iprintf("allocating block of size: (%x)\n", size);
 
-    while (1) {
-        alloc_meta_data_t * header = (alloc_meta_data_t *) allocator->heapStart;
-        while ((uint64_t) header + header->block_size < allocator->heapStart + allocator->heapSize) {
-            //cons_mprintf("header(%i) %x\n",header->block_size, header);
-            if (!header->allocated && header->block_size == size) {
-                header->allocated = 1;
-                // don't know why (void *) (uint64_t) should do anything (I don't think it does) but the CLANG warning goes away so
-                return (void *) (uint64_t) header + META_DATA_SIZE;
-            }
-            if (!header->allocated && header->block_size > size) {
-                // set attributes of next_block
-                alloc_meta_data_t *next_block = (alloc_meta_data_t *) ((uintptr_t)header + size);
-                uint64_t remaining_s = header->block_size - size;               //remaining_s can't be < 16 (bc it's all aligned to 16)
-                next_block->allocated = 0;
-                next_block->block_size = remaining_s;
-                next_block->prev_block_data = size;
-                //set attributes of allocated block
-                header->allocated = 1;
-                header->block_size = size;
-                // prev meta_data stays is not touched bc it's alr there obv
-                return (void *) (uint64_t) header + META_DATA_SIZE;
-            }
+    bool memory = true;
 
-            header = (alloc_meta_data_t *) ((uintptr_t) header + header->block_size);
-
+    alloc_meta_data_t * header = (alloc_meta_data_t *) allocator->heapStart;
+    //Iprintf("header(%x)[%i] (%x)\n",header->block_size, header->allocated, header);
+    while (((uint64_t) header + header->block_size) < allocator->heapStart + allocator->heapSize) {
+        Iprintf("fheader(%x)[%i] (%x)\n",header->block_size, header->allocated, header);
+        if (!header->allocated && header->block_size == size) {
+            header->allocated = 1;
+            return (void *) (uint64_t) header + META_DATA_SIZE;
+        }
+        if (!header->allocated && header->block_size > size) {
+            // set attributes of next_block
+            alloc_meta_data_t *next_block = (alloc_meta_data_t *) ((void *)header + size);
+            uint64_t remaining_s = header->block_size - size;               //remaining_s can't be < 16 (bc it's all aligned to 16)
+            //Iprintf("remaining: %x\n", remaining_s);
+            next_block->allocated = 0;
+            next_block->block_size = remaining_s;
+            next_block->prev_block_data = size;
+            //set attributes of allocated block
+            header->allocated = 1;
+            header->block_size = size;
+            Iprintf("header(%x) %x\n",remaining_s, next_block);
+            // prev meta_data stays is not touched bc it's alr there obv
+            return (void *) (uint64_t) header + META_DATA_SIZE;
         }
 
-        // ask for more memory from the kernel
-        // * 30 / 10 bc SSE doesn't work or smth and yk... but I'm a genius
-        struct_page_t *info_page = (struct_page_t *) KERNEL_VIRT_TO_PHYS(ialloc_frames(ALIGN_UP((uint64_t) (allocator->heapSize * 30 / 10), DEFAULT_PAGE_SIZE), DEFAULT_PAGE));
-        if (map_frame_into_heap(allocator, (page_map_l4_entry *) read_cr3(), info_page) != 0) {
-            return NULL;
-        }
-        allocator->heapSize += info_page->page_count * DEFAULT_PAGE_SIZE;
+        if (!header->allocated)
+            break;
+
+        header = (alloc_meta_data_t *) ((uintptr_t) header + header->block_size);
     }
+
+    // ask for more memory from the kernel
+    // * 30 / 10 bc SSE doesn't work or smth and yk... but I'm a genius
+    struct_page_t *info_page = (struct_page_t *) KERNEL_VIRT_TO_PHYS(ialloc_frames(ALIGN_UP((uint64_t) (allocator->heapSize * 30 / 10), DEFAULT_PAGE_SIZE), DEFAULT_PAGE));
+    if (map_frame_into_heap(allocator, (page_map_l4_entry *) read_cr3(), info_page) != 0) {
+        return NULL;
+    }
+    allocator->heapSize += info_page->page_count * DEFAULT_PAGE_SIZE;
+    memory = false;
+    return (void *) FRAME_ALLOC_FAILED;
 }
 
 void *Imalloc(uint64_t size) {
+    alloc_t * alloc = (alloc_t *) KERNEL_HEAP_ADDR;
     return Imalloc_alocator((alloc_t *) KERNEL_HEAP_ADDR, size);
 }
 
