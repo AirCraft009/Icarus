@@ -119,7 +119,7 @@ alloc_t *init_custom_alloc (uint64_t initial_size, void * heap_start, struct_pag
  * @param initial_size size of the heap at t = 0 in bytes
  * @param heap_start the virtual addr of the kernel
  */
-alloc_t * init_alloc(uint64_t initial_size, void * heap_start) {
+alloc_t * alloc_init(uint64_t initial_size, void * heap_start) {
     uint64_t pages = ALIGN_UP(initial_size, DEFAULT_PAGE_SIZE) / DEFAULT_PAGE_SIZE;
     return init_custom_alloc(initial_size, heap_start, ialloc_frames(pages, DEFAULT_PAGE));
 }
@@ -153,42 +153,44 @@ void * Imalloc_alocator(alloc_t * allocator, uint64_t size) {
 
     alloc_meta_data_t * header = (alloc_meta_data_t *) allocator->heapStart;
     //Iprintf("header(%x)[%i] (%x)\n",header->block_size, header->allocated, header);
-    while (((uint64_t) header + header->block_size) < allocator->heapStart + allocator->heapSize) {
-        Iprintf("fheader(%x)[%i] (%x)\n",header->block_size, header->allocated, header);
-        if (!header->allocated && header->block_size == size) {
-            header->allocated = 1;
-            return (void *) (uint64_t) header + META_DATA_SIZE;
+    while (memory) {
+        while (((uint64_t) header + header->block_size) < allocator->heapStart + allocator->heapSize) {
+            Iprintf("fheader(%x)[%i] (%x)\n",header->block_size, header->allocated, header);
+            if (!header->allocated && header->block_size == size) {
+                header->allocated = 1;
+                return (void *) (uint64_t) header + META_DATA_SIZE;
+            }
+            if (!header->allocated && header->block_size > size) {
+                // set attributes of next_block
+                alloc_meta_data_t *next_block = (alloc_meta_data_t *) ((void *)header + size);
+                uint64_t remaining_s = header->block_size - size;               //remaining_s can't be < 16 (bc it's all aligned to 16)
+
+                next_block->allocated = 0;
+                next_block->block_size = remaining_s;
+                next_block->prev_block_data = size;
+
+                //set attributes of allocated block
+                header->allocated = 1;
+                header->block_size = size;
+                // prev meta_data stays is not touched bc it's alr there obv
+                return (void *) (uint64_t) header + META_DATA_SIZE;
+            }
+
+            if (!header->allocated)
+                break;
+
+            header = (alloc_meta_data_t *) ((uintptr_t) header + header->block_size);
         }
-        if (!header->allocated && header->block_size > size) {
-            // set attributes of next_block
-            alloc_meta_data_t *next_block = (alloc_meta_data_t *) ((void *)header + size);
-            uint64_t remaining_s = header->block_size - size;               //remaining_s can't be < 16 (bc it's all aligned to 16)
-            //Iprintf("remaining: %x\n", remaining_s);
-            next_block->allocated = 0;
-            next_block->block_size = remaining_s;
-            next_block->prev_block_data = size;
-            //set attributes of allocated block
-            header->allocated = 1;
-            header->block_size = size;
-            Iprintf("header(%x) %x\n",remaining_s, next_block);
-            // prev meta_data stays is not touched bc it's alr there obv
-            return (void *) (uint64_t) header + META_DATA_SIZE;
+
+        // ask for more memory from the kernel
+        // * 30 / 10 bc SSE doesn't work or smth and yk... but I'm a genius
+        struct_page_t *info_page = (struct_page_t *) KERNEL_VIRT_TO_PHYS(ialloc_frames(ALIGN_UP((uint64_t) (allocator->heapSize * 30 / 10), DEFAULT_PAGE_SIZE), DEFAULT_PAGE));
+        if (map_frame_into_heap(allocator, (page_map_l4_entry *) read_cr3(), info_page) != 0) {
+            return NULL;
         }
-
-        if (!header->allocated)
-            break;
-
-        header = (alloc_meta_data_t *) ((uintptr_t) header + header->block_size);
+        allocator->heapSize += info_page->page_count * DEFAULT_PAGE_SIZE;
+        memory = false;
     }
-
-    // ask for more memory from the kernel
-    // * 30 / 10 bc SSE doesn't work or smth and yk... but I'm a genius
-    struct_page_t *info_page = (struct_page_t *) KERNEL_VIRT_TO_PHYS(ialloc_frames(ALIGN_UP((uint64_t) (allocator->heapSize * 30 / 10), DEFAULT_PAGE_SIZE), DEFAULT_PAGE));
-    if (map_frame_into_heap(allocator, (page_map_l4_entry *) read_cr3(), info_page) != 0) {
-        return NULL;
-    }
-    allocator->heapSize += info_page->page_count * DEFAULT_PAGE_SIZE;
-    memory = false;
     return (void *) FRAME_ALLOC_FAILED;
 }
 

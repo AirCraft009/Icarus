@@ -27,7 +27,7 @@ typedef struct Allocator {
 }alloc_t;
 
 alloc_t *init_custom_alloc (uint64_t initial_size, void * heap_start, struct_page_t * info_page) ;
-alloc_t * init_alloc(uint64_t initial_size, void * heap_start);
+alloc_t * alloc_init(uint64_t initial_size, void * heap_start);
 void * Imalloc_alocator(alloc_t * allocator, uint64_t size);
 void *Imalloc(uint64_t size);
 void free(void * addr);
