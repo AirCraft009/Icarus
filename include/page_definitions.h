@@ -88,7 +88,7 @@ typedef enum {
     DEFAULT_PAGE,
     HUGE_PAGE,
     SUPER_PAGE,
-} PAGE_SIZE;
+} PAGE_TYPE;
 
 #define PAGE_TYPE_TO_SIZE(type) ((type == SUPER_PAGE) ? SUPER_PS : (type == HUGE_PAGE) ? HUGE_PS : PAGE_S)
 

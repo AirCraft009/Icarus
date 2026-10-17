@@ -90,7 +90,7 @@ int thread_supply_mem(tcb_t *thread, ADDR_SUB_SPACE sub_space, struct_page_t * i
  * @param permissions permission for mapped pages (user access is defined by the type of thread)
  * @return the addr of the struct page (direct kernel mapping) or FRAME_ALLOC_FAILED
  */
-struct_page_t * thread_supply_new_mem(tcb_t *thread, ADDR_SUB_SPACE sub_space,  uint64_t pages, PAGE_SIZE p_size, uint64_t permissions) {
+struct_page_t * thread_supply_new_mem(tcb_t *thread, ADDR_SUB_SPACE sub_space,  uint64_t pages, PAGE_TYPE p_size, uint64_t permissions) {
     uint64_t size = PAGE_TYPE_TO_SIZE(p_size);
     struct_page_t * info = ialloc_frames(pages, size);
     if ((uint64_t)(info) == FRAME_ALLOC_FAILED)

@@ -40,7 +40,7 @@ int page_in(page_map_l4_entry *pml4, const void *virt_addr, const void *phys_add
     page_map_l4_entry *pml4_entry = &pml4[VA_PML4_INDEX(virt_addr)];
 
     if (pml4_entry->present == 0) {
-        phys_addr_t pdpt = map_alloc_kframe(mmap, DEFAULT_PAGE_SIZE);
+        phys_addr_t pdpt = ialloc_kframe(1, DEFAULT_PAGE_SIZE);
         if (pdpt == FRAME_ALLOC_FAILED) {
             Iprintf("ERROR PML4!\n");
             return -1;
@@ -64,7 +64,7 @@ int page_in(page_map_l4_entry *pml4, const void *virt_addr, const void *phys_add
     }
 
     if (pdpt_entry->present == 0) {
-        phys_addr_t pd = map_alloc_kframe(mmap, DEFAULT_PAGE_SIZE);
+        phys_addr_t pd = ialloc_kframe(1, DEFAULT_PAGE_SIZE);
         if (pd == FRAME_ALLOC_FAILED) {
             Iprintf("ERROR PDPT!\n");
             return -1;
@@ -88,7 +88,7 @@ int page_in(page_map_l4_entry *pml4, const void *virt_addr, const void *phys_add
     }
 
     if (pd_entry->present == 0) {
-        phys_addr_t pt = map_alloc_kframe(mmap, DEFAULT_PAGE_SIZE);
+        phys_addr_t pt = ialloc_kframe(1, DEFAULT_PAGE_SIZE);
         if (pt == FRAME_ALLOC_FAILED) {
             Iprintf("ERROR PD!\n");
             return -1;

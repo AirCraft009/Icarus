@@ -15,32 +15,42 @@
 #include "kernel/util/shellio.h"
 
 extern char _kernel_end[];
-static struct_page_t * temp_page;
 
-
+phys_addr_t map_alloc_frame_contiguous(mem_map * mmap, uint64_t page_count);
+phys_addr_t map_alloc_frame(mem_map * mmap, PAGE_TYPE page_size);
 
 void memmap_register_region(mem_map *mmap, uint64_t start, uint64_t end) {
-    mmap->mem_size += end - start;
+    uint64_t len = end - start;
+    uint64_t real_frames = len / DEFAULT_PAGE_SIZE;
+    mmap->mem_size += len;
     mmap->regions[mmap->region_count].start_addr = start;
-    mmap->regions[mmap->region_count].len_bytes = end - start;
-    mmap->regions[mmap->region_count].free_frames = (end - start) / DEFAULT_PAGE_SIZE;
+    mmap->regions[mmap->region_count].len_bytes = len;
+    mmap->regions[mmap->region_count].qword_count = ALIGN_UP(real_frames, 64) / 64;      // align up for better parsing
+    mmap->regions[mmap->region_count].free_frames = real_frames;
 
     if (mmap->region_count == 0) {
         mmap->regions[mmap->region_count].bitmap_start_addr = 0;
     }else {
         mem_region prev_region = mmap->regions[mmap->region_count - 1];
-        mmap->regions[mmap->region_count].bitmap_start_addr = prev_region.bitmap_start_addr + prev_region.len_bytes / DEFAULT_PAGE_SIZE;
+        // make sure the 64bit padding is taken into account
+        mmap->regions[mmap->region_count].bitmap_start_addr = prev_region.bitmap_start_addr + prev_region.qword_count * 8;
     }
 
-    mmap->bitmap.size += (end - start) / DEFAULT_PAGE_SIZE;
+    // pad to 64 bits
+    mmap->bitmap.size += mmap->regions[mmap->region_count].qword_count * 64;
     mmap->region_count++;
 }
 
 /**
- * zeros out the entire bitmap (use for fresh systems)
+ * zeros out the bitmap and sets the padded spaces to 1 (use for fresh systems)
  */
 void zero_mem_map(mem_map *mmap) {
     Imemset(mmap->bitmap.data, 0, mmap->bitmap.size / 8);
+    for (uint32_t i = 0; i < mmap->region_count; i++) {
+        mem_region *region = &mmap->regions[i];
+        uint8_t * padding = &mmap->bitmap.data[region->bitmap_start_addr + region->len_bytes / DEFAULT_PAGE_SIZE];
+        Imemset(padding, 1,  region->qword_count * 64 - region->len_bytes);
+    }
 }
 
 /**
@@ -114,20 +124,21 @@ void show_mem_map(mem_map *mmap, bool verbose) {
  * @param page_type size of each allocated page
  * @return NULL on fail
  */
-struct_page_t *ialloc_frames(uint64_t count, PAGE_SIZE page_type) {
+struct_page_t *ialloc_frames(uint64_t count, PAGE_TYPE page_type) {
+    //TODO: make an independent method instead of relying on map_alloc_frame
     //TODO: make structpage a linkedlist so that arbitrary amount of pages can be allocated
     if (count > 510)        // rn this bc the struct_page only has space for 510 entries  (will build a linked list later)
         return (struct_page_t *) FRAME_ALLOC_FAILED;
 
     uint64_t page_size = PAGE_TYPE_TO_SIZE(page_type);
     mem_map * mmap = (mem_map *) &_kernel_end;
-    struct_page_t *info_page = (struct_page_t *) KERNEL_PHYS_TO_VIRT(map_alloc_kframe(mmap,  page_size));
+    struct_page_t *info_page = (struct_page_t *) KERNEL_PHYS_TO_VIRT(map_alloc_frame(mmap, page_type));
     info_page->page_count = count;
     info_page->page_addr[0] = (phys_addr_t) KERNEL_VIRT_TO_PHYS(info_page);
     info_page->page_size = page_size;
 
     for (uint64_t i = 1; i < count; i++) {
-        info_page->page_addr[i] = map_alloc_kframe(mmap, page_size);
+        info_page->page_addr[i] = map_alloc_frame(mmap, page_type);
         if (info_page->page_addr[i] == FRAME_ALLOC_FAILED) {
             Iprintf("allocation failed\n");
             return (struct_page_t *) FRAME_ALLOC_FAILED;
@@ -155,7 +166,7 @@ int idealloc_frames(struct_page_t * info_page) {
 
 phys_addr_t alloc_kframe(uint64_t size) {
     mem_map * mmap = (mem_map *) &_kernel_end;
-    return map_alloc_kframe(mmap, size);
+    return map_alloc_frame_contiguous(mmap, ALIGN_UP(size, DEFAULT_PAGE_SIZE) / DEFAULT_PAGE_SIZE);
 }
 
 int dealloc_kframe(phys_addr_t start, uint64_t size) {
@@ -167,57 +178,94 @@ int dealloc_kframe(phys_addr_t start, uint64_t size) {
  * Allocate contiguous physical memory
  * @size is the total size of all 4KiB regions (should be aligned to 4KiB)
  */
-phys_addr_t ialloc_kframe(uint64_t pages, uint64_t page_size) {
+phys_addr_t ialloc_kframe(uint64_t pages, PAGE_TYPE page_size) {
     mem_map * mmap = (mem_map *) &_kernel_end;
-    return map_alloc_kframe(mmap, pages * page_size);
+    return map_alloc_frame_contiguous(mmap, pages * PAGE_TYPE_TO_SIZE(page_size) / DEFAULT_PAGE_SIZE);
+}
+
+/**
+ * returns bit index of first run of n free frames in w, or -1
+ */
+static inline int find_run_in_word(uint64_t word, unsigned run_length) {
+    uint64_t free_mask = ~word;          // free = 1
+    unsigned covered = 1;
+    while (covered * 2 <= run_length) {
+        free_mask &= free_mask >> covered;
+        covered *= 2;
+    }
+    if (covered < run_length) free_mask &= free_mask >> (run_length - covered);
+    return free_mask ? __builtin_ctzll(free_mask) : -1;
 }
 
 
 /**
- * Allocate contiguous physical memory
- * @size is the total size of all 4KiB regions (should be aligned to 4KiB)
+ * allocate a single page of physical memory
+ * @return physical addr or FRAME_ALLOC_FAILED
  */
-phys_addr_t map_alloc_kframe(mem_map *mmap, uint64_t size) {
+phys_addr_t map_alloc_frame(mem_map * mmap, PAGE_TYPE page_size) {
+    uint8_t smallest_unit = PAGE_TYPE_TO_SIZE(page_size) / DEFAULT_PAGE_SIZE;           // how many blocsk need to be contiguous
+    return map_alloc_frame_contiguous(mmap,smallest_unit);
+}
 
-    // default page size = 4096 while the page size param could be a huge or super page
-    uint64_t cont_units = size / DEFAULT_PAGE_SIZE;
-    //cons_mprintf("Allocating memory for frame [%i]\n", cont_units);
-    uint64_t count = 0;
-   for (uint32_t i = 0; i < mmap->region_count; i++) {
-       mem_region * region = &mmap->regions[i];
-       if (region->free_frames < cont_units) {
-           continue;
-       }
+/**
+ * allocates n 4KIB frames contiguously from a given mem_map
+ * @return the physical addr or FRAME_ALLOC_FAILED
+ */
+phys_addr_t map_alloc_frame_contiguous(mem_map * mmap, uint64_t page_count) {
 
-       for (uint64_t j = region->bitmap_start_addr; j < region->len_bytes / DEFAULT_PAGE_SIZE; j++) {
-           uint64_t byte_ind = j / 8;
-           uint64_t bit_ind = j % 8;
-           if (((mmap->bitmap.data[byte_ind] >> bit_ind) & 0x1) == 0) {
-               // false = 0 = free;
-               count++;
-           }else {
-               //cons_mprintf("full frame[%i] - full byte[%i]=%i\n", j, byte_ind, region.bitmap.data[byte_ind]);
-               count = 0;
+    /*
+     *  I know micro-optimizations aren't a priority but this was js such a good. idea..
+     *  I've updated the contiguous frame generator to use trailing and leading zeros
+     *  as well as an optimized (I tried my best) way to find holes of size n in uint64
+     *
+     *  That coupled w/ padding the bitmap to be 64 bit aligned
+     *  so that I can use 64 bit ints to get better cache utilization (mb/hopefully) should be pretty good yk?
+     */
+
+    for (uint32_t i = 0; i < mmap->region_count; i++) {
+        mem_region * region = &mmap->regions[i];
+        if (region->free_frames < page_count) {
+            continue;
+        }
+
+        uint32_t total_frames = (region->len_bytes / DEFAULT_PAGE_SIZE);
+        uint32_t qword_count = total_frames / 64;      // 64 frames per memory access is always fine bc bitmap is padded
+
+        uint32_t carried_run = 0;
+        uint32_t run_start = 0;
+        for (uint32_t qword_index = 0; qword_index < qword_count; ++qword_index) {
+            uint64_t qword = *(uint64_t *) &mmap->bitmap.data[qword_index];
+
+            if (qword == 0) {                                  // fully free handle separately bc it's ub for trailing 0's
+                if (carried_run == 0)
+                    run_start = qword_index * 64;
+                carried_run += 64;
+                if (carried_run >= page_count) {
+                    region->free_frames -= page_count;
+                    return region->start_addr + run_start * DEFAULT_PAGE_SIZE;
+                }
                 continue;
-           }
+            }
 
-           if (count == cont_units) {
-               //success
-                uint32_t start = j - (count - 1);
-               //manually setting bits bc I'm sure it'll be faster (100% cope)
-               for (uint64_t k = start; k < start + count; k++) {
-                   byte_ind = k / 8;
-                   bit_ind = k % 8;
-                   mmap->bitmap.data[byte_ind] |= (0x1 << bit_ind);
-               }
-               region->free_frames -= cont_units;
+            unsigned leading_free = __builtin_ctzll(qword);    // free frames at the bottom
+            if (carried_run + leading_free >= page_count) {
+                region->free_frames -= page_count;
+                return region->start_addr + run_start * DEFAULT_PAGE_SIZE;
+            }
 
+            if (page_count <= 64) {                        // hole fully inside this word
+                int bit_index = find_run_in_word(qword, page_count);
+                if (bit_index >= 0) {
+                    region->free_frames -= page_count;
+                    return region->start_addr + (qword_index * 64 + bit_index) * DEFAULT_PAGE_SIZE;
+                }
+            }
 
-               //Iprintf("allocated at: %x; %x;\n", region->start_addr, start * DEFAULT_PAGE_SIZE);
-               return (region->start_addr + start * DEFAULT_PAGE_SIZE);
-           }
-       }
-   }
+            unsigned trailing_free = __builtin_clzll(qword);   // free frames at the top, carried on
+            carried_run = trailing_free;
+            run_start = qword_index * 64 + 64 - trailing_free;
+        }
+    }
     return FRAME_ALLOC_FAILED;
 }
 
