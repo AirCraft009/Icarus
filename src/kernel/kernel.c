@@ -46,8 +46,6 @@ void kmain(uint32_t magic, struct multiboot_info *mboot) {
 
     Imemset(&Kernel_PML4_TABLE[0], 0, sizeof(Kernel_PML4_TABLE));
 
-    // call lgdt from high addr again (addr: 0x1088FD)
-    gdt_init();
     //parse the struct given to use from the multiboot2 header
     //init the bitmap for free memory
     paging_init();
@@ -55,6 +53,11 @@ void kmain(uint32_t magic, struct multiboot_info *mboot) {
         Iprintf("init_multiboot2 failed, error while parsing mulitboot2 struct\n");
         __asm__ volatile ("cli; hlt"); // Completely hangs the computer
     };
+
+    // call lgdt from high addr again (addr: 0x1088FD)
+    gdt_init();
+
+
     test_walk_table(&Kernel_PML4_TABLE[0], (phys_addr_t *) KERNEL_PHYS_TO_VIRT(0x0100000));
     write_cr3((uint64_t) KERNEL_VIRT_TO_PHYS(&Kernel_PML4_TABLE[0]));
     allocator = alloc_init(DEFAULT_PAGE_SIZE * 510, (void *) KERNEL_HEAP_ADDR);

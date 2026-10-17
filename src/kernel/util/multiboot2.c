@@ -49,29 +49,29 @@ int handle_multiboot2 (uint32_t magic, boot_info *info, page_map_l4_entry *pml4)
 		switch (tag->type)
 		{
 			case MULTIBOOT_TAG_TYPE_CMDLINE:
-				// Iprintf( "Command line = %s\n",
-				// ((struct multiboot_tag_string *) tag)->string);
+				Iprintf( "Command line = %s\n",
+				((struct multiboot_tag_string *) tag)->string);
 				break;
 			case MULTIBOOT_TAG_TYPE_BOOT_LOADER_NAME:
-				// Iprintf( "Boot loader name = %s\n",
-				// ((struct multiboot_tag_string *) tag)->string);
+				Iprintf( "Boot loader name = %s\n",
+				((struct multiboot_tag_string *) tag)->string);
 				break;
 			case MULTIBOOT_TAG_TYPE_MODULE:
-				// Iprintf( "Module at 0x%i-0x%i. Command line %s\n",
-				// ((struct multiboot_tag_module *) tag)->mod_start,
-				// ((struct multiboot_tag_module *) tag)->mod_end,
-				// ((struct multiboot_tag_module *) tag)->cmdline);
+				Iprintf( "Module at 0x%i-0x%i. Command line %s\n",
+				((struct multiboot_tag_module *) tag)->mod_start,
+				((struct multiboot_tag_module *) tag)->mod_end,
+				((struct multiboot_tag_module *) tag)->cmdline);
 				break;
 			case MULTIBOOT_TAG_TYPE_BASIC_MEMINFO:
-				// Iprintf( "mem_lower = %uKB, mem_upper = %uKB\n",
-				// ((struct multiboot_tag_basic_meminfo *) tag)->mem_lower,
-				// ((struct multiboot_tag_basic_meminfo *) tag)->mem_upper);
+				Iprintf( "mem_lower = %uKB, mem_upper = %uKB\n",
+				((struct multiboot_tag_basic_meminfo *) tag)->mem_lower,
+				((struct multiboot_tag_basic_meminfo *) tag)->mem_upper);
 				break;
 			case MULTIBOOT_TAG_TYPE_BOOTDEV:
-				// Iprintf( "Boot device 0x%i,%u,%u\n",
-				// ((struct multiboot_tag_bootdev *) tag)->biosdev,
-				// ((struct multiboot_tag_bootdev *) tag)->slice,
-				// ((struct multiboot_tag_bootdev *) tag)->part);
+				Iprintf( "Boot device 0x%i,%u,%u\n",
+				((struct multiboot_tag_bootdev *) tag)->biosdev,
+				((struct multiboot_tag_bootdev *) tag)->slice,
+				((struct multiboot_tag_bootdev *) tag)->part);
 				break;
 			case MULTIBOOT_TAG_TYPE_MMAP:
 				mmap = tag;
@@ -117,6 +117,7 @@ int handle_multiboot2 (uint32_t magic, boot_info *info, page_map_l4_entry *pml4)
 
 	//handle_ACPI();
 
+	Iprintf("I'm good fool");
 	return 0;
 }
 

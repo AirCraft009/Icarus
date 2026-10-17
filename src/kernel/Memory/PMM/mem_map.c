@@ -49,7 +49,7 @@ void zero_mem_map(mem_map *mmap) {
     for (uint32_t i = 0; i < mmap->region_count; i++) {
         mem_region *region = &mmap->regions[i];
         uint8_t * padding = &mmap->bitmap.data[region->bitmap_start_addr + region->len_bytes / DEFAULT_PAGE_SIZE];
-        Imemset(padding, 1,  region->qword_count * 64 - region->len_bytes);
+        Imemset(padding, 1,  (region->qword_count * 64) * DEFAULT_PAGE_SIZE - region->len_bytes);
     }
 }
 
@@ -224,12 +224,15 @@ phys_addr_t map_alloc_frame_contiguous(mem_map * mmap, uint64_t page_count) {
 
     for (uint32_t i = 0; i < mmap->region_count; i++) {
         mem_region * region = &mmap->regions[i];
+        Iprintf("REGION: %x\n", region->start_addr);
         if (region->free_frames < page_count) {
             continue;
         }
 
         uint32_t total_frames = (region->len_bytes / DEFAULT_PAGE_SIZE);
         uint32_t qword_count = total_frames / 64;      // 64 frames per memory access is always fine bc bitmap is padded
+
+        Iprintf("qwords: %i\n", qword_count);
 
         uint32_t carried_run = 0;
         uint32_t run_start = 0;

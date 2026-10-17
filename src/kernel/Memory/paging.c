@@ -90,7 +90,7 @@ int page_in(page_map_l4_entry *pml4, const void *virt_addr, const void *phys_add
     if (pd_entry->present == 0) {
         phys_addr_t pt = ialloc_kframe(1, DEFAULT_PAGE_SIZE);
         if (pt == FRAME_ALLOC_FAILED) {
-            Iprintf("ERROR PD!\n");
+            Iprintf("ERROR PT!\n");
             return -1;
         }
         Imemset((void *) KERNEL_PHYS_TO_VIRT(pt), 0, DEFAULT_PAGE_SIZE);

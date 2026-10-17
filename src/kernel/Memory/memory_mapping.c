@@ -37,7 +37,7 @@ int page_in_regions(mem_map *mmap, page_map_l4_entry * pml4);
 int handle_mb2_mmap(struct multiboot_tag *mmap_tag, page_map_l4_entry *pml4) {
     //phys addr of method 0x107812
     MemmapStart = (uint64_t) &_kernel_end;
-    //Iprintf("INIT_MMAP: %x == %x -> %x\n", _kernel_start_phys, &_kernel_end, &_kernel_end_phys);
+    Iprintf("INIT_MMAP: %x == %x -> %x\n", _kernel_start_phys, &_kernel_end, &_kernel_end_phys);
 
     mmap = (mem_map *) MemmapStart;
     mmap->region_count = 0;
@@ -63,12 +63,12 @@ int handle_mb2_mmap(struct multiboot_tag *mmap_tag, page_map_l4_entry *pml4) {
             uint64_t start = ALIGN_UP(mmap_entry->addr, DEFAULT_PAGE_SIZE);
             uint64_t end = ALIGN_DOWN(mmap_entry->addr + mmap_entry->len, DEFAULT_PAGE_SIZE);
             if (end > start) {
-                //Iprintf("addrF: %x - %x = len: %i\n", start, end, end - start);
+                Iprintf("addrF: %x - %x = len: %i\n", start, end, end - start);
                 memmap_register_region(mmap, start, end);
             }
         }
     }
-    //mmap->bitmap.size = 525987;
+
     zero_mem_map(mmap);
 
     //mark the kernel and bitmap itself as not available
@@ -82,9 +82,11 @@ int handle_mb2_mmap(struct multiboot_tag *mmap_tag, page_map_l4_entry *pml4) {
         return -1;
     }
 
+    Iprintf("paging\n");
     if ( page_in_regions(mmap, pml4) != 0) {
         return -1;
     };
+    Iprintf("paging\n");
     //show_mem_map(mmap, false);
     return 0;
 }
@@ -97,6 +99,7 @@ int page_in_regions(mem_map *mmap, page_map_l4_entry * pml4) {
         end = start + mmap->regions[i].len_bytes;
 
         uint64_t addr = ALIGN_UP(start, HUGE_PS);
+        Iprintf("region: %x\n", end);
         while (addr < end) {
             uint64_t remaining = end - addr;
             uint64_t sz;
@@ -114,12 +117,14 @@ int page_in_regions(mem_map *mmap, page_map_l4_entry * pml4) {
                     (void *)KERNEL_PHYS_TO_VIRT(addr),
                     (void *)addr,
                     HUGE_PS,
-                    WRITEABLE | USER_ACCESS) != 0)
+                    WRITEABLE) != 0)
             {
                 return -1;
             }
             addr += HUGE_PS;
+
         }
+        Iprintf("region: %i end\n", i);
     }
     return 0;
 }

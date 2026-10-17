@@ -53,7 +53,7 @@ alloc_t *init_custom_alloc (uint64_t initial_size, void * heap_start, struct_pag
             (void *) st,
             (void *) info_page->page_addr[0],
             DEFAULT_PAGE_SIZE,
-            WRITEABLE | USER_ACCESS) != 0)
+            WRITEABLE) != 0)
     {
         return NULL;
     }
@@ -73,7 +73,7 @@ alloc_t *init_custom_alloc (uint64_t initial_size, void * heap_start, struct_pag
         (void *) heap_start,
         (void *) phys_allocator,
         DEFAULT_PAGE_SIZE,
-        WRITEABLE | USER_ACCESS) != 0 )
+        WRITEABLE) != 0 )
     {
         return NULL;
     }
@@ -84,7 +84,7 @@ alloc_t *init_custom_alloc (uint64_t initial_size, void * heap_start, struct_pag
             (void *) heap_start + i * DEFAULT_PAGE_SIZE,
             (void *) info_page->page_addr[i - 1],
             DEFAULT_PAGE_SIZE,
-            WRITEABLE | USER_ACCESS) != 0)
+            WRITEABLE) != 0)
         {
             return NULL;
         }
@@ -133,7 +133,7 @@ int map_frame_into_heap(alloc_t * allocator, page_map_l4_entry *pml4,  struct_pa
             (void *) allocator->heapStart + allocator->heapSize + i * DEFAULT_PAGE_SIZE,
             (void *) info_page->page_addr[i],
             DEFAULT_PAGE_SIZE,
-            WRITEABLE | USER_ACCESS) != 0)
+            WRITEABLE) != 0)
         {
             return -1;
         }

@@ -134,7 +134,7 @@ pdpt:
 align 4096
 pd:
     %assign i 0
-    %rep 17
+    %rep 20
         dq (i * 0x200000) | 0x83
         %assign i i+1
     %endrep
