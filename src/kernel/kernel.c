@@ -58,12 +58,14 @@ void kmain(uint32_t magic, struct multiboot_info *mboot) {
     gdt_init();
 
 
-    test_walk_table(&Kernel_PML4_TABLE[0], (phys_addr_t *) KERNEL_PHYS_TO_VIRT(0x0100000));
     write_cr3((uint64_t) KERNEL_VIRT_TO_PHYS(&Kernel_PML4_TABLE[0]));
-    allocator = alloc_init(DEFAULT_PAGE_SIZE * 510, (void *) KERNEL_HEAP_ADDR);
+    //show_mem(true);
 
+    allocator = alloc_init(DEFAULT_PAGE_SIZE * 50, (void *) KERNEL_HEAP_ADDR);
     handle_ACPI();
-
+    __asm__ volatile ("cli; hlt");
+    while (1)
+        ;
 
     //.Iprintf("---------------MODEL-----------------\n");
     //Iprintf("%s\n", init_cpuid());
@@ -80,7 +82,8 @@ void kmain(uint32_t magic, struct multiboot_info *mboot) {
 
     tcb_t * thread1 = create_thread(0, false, 1);
     struct_page_t *addr = thread_supply_new_mem(thread1, SPACE_CODE, 2, DEFAULT_PAGE, WRITEABLE);
-    Imemcpy((void *) addr, fill_vga, sizeof(fill_vga));
+    //test_walk_table((void *)KERNEL_PHYS_TO_VIRT(thread1->page_table), (void *)KERNEL_PHYS_TO_VIRT(2 * HUGE_PS));
+    //Imemcpy((void *) addr, fill_vga, sizeof(fill_vga));
     Iprintf("addr: (%x)\n", addr);
 
     thread1->state = PROCESS_READY;
@@ -89,10 +92,9 @@ void kmain(uint32_t magic, struct multiboot_info *mboot) {
     __asm__ volatile ("sti");
     keyboard_ps2_init();
 
-
-    //lapic_write(LAPIC_TIMER_INITCNT, 0x0);
-    //lapic_write(LAPIC_LVT_TIMER, 32 | LAPIC_TIMER_PERIODIC);
-    //lapic_write(LAPIC_TIMER_INITCNT, LAPIC_TICKS_PER_MS * 500);
+    lapic_write(LAPIC_TIMER_INITCNT, 0x0);
+    lapic_write(LAPIC_LVT_TIMER, 32 | LAPIC_TIMER_PERIODIC);
+    lapic_write(LAPIC_TIMER_INITCNT, LAPIC_TICKS_PER_MS * 500);
 
 
 

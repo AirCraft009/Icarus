@@ -134,6 +134,7 @@ int handle_old_acpi(struct RSDP_t * rsdp) {
         Iprintf("categorise tables (failed checksum)\n");
         return -1;
     }
+    Iprintf("SOOOO FINE");
     discoverPCIE();
     return 0;
 }

@@ -22,6 +22,7 @@ int discoverPCIE() {
     // no MCFG table found, so read w/ the old regs
     if (MCFG.h.Signature[0] == '\0') {
         Iprintf("reading via legacy IO ports\n");
+        return -1;
     }
 
 
@@ -39,7 +40,9 @@ int discoverPCIE() {
         Iprintf("entering at MCFG[%i]; (%x) & (%x)\n", i, ecam->start_pci, ecam->end_pci);
 
         for (int bus = ecam->start_pci; bus < ecam->end_pci + 1; ++bus) {
-            for (int dev_n = 0; dev_n < 32; ++dev_n) {
+            //Iprintf("busses (%i)\n", bus);
+            for (int dev_n = 0; dev_n < 8; ++dev_n) {
+                Iprintf("device (%i)\n", dev_n);
                 // get the start addr of the device block
                 volatile phys_addr_t dev_phys = (phys_addr_t)  ecam_addr(base, start_bus, bus, dev_n, 0, 0);
                 volatile pci_hdr_common_t * dev = (pci_hdr_common_t *) map_mmio(dev_phys, DEFAULT_PAGE_SIZE, CACHE_DISABLED | WRITEABLE);
@@ -48,10 +51,13 @@ int discoverPCIE() {
                 if (vendor == 0xFFFF)
                     continue;       // no device here
 
+
                 uint8_t header = dev->header_type;
                 uint8_t functions = (header & 0x80) ? 8 : 1;        // bit 7 is multifunction bit
 
+
                 for (int fn = 0; fn < functions; ++fn) {
+                    Iprintf("fn %i at b = %i d = %i\n", fn, bus, dev_n);
                     dev_phys = (phys_addr_t)  ecam_addr(base, start_bus, bus, dev_n, fn, 0);
                     dev = (pci_hdr_common_t *) map_mmio(dev_phys, DEFAULT_PAGE_SIZE, CACHE_DISABLED | WRITEABLE);
                     uint8_t type = header & 0x3;

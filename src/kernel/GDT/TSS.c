@@ -20,7 +20,6 @@ static uint64_t tss_alloc_stack(void) {
     if (phys == FRAME_ALLOC_FAILED) {
         return FRAME_ALLOC_FAILED;
     }
-    Iprintf("TSS - Stack allocated at %x\n", phys);
 
     uint64_t base = (uint64_t)KERNEL_PHYS_TO_VIRT(phys);
     uint64_t top  = base + TSS_STACK_PAGES * DEFAULT_PAGE_SIZE;

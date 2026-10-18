@@ -59,7 +59,7 @@ static __inline uint32_t pci_read_val(){
     return value;
 }
 
-static __inline void invlpg(void *addr) {
+static __inline void invlpg(const void *addr) {
     __asm__ volatile ("invlpg (%0)" : : "r"(addr) : "memory");
 }
 

@@ -60,6 +60,14 @@ byte bitmap_get(bit_map *map, uint64_t index) {
     return (map->data[byte_ind] & (1 << offset)) >> offset;
 }
 
+/**
+ * sets a region in a bitmap
+ *
+ * @param map the bitmap
+ * @param startIndex the bitindex
+ * @param len the size
+ * @return
+ */
 int bitmap_set_len(bit_map *map, uint64_t startIndex, uint64_t len) {
     if (startIndex > map->size || len > map->size - startIndex) {
         return -1;
@@ -141,7 +149,7 @@ int show_bit_map_range(bit_map *map, uint64_t start, uint64_t end) {
     }
     uint64_t i = start;
     uint64_t blockS = 0;
-    bool currently_set = (map->data[start] & 0x1) == 1;
+    bool currently_set = (map->data[start / 8] >> (start % 8) & 0x1) == 1;
     while (i < end) {
         while (i < end
             && currently_set == ((map->data[i / 8] >> (i % 8)) & 1u))

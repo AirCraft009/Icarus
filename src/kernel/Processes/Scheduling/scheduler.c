@@ -10,6 +10,7 @@
 #include "kernel/interrupts/APIC.h"
 #include "kernel/interrupts/ISR.h"
 #include "kernel/Memory/alloc.h"
+#include "kernel/Memory/memory_mapping.h"
 #include "kernel/Processes/thread.h"
 #include "kernel/util/mem_utils.h"
 #include "kernel/util/shellio.h"
@@ -104,10 +105,12 @@ void context_switch(tcb_t *next_tcb, struct interrupt_frame *frame) {
         sizeof(cpu_push_frame)
         );
 
+    //Iprintf("pre: %x\n", next_tcb->page_table);
+    //test_walk_table((void *) KERNEL_PHYS_TO_VIRT(next_tcb->page_table), (void *)KERNEL_PHYS_TO_VIRT(2 * HUGE_PS));
     // change pml4 table (it still has the kernel mappings so the current code should stay fine)
     write_cr3((uint64_t)next_tcb->page_table);
-
     Iprintf("code segment: (%x)\n", next_tcb->regsiters.psp.rip);
+
 
     running_tcb = next_tcb;
     // send the EOI as late as possible
@@ -128,6 +131,7 @@ void scheduler_init(tcb_t * tcb) {
     last_tcb->next = NULL;
 
     top_tcb = tcb;
+    //test_walk_table((void *)KERNEL_PHYS_TO_VIRT(tcb->page_table), (void *)KERNEL_PHYS_TO_VIRT(2 * HUGE_PS));
     top_tcb->next = last_tcb;
     tcb->state = PROCESS_READY;
 }

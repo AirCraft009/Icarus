@@ -38,7 +38,6 @@ int page_in(page_map_l4_entry *pml4, const void *virt_addr, const void *phys_add
             uint64_t pageSize, uint64_t permissions) {
 
     page_map_l4_entry *pml4_entry = &pml4[VA_PML4_INDEX(virt_addr)];
-
     if (pml4_entry->present == 0) {
         phys_addr_t pdpt = ialloc_kframe(1, DEFAULT_PAGE_SIZE);
         if (pdpt == FRAME_ALLOC_FAILED) {
@@ -108,12 +107,13 @@ int page_in(page_map_l4_entry *pml4, const void *virt_addr, const void *phys_add
     pt_entry->page_ppn = ((uint64_t) phys_addr) >> 12;
     pt_entry->present  = 1;
     invlpg(virt_addr);
+
     return 0;
 }
 
 
 phys_addr_t test_walk_table(page_map_l4_entry *pml4, const phys_addr_t *virt_addr) {
-    Iprintf("Walking addr (%x)\n", virt_addr);
+    Iprintf("Walking addr (%x) on (%x)\n", virt_addr, pml4);
     page_map_l4_entry *pml4_entry = &pml4[VA_PML4_INDEX(virt_addr)];
     if (pml4_entry->present == 0) {
         Iprintf("PML4 table: PDPT NOT PRESENT AT(%i)\n",  VA_PML4_INDEX(virt_addr));

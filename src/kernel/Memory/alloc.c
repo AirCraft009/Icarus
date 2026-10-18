@@ -147,7 +147,6 @@ int map_frame_into_heap(alloc_t * allocator, page_map_l4_entry *pml4,  struct_pa
 void * Imalloc_alocator(alloc_t * allocator, uint64_t size) {
     size += META_DATA_SIZE;      // make the total size
     size = ALIGN_UP(size, HEAP_ALIGNMENT);
-    Iprintf("allocating block of size: (%x)\n", size);
 
     bool memory = true;
 
@@ -155,7 +154,7 @@ void * Imalloc_alocator(alloc_t * allocator, uint64_t size) {
     //Iprintf("header(%x)[%i] (%x)\n",header->block_size, header->allocated, header);
     while (memory) {
         while (((uint64_t) header + header->block_size) < allocator->heapStart + allocator->heapSize) {
-            Iprintf("fheader(%x)[%i] (%x)\n",header->block_size, header->allocated, header);
+            //Iprintf("fheader(%x)[%i] (%x)\n",header->block_size, header->allocated, header);
             if (!header->allocated && header->block_size == size) {
                 header->allocated = 1;
                 return (void *) (uint64_t) header + META_DATA_SIZE;

@@ -71,22 +71,22 @@ int handle_mb2_mmap(struct multiboot_tag *mmap_tag, page_map_l4_entry *pml4) {
 
     zero_mem_map(mmap);
 
+
     //mark the kernel and bitmap itself as not available
     int err = set_mem_region(mmap,
         ALIGN_DOWN((uint64_t) &_kernel_start_phys, DEFAULT_PAGE_SIZE),
         KERNEL_VIRT_TO_PHYS(ALIGN_UP((uint64_t) mmap->bitmap.data + mmap->bitmap.size, DEFAULT_PAGE_SIZE ))
     );
 
+    //show_mem(true);
     if (err != 0) {
         Iprintf("ERROR: set_mem_region returned %d\n", err);
         return -1;
     }
 
-    Iprintf("paging\n");
     if ( page_in_regions(mmap, pml4) != 0) {
         return -1;
     };
-    Iprintf("paging\n");
     //show_mem_map(mmap, false);
     return 0;
 }
@@ -99,7 +99,6 @@ int page_in_regions(mem_map *mmap, page_map_l4_entry * pml4) {
         end = start + mmap->regions[i].len_bytes;
 
         uint64_t addr = ALIGN_UP(start, HUGE_PS);
-        Iprintf("region: %x\n", end);
         while (addr < end) {
             uint64_t remaining = end - addr;
             uint64_t sz;
@@ -124,7 +123,6 @@ int page_in_regions(mem_map *mmap, page_map_l4_entry * pml4) {
             addr += HUGE_PS;
 
         }
-        Iprintf("region: %i end\n", i);
     }
     return 0;
 }
