@@ -112,7 +112,7 @@ int page_in(page_map_l4_entry *pml4, const void *virt_addr, const void *phys_add
 }
 
 
-phys_addr_t test_walk_table(page_map_l4_entry *pml4, const phys_addr_t *virt_addr) {
+phys_addr_t test_walk_table(page_map_l4_entry *pml4, const phys_addr_t virt_addr) {
     Iprintf("Walking addr (%x) on (%x)\n", virt_addr, pml4);
     page_map_l4_entry *pml4_entry = &pml4[VA_PML4_INDEX(virt_addr)];
     if (pml4_entry->present == 0) {

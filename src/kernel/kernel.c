@@ -74,12 +74,12 @@ void kmain(uint32_t magic, struct multiboot_info *mboot) {
 
     Iprintf("Ticks per Ms: (%i)", LAPIC_TICKS_PER_MS);
     // TODO: TESTING BC OF THREADS
-    page_in(Kernel_PML4_TABLE, (void *)0xB8000, (void *)0xB8000, DEFAULT_PAGE_SIZE, WRITEABLE | USER_ACCESS);
+    page_in(Kernel_PML4_TABLE, (void *)0xB8000, (void *)0xB8000, DEFAULT_PAGE_SIZE, WRITEABLE | 1 << USER_ACCESS_SHIFT);
 
     tcb_t * thread1 = create_thread(0, false, 1);
-    struct_page_t *addr = thread_supply_new_mem(thread1, SPACE_CODE, 2, DEFAULT_PAGE, WRITEABLE);
+    struct_page_t *addr = thread_supply_new_mem(thread1, SPACE_CODE, 2, DEFAULT_PAGE, WRITEABLE );
     //test_walk_table((void *)KERNEL_PHYS_TO_VIRT(thread1->page_table), (void *)KERNEL_PHYS_TO_VIRT(2 * HUGE_PS));
-    //Imemcpy((void *) addr, fill_vga, sizeof(fill_vga));
+    Imemcpy((void *) addr, fill_vga, sizeof(fill_vga));
     Iprintf("addr: (%x)\n", addr);
 
     thread1->state = PROCESS_READY;

@@ -47,10 +47,6 @@ tcb_t * create_thread(PID_t parent, bool is_priviledged, uint16_t priority) {
     page_map_l4_entry * cur_pml4 = (page_map_l4_entry *) read_cr3();
     Imemcpy( (void *) KERNEL_PHYS_TO_VIRT(proc_pml4), (void *) KERNEL_PHYS_TO_VIRT(cur_pml4), sizeof(page_map_l4_entry) * 512);
     tcb->page_table = proc_pml4;
-    Iprintf("TABLES: (%x / %x)\n",
-        test_walk_table((void *)KERNEL_PHYS_TO_VIRT(cur_pml4), (void *) KERNEL_PHYS_TO_VIRT(tcb->page_table)),
-        test_walk_table((void *)KERNEL_PHYS_TO_VIRT(cur_pml4), (void *) tcb)
-            );
     //test_walk_table((void *)KERNEL_PHYS_TO_VIRT(tcb->page_table), (void *)KERNEL_PHYS_TO_VIRT(2 * HUGE_PS));
     atomic_store(&tcb->state, PROCESS_NEW);
     tcb->privileged = is_priviledged;
@@ -70,20 +66,19 @@ tcb_t * create_thread(PID_t parent, bool is_priviledged, uint16_t priority) {
  * @return 0 on success -1 if paging failed
  */
 int thread_supply_mem(tcb_t *thread, ADDR_SUB_SPACE sub_space, struct_page_t * info_page, uint64_t permissions) {
-    Iprintf("table: (%x)(%x)\n", ((page_map_l4_entry *)KERNEL_PHYS_TO_VIRT(thread->page_table))[511].present, info_page->page_size);
     for (uint64_t i = 0; i < info_page->page_count; i++) {
         if (page_in(
             (void *) KERNEL_PHYS_TO_VIRT(thread->page_table),
             (void *) (SUB_SPACE_TO_ADDR(sub_space) + thread->memory_limit),
             (void *) info_page->page_addr[i],
             info_page->page_size,
-            permissions | (thread->privileged << USER_ACCESS_SHIFT)
+            permissions | (!thread->privileged << USER_ACCESS_SHIFT)
         ) != 0)
             return -1;
         thread->memory_limit += info_page->page_size;
     }
     Iprintf("table: (%x)\n", ((page_map_l4_entry *)KERNEL_PHYS_TO_VIRT(thread->page_table))[511].present);
-
+    test_walk_table(((page_map_l4_entry *)KERNEL_PHYS_TO_VIRT(thread->page_table)),PROCESS_CODE_VIRT_ADDR);
     return 0;
 }
 
@@ -109,7 +104,6 @@ struct_page_t * thread_supply_new_mem(tcb_t *thread, ADDR_SUB_SPACE sub_space,  
         permissions
     ) != 0)
         return (void *) FRAME_ALLOC_FAILED;
-
 
     return info;
 }

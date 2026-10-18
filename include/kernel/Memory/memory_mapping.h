@@ -30,17 +30,19 @@
 ((((int64_t)(va) << 16) >> 16) == (int64_t)(va))
 
 // Helpers for setting the Page Permissions
-#define WRITEABLE 0x2
-#define USER_ACCESS 0x4
-#define WRITE_THROUGH 0x8
-#define CACHE_DISABLED 0x10
-#define EXECUTION_DISABLED 0x40
-
 #define WRITEABLE_SHIFT 0x1
 #define USER_ACCESS_SHIFT 0x3
 #define WRITE_THROUGH_SHIFT 0x7
 #define CACHE_DISABLED_SHIFT 0xF
 #define EXECUTION_DISABLED_SHIFT 0x3F
+
+#define WRITEABLE (0x1 << WRITEABLE_SHIFT)
+#define USER_ACCESS (0x1 << USER_ACCESS_SHIFT)
+#define WRITE_THROUGH (0x1 << WRITE_THROUGH_SHIFT)
+#define CACHE_DISABLED (0x1 << CACHE_DISABLED_SHIFT)
+#define EXECUTION_DISABLED (0x1 << EXECUTION_DISABLED_SHIFT)
+
+
 
 #define PERM_BIT(p, shift)  (((p) >> (shift)) & 0x1)
 
@@ -63,7 +65,7 @@
     } while (0)
 
 int handle_mb2_mmap(struct multiboot_tag *mmap_tag, page_map_l4_entry *pml4);
-phys_addr_t test_walk_table(page_map_l4_entry *pml4, const phys_addr_t *virt_addr);
+phys_addr_t test_walk_table(page_map_l4_entry *pml4, const phys_addr_t virt_addr);
 
 
 #endif //ICARUS_MEMORY_MAPPING_H

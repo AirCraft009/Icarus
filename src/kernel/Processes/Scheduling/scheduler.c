@@ -110,6 +110,7 @@ void context_switch(tcb_t *next_tcb, struct interrupt_frame *frame) {
     // change pml4 table (it still has the kernel mappings so the current code should stay fine)
     write_cr3((uint64_t)next_tcb->page_table);
     Iprintf("code segment: (%x)\n", next_tcb->regsiters.psp.rip);
+    Iprintf("firstB (%x)", *(uint8_t *)PROCESS_CODE_VIRT_ADDR);
 
 
     running_tcb = next_tcb;
@@ -148,6 +149,7 @@ void scheduler_add_thread(tcb_t *tcb) {
 void schedule(struct interrupt_frame *frame) {
     tcb_t * next = scheduler_pick_next_thread();
     Iprintf("next_thread(%i) addr: (%x)\n", next->tid, next->regsiters.psp.rip);
+    test_walk_table(((page_map_l4_entry *)KERNEL_PHYS_TO_VIRT(next->page_table)),PROCESS_CODE_VIRT_ADDR);
     context_switch(next, frame);
 }
 
