@@ -64,7 +64,7 @@ alloc_t *init_custom_alloc (uint64_t initial_size, void * heap_start, struct_pag
 
     uint64_t pages = ALIGN_UP(initial_size, DEFAULT_PAGE_SIZE) / DEFAULT_PAGE_SIZE;
     initial_size = pages * DEFAULT_PAGE_SIZE;
-    alloc_t * phys_allocator = (alloc_t *) ialloc_frames(1, DEFAULT_PAGE)->page_addr[0]; //TODO: map to virt at start and figure out how big we want the allocator to be
+    alloc_t * phys_allocator = (alloc_t *) ialloc_frames(1, DEFAULT_PAGE, "ialloc + init2")->page_addr[0]; //TODO: map to virt at start and figure out how big we want the allocator to be
 
     // cons_mprintf("init allocator ( page_in allocator ): (%x)\n", phys_allocator);
     if (
@@ -121,7 +121,7 @@ alloc_t *init_custom_alloc (uint64_t initial_size, void * heap_start, struct_pag
  */
 alloc_t * alloc_init(uint64_t initial_size, void * heap_start) {
     uint64_t pages = ALIGN_UP(initial_size, DEFAULT_PAGE_SIZE) / DEFAULT_PAGE_SIZE;
-    return init_custom_alloc(initial_size, heap_start, ialloc_frames(pages, DEFAULT_PAGE));
+    return init_custom_alloc(initial_size, heap_start, ialloc_frames(pages, DEFAULT_PAGE, "ialloc + init"));
 }
 
 
@@ -183,7 +183,7 @@ void * Imalloc_alocator(alloc_t * allocator, uint64_t size) {
 
         // ask for more memory from the kernel
         // * 30 / 10 bc SSE doesn't work or smth and yk... but I'm a genius
-        struct_page_t *info_page = (struct_page_t *) KERNEL_VIRT_TO_PHYS(ialloc_frames(ALIGN_UP((uint64_t) (allocator->heapSize * 30 / 10), DEFAULT_PAGE_SIZE), DEFAULT_PAGE));
+        struct_page_t *info_page = (struct_page_t *) KERNEL_VIRT_TO_PHYS(ialloc_frames(ALIGN_UP((uint64_t) (allocator->heapSize * 30 / 10), DEFAULT_PAGE_SIZE), DEFAULT_PAGE, "ialloc + malloc"));
         if (map_frame_into_heap(allocator, (page_map_l4_entry *) read_cr3(), info_page) != 0) {
             return NULL;
         }

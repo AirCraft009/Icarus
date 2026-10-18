@@ -16,7 +16,7 @@
  * Allocate a stack and return its top (stacks grow down)
 **/
 static uint64_t tss_alloc_stack(void) {
-    phys_addr_t phys = ialloc_kframe(TSS_STACK_PAGES, DEFAULT_PAGE_SIZE);
+    phys_addr_t phys = ialloc_kframe(TSS_STACK_PAGES, DEFAULT_PAGE_SIZE, "kframe - tss stack");
     if (phys == FRAME_ALLOC_FAILED) {
         return FRAME_ALLOC_FAILED;
     }

@@ -157,7 +157,7 @@ int show_bit_map_range(bit_map *map, uint64_t start, uint64_t end) {
             blockS ++;
             i++;
         }
-        Iprintf("found block(%i): %x - %x\n",currently_set,  (i - blockS) * DEFAULT_PAGE_SIZE, i * DEFAULT_PAGE_SIZE);
+        Iprintf("found block(%i): (%x - %x)\n",currently_set,  (i - blockS) * DEFAULT_PAGE_SIZE, i * DEFAULT_PAGE_SIZE);
         currently_set = !currently_set;
         blockS = 0;
     }

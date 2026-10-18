@@ -42,7 +42,7 @@ tcb_t * create_thread(PID_t parent, bool is_priviledged, uint16_t priority) {
     tcb->regsiters.psp.cs = is_priviledged? 0x08 : 0x23;
     tcb->regsiters.psp.ss = is_priviledged? 0x10 : 0x1b;
 
-    page_map_l4_entry * proc_pml4 = (page_map_l4_entry *) KERNEL_VIRT_TO_PHYS(ialloc_frames(1, DEFAULT_PAGE));      // get physical addr struct page is mapped into k_space
+    page_map_l4_entry * proc_pml4 = (page_map_l4_entry *) KERNEL_VIRT_TO_PHYS(ialloc_frames(1, DEFAULT_PAGE, "ialloc + create_thread"));      // get physical addr struct page is mapped into k_space
     // current pml4 js has the higher mapped kernel, by copying its zeroing lower and higher mapping the kernel
     page_map_l4_entry * cur_pml4 = (page_map_l4_entry *) read_cr3();
     Imemcpy( (void *) KERNEL_PHYS_TO_VIRT(proc_pml4), (void *) KERNEL_PHYS_TO_VIRT(cur_pml4), sizeof(page_map_l4_entry) * 512);
@@ -99,7 +99,7 @@ int thread_supply_mem(tcb_t *thread, ADDR_SUB_SPACE sub_space, struct_page_t * i
  */
 struct_page_t * thread_supply_new_mem(tcb_t *thread, ADDR_SUB_SPACE sub_space,  uint64_t pages, PAGE_TYPE p_size, uint64_t permissions) {
     uint64_t size = PAGE_TYPE_TO_SIZE(p_size);
-    struct_page_t * info = ialloc_frames(pages, size);
+    struct_page_t * info = ialloc_frames(pages, size, "ialloc + thread_mem");
     if ((uint64_t)(info) == FRAME_ALLOC_FAILED)
         return (void *) FRAME_ALLOC_FAILED;
     if (thread_supply_mem(
@@ -109,6 +109,7 @@ struct_page_t * thread_supply_new_mem(tcb_t *thread, ADDR_SUB_SPACE sub_space,  
         permissions
     ) != 0)
         return (void *) FRAME_ALLOC_FAILED;
+
 
     return info;
 }

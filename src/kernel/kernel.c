@@ -59,13 +59,9 @@ void kmain(uint32_t magic, struct multiboot_info *mboot) {
 
 
     write_cr3((uint64_t) KERNEL_VIRT_TO_PHYS(&Kernel_PML4_TABLE[0]));
-    //show_mem(true);
 
-    allocator = alloc_init(DEFAULT_PAGE_SIZE * 50, (void *) KERNEL_HEAP_ADDR);
+    allocator = alloc_init(DEFAULT_PAGE_SIZE * 510, (void *) KERNEL_HEAP_ADDR);
     handle_ACPI();
-    __asm__ volatile ("cli; hlt");
-    while (1)
-        ;
 
     //.Iprintf("---------------MODEL-----------------\n");
     //Iprintf("%s\n", init_cpuid());
