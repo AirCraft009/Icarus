@@ -36,6 +36,15 @@ static const uint8_t fill_vga[] = {
     0xEB, 0xEC                     // jmp -20 (back to cld, refills forever)
 };
 
+static const uint8_t clear_vga[] = {
+    0xFC,                          // cld
+    0xBF, 0x00, 0x80, 0x0B, 0x00,  // mov edi, 0xB8000
+    0xB9, 0xE8, 0x03, 0x00, 0x00,  // mov ecx, 1000        (1000 dwords = 4000 bytes = 80x25x2)
+    0xB8, 0x20, 0x07, 0x20, 0x07,  // mov eax, 0x07200720  (two cells: ' ' + attribute 0x07)
+    0xF3, 0xAB,                    // rep stosd
+    0xEB, 0xEC                     // jmp -20 (back to cld, clears forever)
+};
+
 
 //235372403 = 256809072
 void kmain(uint32_t magic, struct multiboot_info *mboot) {
@@ -91,8 +100,6 @@ void kmain(uint32_t magic, struct multiboot_info *mboot) {
     lapic_write(LAPIC_TIMER_INITCNT, 0x0);
     lapic_write(LAPIC_LVT_TIMER, 32 | LAPIC_TIMER_PERIODIC);
     lapic_write(LAPIC_TIMER_INITCNT, LAPIC_TICKS_PER_MS * 500);
-
-
 
     //TODO: build a table to hold all important subtables and system_statistics
     while (1)
