@@ -29,13 +29,27 @@ typedef uint64_t TID_t;
 #define PROCESS_STACK_VIRT_ADDR 0x00007C8000000000
 
 typedef enum {
-    SPACE_CODE,
-    SPACE_MAPPING,
-    SPACE_STACK,
+    SPACE_CODE,         // encompasses .text, .bss ... + heap
+    SPACE_MAPPING,      // common mappings of libraries io buffers etc.
+    SPACE_STACK,        // stack addr and down
 }ADDR_SUB_SPACE;
 
 #define SUB_SPACE_TO_ADDR(sub_space) ((sub_space == SPACE_CODE)? PROCESS_CODE_VIRT_ADDR : (sub_space == SPACE_MAPPING)? PROCESS_MAPPINGS_VIRT_ADDR : PROCESS_STACK_VIRT_ADDR)
 
+
+/*
+ * represents the sizes of each memory subspace
+ * union so that I can index into the fields w/ the ADDR_SUB_SPACE ENUM
+ */
+typedef union THREAD_MEMORY {
+    struct {
+        uint64_t code_size;
+        uint64_t mapping_size;
+        uint64_t stack_size;
+        uint64_t memory_limit;
+    };
+    uint64_t fields[4];
+} thread_memory_t;
 
 typedef struct THREAD_CONTROL_BLOCK {
     PID_t pid;                   // Process ID
@@ -53,7 +67,7 @@ typedef struct THREAD_CONTROL_BLOCK {
 
     // Memory management information
     page_map_l4_entry *page_table;  // physical addr of pml4 table
-    uint64_t memory_limit;          // size of memory allocated
+    thread_memory_t memory;
 
     // Accounting
     uint64_t cpu_time_used;

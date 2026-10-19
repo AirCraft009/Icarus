@@ -94,11 +94,12 @@ void kmain(uint32_t magic, struct multiboot_info *mboot) {
     struct_page_t *addr = thread_supply_new_mem(thread1, SPACE_CODE, 2, DEFAULT_PAGE, WRITEABLE );
     struct_page_t *addr2 = thread_supply_new_mem(thread2, SPACE_CODE, 2, DEFAULT_PAGE, WRITEABLE );
     //test_walk_table((void *)KERNEL_PHYS_TO_VIRT(thread1->page_table), (void *)KERNEL_PHYS_TO_VIRT(2 * HUGE_PS));
-    Imemcpy((void *) addr, loop, sizeof(fill_vga));
+    Imemcpy((void *) addr, fill_vga, sizeof(fill_vga));
     Imemcpy((void *) addr2, clear_vga, sizeof(clear_vga));
     Iprintf("addr: (%x)\n", addr);
 
     thread1->state = PROCESS_READY;
+    thread2->state = PROCESS_READY;
     scheduler_init(thread1);
     scheduler_add_thread(thread2);
     //Iprintf("rip: (%x)\n", thread1->regsiters.psp.rip);
@@ -107,7 +108,7 @@ void kmain(uint32_t magic, struct multiboot_info *mboot) {
 
     lapic_write(LAPIC_TIMER_INITCNT, 0x0);
     lapic_write(LAPIC_LVT_TIMER, 32 | LAPIC_TIMER_PERIODIC);
-    lapic_write(LAPIC_TIMER_INITCNT, LAPIC_TICKS_PER_MS * 2000);
+    lapic_write(LAPIC_TIMER_INITCNT, LAPIC_TICKS_PER_MS * 100);
 
     //TODO: build a table to hold all important subtables and system_statistics
     while (1)

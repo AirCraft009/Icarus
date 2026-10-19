@@ -19,7 +19,7 @@ extern void _switch_threads(tcb_t *tcb);
 
 // holds the tcb currently at the top of the queue
 tcb_t *top_tcb = NULL;
-// holds the tcb that is last in the waiting queue
+// holds the tcb that is last in the waiting queue (last.next = NULL)
 tcb_t *last_tcb = NULL;
 // the currently switched to pcb
 tcb_t *running_tcb = NULL;
@@ -27,8 +27,6 @@ tcb_t *running_tcb = NULL;
 tcb_t dummy_tcb = {0};
 
 uint64_t thread_count = 0;
-
-
 /**
  * returns the next thread in the queue.
  * modifies state of
@@ -184,4 +182,13 @@ void schedule(struct interrupt_frame *frame, INTERRUPT_SRC src) {
     //Iprintf("next_thread(%i) addr: (%x)\n", next->tid, next->regsiters.psp.rip);
     //test_walk_table(((page_map_l4_entry *)KERNEL_PHYS_TO_VIRT(next->page_table)),PROCESS_CODE_VIRT_ADDR);
     context_switch(next, frame, src);
+}
+
+int spawn_thread(PID_t parent, bool is_priviledged, uint16_t priority, struct_page_t * info_page) {
+    tcb_t * tcb = create_thread(parent, is_priviledged, priority);
+    thread_supply_mem(tcb, )
+}
+
+int spawn_alloc_thread(PID_t parent, bool is_priviledged, uint16_t priority) {
+
 }

@@ -69,15 +69,16 @@ int thread_supply_mem(tcb_t *thread, ADDR_SUB_SPACE sub_space, struct_page_t * i
     for (uint64_t i = 0; i < info_page->page_count; i++) {
         if (page_in(
             (void *) KERNEL_PHYS_TO_VIRT(thread->page_table),
-            (void *) (SUB_SPACE_TO_ADDR(sub_space) + thread->memory_limit),
+            (void *) (SUB_SPACE_TO_ADDR(sub_space) + thread->memory.fields[sub_space]),
             (void *) info_page->page_addr[i],
             info_page->page_size,
             permissions | (!thread->privileged << USER_ACCESS_SHIFT)
         ) != 0)
             return -1;
-        thread->memory_limit += info_page->page_size;
+        thread->memory.fields[sub_space] += info_page->page_size;
+        thread->memory.memory_limit += info_page->page_size;
     }
-    Iprintf("table: (%x)\n", ((page_map_l4_entry *)KERNEL_PHYS_TO_VIRT(thread->page_table))[511].present);
+    //Iprintf("table: (%x)\n", ((page_map_l4_entry *)KERNEL_PHYS_TO_VIRT(thread->page_table))[511].present);
     test_walk_table(((page_map_l4_entry *)KERNEL_PHYS_TO_VIRT(thread->page_table)),PROCESS_CODE_VIRT_ADDR);
     return 0;
 }
