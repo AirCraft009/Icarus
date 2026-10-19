@@ -9,6 +9,12 @@
 
 #include "kernel/util/cpu_regs.h"
 
+typedef enum {
+    INT_TMR,
+    INT_KBD,
+    INT_GEN,
+} INTERRUPT_SRC;
+
 struct interrupt_frame {
     // pushed by isr_common
     uint64_t cr4, cr3, cr2;                       // faulting address (valid on #PF)

@@ -45,6 +45,9 @@ static const uint8_t clear_vga[] = {
     0xEB, 0xEC                     // jmp -20 (back to cld, clears forever)
 };
 
+static const uint8_t loop[] = {
+    0xEB, 0xFE
+};
 
 //235372403 = 256809072
 void kmain(uint32_t magic, struct multiboot_info *mboot) {
@@ -73,7 +76,8 @@ void kmain(uint32_t magic, struct multiboot_info *mboot) {
     handle_ACPI();
 
     //.Iprintf("---------------MODEL-----------------\n");
-    //Iprintf("%s\n", init_cpuid());
+    //Iprintf("%s\n", );
+    init_cpuid();
     enable_apic();
     enable_io_apics();
     //Iprintf("set up APIC\n");
@@ -86,20 +90,24 @@ void kmain(uint32_t magic, struct multiboot_info *mboot) {
     page_in(Kernel_PML4_TABLE, (void *)0xB8000, (void *)0xB8000, DEFAULT_PAGE_SIZE, WRITEABLE | 1 << USER_ACCESS_SHIFT);
 
     tcb_t * thread1 = create_thread(0, false, 1);
+    tcb_t * thread2 = create_thread(0, false, 1);
     struct_page_t *addr = thread_supply_new_mem(thread1, SPACE_CODE, 2, DEFAULT_PAGE, WRITEABLE );
+    struct_page_t *addr2 = thread_supply_new_mem(thread2, SPACE_CODE, 2, DEFAULT_PAGE, WRITEABLE );
     //test_walk_table((void *)KERNEL_PHYS_TO_VIRT(thread1->page_table), (void *)KERNEL_PHYS_TO_VIRT(2 * HUGE_PS));
-    Imemcpy((void *) addr, fill_vga, sizeof(fill_vga));
+    Imemcpy((void *) addr, loop, sizeof(fill_vga));
+    Imemcpy((void *) addr2, clear_vga, sizeof(clear_vga));
     Iprintf("addr: (%x)\n", addr);
 
     thread1->state = PROCESS_READY;
     scheduler_init(thread1);
+    scheduler_add_thread(thread2);
     //Iprintf("rip: (%x)\n", thread1->regsiters.psp.rip);
     __asm__ volatile ("sti");
     keyboard_ps2_init();
 
     lapic_write(LAPIC_TIMER_INITCNT, 0x0);
     lapic_write(LAPIC_LVT_TIMER, 32 | LAPIC_TIMER_PERIODIC);
-    lapic_write(LAPIC_TIMER_INITCNT, LAPIC_TICKS_PER_MS * 500);
+    lapic_write(LAPIC_TIMER_INITCNT, LAPIC_TICKS_PER_MS * 2000);
 
     //TODO: build a table to hold all important subtables and system_statistics
     while (1)

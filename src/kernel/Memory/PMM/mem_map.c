@@ -16,8 +16,8 @@
 
 extern char _kernel_end[];
 
-phys_addr_t map_alloc_frame_contiguous(mem_map * mmap, uint64_t page_count, char * calling);
-phys_addr_t map_alloc_frame(mem_map * mmap, PAGE_TYPE page_size, char * calling);
+phys_addr_t map_alloc_frame_contiguous(mem_map * mmap, uint64_t page_count);
+phys_addr_t map_alloc_frame(mem_map * mmap, PAGE_TYPE page_size);
 
 void memmap_register_region(mem_map *mmap, uint64_t start, uint64_t end) {
 
@@ -134,7 +134,7 @@ void show_mem_map(mem_map *mmap, bool verbose) {
  * @param page_type size of each allocated page
  * @return NULL on fail
  */
-struct_page_t *ialloc_frames(uint64_t count, PAGE_TYPE page_type, char * calling) {
+struct_page_t *ialloc_frames(uint64_t count, PAGE_TYPE page_type) {
     //TODO: make an independent method instead of relying on map_alloc_frame
     //TODO: make structpage a linkedlist so that arbitrary amount of pages can be allocated
     if (count > 510)        // rn this bc the struct_page only has space for 510 entries  (will build a linked list later)
@@ -142,13 +142,13 @@ struct_page_t *ialloc_frames(uint64_t count, PAGE_TYPE page_type, char * calling
 
     uint64_t page_size = PAGE_TYPE_TO_SIZE(page_type);
     mem_map * mmap = (mem_map *) &_kernel_end;
-    struct_page_t *info_page = (struct_page_t *) KERNEL_PHYS_TO_VIRT(map_alloc_frame(mmap, page_type, calling));
+    struct_page_t *info_page = (struct_page_t *) KERNEL_PHYS_TO_VIRT(map_alloc_frame(mmap, page_type));
     info_page->page_count = count;
     info_page->page_addr[0] = (phys_addr_t) KERNEL_VIRT_TO_PHYS(info_page);
     info_page->page_size = page_size;
 
     for (uint64_t i = 1; i < count; i++) {
-        info_page->page_addr[i] = map_alloc_frame(mmap, page_type, calling);
+        info_page->page_addr[i] = map_alloc_frame(mmap, page_type);
         if (info_page->page_addr[i] == FRAME_ALLOC_FAILED) {
             Iprintf("allocation failed\n");
             return (struct_page_t *) FRAME_ALLOC_FAILED;
@@ -176,7 +176,7 @@ int idealloc_frames(struct_page_t * info_page) {
 
 phys_addr_t alloc_kframe(uint64_t size) {
     mem_map * mmap = (mem_map *) &_kernel_end;
-    return map_alloc_frame_contiguous(mmap, ALIGN_UP(size, DEFAULT_PAGE_SIZE) / DEFAULT_PAGE_SIZE, "alloc_kframe");
+    return map_alloc_frame_contiguous(mmap, ALIGN_UP(size, DEFAULT_PAGE_SIZE) / DEFAULT_PAGE_SIZE);
 }
 
 int dealloc_kframe(phys_addr_t start, uint64_t size) {
@@ -188,9 +188,9 @@ int dealloc_kframe(phys_addr_t start, uint64_t size) {
  * Allocate contiguous physical memory
  * @size is the total size of all 4KiB regions (should be aligned to 4KiB)
  */
-phys_addr_t ialloc_kframe(uint64_t pages, PAGE_TYPE page_size, char * calling) {
+phys_addr_t ialloc_kframe(uint64_t pages, PAGE_TYPE page_size) {
     mem_map * mmap = (mem_map *) &_kernel_end;
-    return map_alloc_frame_contiguous(mmap, pages , calling);
+    return map_alloc_frame_contiguous(mmap, pages);
 }
 
 /**
@@ -212,9 +212,9 @@ static inline int find_run_in_word(uint64_t word, unsigned run_length) {
  * allocate a single page of physical memory
  * @return physical addr or FRAME_ALLOC_FAILED
  */
-phys_addr_t map_alloc_frame(mem_map * mmap, PAGE_TYPE page_size, char * calling) {
+phys_addr_t map_alloc_frame(mem_map * mmap, PAGE_TYPE page_size) {
     uint8_t smallest_unit = PAGE_TYPE_TO_SIZE(page_size) / DEFAULT_PAGE_SIZE;           // how many blocsk need to be contiguous
-    return map_alloc_frame_contiguous(mmap,smallest_unit, calling);
+    return map_alloc_frame_contiguous(mmap,smallest_unit);
 }
 
 // 0x18000 / 0x1b3000
@@ -222,7 +222,7 @@ phys_addr_t map_alloc_frame(mem_map * mmap, PAGE_TYPE page_size, char * calling)
  * allocates n 4KIB frames contiguously from a given mem_map
  * @return the physical addr or FRAME_ALLOC_FAILED
  */
-phys_addr_t map_alloc_frame_contiguous(mem_map * mmap, uint64_t page_count, char * calling) {
+phys_addr_t map_alloc_frame_contiguous(mem_map * mmap, uint64_t page_count) {
 
     /*
      *  I know micro-optimizations aren't a priority but this was js such a good. idea..
