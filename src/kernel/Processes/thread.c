@@ -65,7 +65,7 @@ tcb_t * create_thread(PID_t parent, bool is_priviledged, uint16_t priority) {
  * @param permissions permission for mapped pages (user access is defined by the type of thread)
  * @return 0 on success -1 if paging failed
  */
-int thread_supply_mem(tcb_t *thread, ADDR_SUB_SPACE sub_space, struct_page_t * info_page, uint64_t permissions) {
+int thread_supply_mem_region(tcb_t *thread, ADDR_SUB_SPACE sub_space, struct_page_t * info_page, uint64_t permissions) {
     for (uint64_t i = 0; i < info_page->page_count; i++) {
         if (page_in(
             (void *) KERNEL_PHYS_TO_VIRT(thread->page_table),
@@ -93,12 +93,12 @@ int thread_supply_mem(tcb_t *thread, ADDR_SUB_SPACE sub_space, struct_page_t * i
  * @param permissions permission for mapped pages (user access is defined by the type of thread)
  * @return the addr of the struct page (direct kernel mapping) or FRAME_ALLOC_FAILED
  */
-struct_page_t * thread_supply_new_mem(tcb_t *thread, ADDR_SUB_SPACE sub_space,  uint64_t pages, PAGE_TYPE p_size, uint64_t permissions) {
+struct_page_t * thread_supply_new_mem_region(tcb_t *thread, ADDR_SUB_SPACE sub_space,  uint64_t pages, PAGE_TYPE p_size, uint64_t permissions) {
     uint64_t size = PAGE_TYPE_TO_SIZE(p_size);
     struct_page_t * info = ialloc_frames(pages, size);
     if ((uint64_t)(info) == FRAME_ALLOC_FAILED)
         return (void *) FRAME_ALLOC_FAILED;
-    if (thread_supply_mem(
+    if (thread_supply_mem_region(
         thread,
         sub_space,
         info,
@@ -107,4 +107,84 @@ struct_page_t * thread_supply_new_mem(tcb_t *thread, ADDR_SUB_SPACE sub_space,  
         return (void *) FRAME_ALLOC_FAILED;
 
     return info;
+}
+
+
+/**
+ * supplies a thread w/ new memory in multiple sub-spaces
+ *
+ * @param thread to allocate to
+ * @param allocation_info info for subspace page count and size
+ * @param perm_info permissions for each subspace
+ * @return the addr of a tms block to map into other thread mem_spaces (heap allocated make sure to dealloc)
+ * fails are per subspace and leave a FRAME_ALLOC FAILED in the respective slot
+ */
+thread_memory_supply_block_t * thread_supply_new_mem(
+    tcb_t *thread,
+    thread_memory_allocation_info_t allocation_info,
+    thread_memory_permission_info_t perm_info) {
+    thread_memory_supply_block_t * result = Imalloc(sizeof(thread_memory_supply_block_t));
+
+    result->code_memory = thread_supply_new_mem_region(
+        thread,
+        SUBSPACE_CODE,
+        allocation_info.code_pages,
+        perm_info.code_perms,
+        allocation_info.code_pages
+        );
+
+    result->mapping_memory = thread_supply_new_mem_region(
+        thread,
+        SUBSPACE_MAPPING,
+        allocation_info.mapping_pages,
+        perm_info.mapping_perms,
+        allocation_info.mapping_page_size
+    );
+
+    result->stack_memory = thread_supply_new_mem_region(
+        thread,
+        SUBSPACE_STACK,
+        allocation_info.stack_pages,
+        perm_info.stack_perms,
+        allocation_info.stack_page_size
+    );
+
+    return result;
+}
+
+
+/**
+ *
+ * map subspace regions into a threads memory
+ *
+ * @param thread to map into
+ * @param supply_block specifies each region size
+ * @param perms permissions for each region
+ * @return int[3] where each integer is a result from a subspace.
+ * 0 for ok -1 fails
+ */
+int * thread_supply_mem(tcb_t * thread, thread_memory_supply_block_t supply_block, thread_memory_permission_info_t perms) {
+    int * result = Imalloc(sizeof(int) * 3);
+
+    result[0] = thread_supply_mem_region(
+        thread,
+        SUBSPACE_CODE,
+        supply_block.code_memory,
+        perms.code_perms
+    );
+
+    result[1] = thread_supply_mem_region(
+        thread,
+        SUBSPACE_MAPPING,
+        supply_block.mapping_memory,
+        perms.mapping_perms
+    );
+
+    result[2] = thread_supply_mem_region(
+        thread,
+        SUBSPACE_STACK,
+        supply_block.stack_memory,
+        perms.stack_perms
+    );
+    return result;
 }

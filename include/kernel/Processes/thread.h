@@ -29,12 +29,12 @@ typedef uint64_t TID_t;
 #define PROCESS_STACK_VIRT_ADDR 0x00007C8000000000
 
 typedef enum {
-    SPACE_CODE,         // encompasses .text, .bss ... + heap
-    SPACE_MAPPING,      // common mappings of libraries io buffers etc.
-    SPACE_STACK,        // stack addr and down
+    SUBSPACE_CODE,         // encompasses .text, .bss ... + heap
+    SUBSPACE_MAPPING,      // common mappings of libraries io buffers etc.
+    SUBSPACE_STACK,        // stack addr and down
 }ADDR_SUB_SPACE;
 
-#define SUB_SPACE_TO_ADDR(sub_space) ((sub_space == SPACE_CODE)? PROCESS_CODE_VIRT_ADDR : (sub_space == SPACE_MAPPING)? PROCESS_MAPPINGS_VIRT_ADDR : PROCESS_STACK_VIRT_ADDR)
+#define SUB_SPACE_TO_ADDR(sub_space) ((sub_space == SUBSPACE_CODE)? PROCESS_CODE_VIRT_ADDR : (sub_space == SUBSPACE_MAPPING)? PROCESS_MAPPINGS_VIRT_ADDR : PROCESS_STACK_VIRT_ADDR)
 
 
 /*
@@ -50,6 +50,27 @@ typedef union THREAD_MEMORY {
     };
     uint64_t fields[4];
 } thread_memory_t;
+
+typedef struct THREAD_MEMORY_SUPPLY_BLOCK {
+    struct_page_t * code_memory;
+    struct_page_t * mapping_memory;
+    struct_page_t * stack_memory;
+}thread_memory_supply_block_t;
+
+typedef struct THREAD_MEMORY_ALLOCATION_INFO {
+    uint64_t code_pages;
+    uint64_t code_page_size;
+    uint64_t mapping_pages;
+    uint64_t mapping_page_size;
+    uint64_t stack_pages;
+    uint64_t stack_page_size;
+}thread_memory_allocation_info_t;
+
+typedef struct THREAD_MEMORY_PERMISSION_INFO {
+    uint64_t code_perms;
+    uint64_t mapping_perms;
+    uint64_t stack_perms;
+}thread_memory_permission_info_t;
 
 typedef struct THREAD_CONTROL_BLOCK {
     PID_t pid;                   // Process ID
@@ -78,7 +99,12 @@ typedef struct THREAD_CONTROL_BLOCK {
 } tcb_t;
 
 tcb_t * create_thread(PID_t parent, bool is_priviledged, uint16_t priority);
-int thread_supply_mem(tcb_t *thread, ADDR_SUB_SPACE sub_space, struct_page_t * info_page, uint64_t permissions);
-struct_page_t * thread_supply_new_mem(tcb_t *thread, ADDR_SUB_SPACE sub_space,  uint64_t pages, PAGE_TYPE p_size, uint64_t permissions);
+int thread_supply_mem_region(tcb_t *thread, ADDR_SUB_SPACE sub_space, struct_page_t * info_page, uint64_t permissions);
+struct_page_t * thread_supply_new_mem_region(tcb_t *thread, ADDR_SUB_SPACE sub_space,  uint64_t pages, PAGE_TYPE p_size, uint64_t permissions);
+int * thread_supply_mem(tcb_t * thread, thread_memory_supply_block_t supply_block, thread_memory_permission_info_t perms);
+thread_memory_supply_block_t * thread_supply_new_mem(
+    tcb_t *thread,
+    thread_memory_allocation_info_t allocation_info,
+    thread_memory_permission_info_t perm_info);
 
 #endif //ICARUS_PROCESS_CONTROL_BLOCK_H
