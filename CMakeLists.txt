@@ -66,6 +66,8 @@ add_executable(Icarus_kernel
         include/kernel/Memory/paging.h
         include/kernel/interrupts/ISR.h
         src/kernel/Processes/Scheduling/set_context.asm
+        src/kernel/util/MasterRecordTable.c
+        src/kernel/util/MasterRecordTable.h
 )
 
 target_include_directories(Icarus_kernel PRIVATE include

@@ -21,6 +21,8 @@
   - Physical memory allocator
   - Dynamic page-table mapper
   - Kernel heap
+  - Create a global config table over which all others are reachable.
+    - name: MRT (Master Record Table)
 
 
 ## I/O
@@ -30,4 +32,19 @@
   - Ring 3
   - Syscalls
   - First user program
+  - read from a storage device
+
+## Threads & Multithreading
+  - expand threading to multiple CPU cores
+  - make process and thread creation api better
+    - find a thread via it's tid
+    - find a process through it's pid
+    - process should contain a list of:
+      - all threads 
+      - mappings 
+  - work on signal handling
+  - create a unified mapping layer w/ a clean format
+    - all programs can get mappings
+    - mappings are passed to each thread
+  - work in interrupts for IO-APIC devs 
 

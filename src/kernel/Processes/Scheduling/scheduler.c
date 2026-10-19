@@ -179,16 +179,36 @@ void scheduler_add_thread(tcb_t *tcb) {
 
 void schedule(struct interrupt_frame *frame, INTERRUPT_SRC src) {
     tcb_t * next = scheduler_pick_next_thread(src);
-    //Iprintf("next_thread(%i) addr: (%x)\n", next->tid, next->regsiters.psp.rip);
-    //test_walk_table(((page_map_l4_entry *)KERNEL_PHYS_TO_VIRT(next->page_table)),PROCESS_CODE_VIRT_ADDR);
     context_switch(next, frame, src);
 }
 
-int spawn_thread(PID_t parent, bool is_priviledged, uint16_t priority, struct_page_t * info_page) {
+
+tcb_t * spawn_thread(
+    PID_t parent,
+    bool is_priviledged,
+    uint16_t priority,
+    thread_memory_supply_block_t mem_supply_block,
+    thread_memory_permission_info_t perms
+) {
     tcb_t * tcb = create_thread(parent, is_priviledged, priority);
-    thread_supply_mem(tcb, )
+    //TODO: find a way to cleanly handle return from thread_supply_mem
+    thread_supply_mem(tcb, mem_supply_block, perms);
+    tcb->state =PROCESS_READY;
+    scheduler_add_thread(tcb);
+    return tcb;
 }
 
-int spawn_alloc_thread(PID_t parent, bool is_priviledged, uint16_t priority) {
-
+tcb_t * spawn_alloc_thread(
+    PID_t parent,
+    bool is_priviledged,
+    uint16_t priority,
+    thread_memory_allocation_info_t alloc_info,
+    thread_memory_permission_info_t perms
+) {
+    tcb_t * tcb = create_thread(parent, is_priviledged, priority);
+    //TODO: find a way to cleanly handle return from thread_supply_mem
+    thread_supply_new_mem(tcb, alloc_info, perms);
+    tcb->state =PROCESS_READY;
+    scheduler_add_thread(tcb);
+    return tcb;
 }
