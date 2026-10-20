@@ -9,6 +9,7 @@
 #include "kernel/Memory/DMA/MMIO.h"
 #include "kernel/util/shellio.h"
 #include "kernel_helper.h"
+#include "kernel/Memory/alloc.h"
 #include "kernel/Memory/memory_mapping.h"
 
 
@@ -37,13 +38,10 @@ int discoverPCIE() {
         ECAM *ecam =  &MCFG.conf_space_addrs[i];
         uint64_t base =  ecam->conf_base_addr;
         uint64_t start_bus = ecam->start_pci;
-        Iprintf("entering at MCFG[%i]; (%x) & (%x)\n", i, ecam->start_pci, ecam->end_pci);
+        //Iprintf("entering at MCFG[%i]; (%x) & (%x)\n", i, ecam->start_pci, ecam->end_pci);
 
-        for (int bus = ecam->start_pci; bus < 3; ++bus) {
-        //for (int bus = ecam->start_pci; bus < ecam->end_pci + 1; ++bus) {
-            //Iprintf("busses (%i)\n", bus);
-            for (int dev_n = 0; dev_n < 3; ++dev_n) {
-                //Iprintf("device (%i)\n", dev_n);
+        for (int bus = ecam->start_pci; bus < ecam->end_pci + 1; ++bus) {
+            for (int dev_n = 0; dev_n < 32; ++dev_n) {
                 // get the start addr of the device block
                 volatile phys_addr_t dev_phys = (phys_addr_t)  ecam_addr(base, start_bus, bus, dev_n, 0, 0);
                 volatile pci_hdr_common_t * dev = (pci_hdr_common_t *) map_mmio(dev_phys, DEFAULT_PAGE_SIZE, CACHE_DISABLED | WRITEABLE);
@@ -65,6 +63,15 @@ int discoverPCIE() {
                     vendor = dev->vendor_id;
                     if (vendor == 0xFFFF)
                         continue;       // no device here
+
+                    pci_dev_t * conf_dev = (pci_dev_t *) Imalloc(sizeof(pci_dev_t));
+                    conf_dev->bus = bus;
+                    conf_dev->dev = dev_n;
+                    conf_dev->fn = functions;
+                    conf_dev->vendor_id = vendor;
+                    conf_dev->device_id = dev->vendor_id;
+                    conf_dev->subclass = dev->subclass;
+                    conf_dev->header_type = 0;      // endpoint
 
                     if (type == 0) {
                         volatile pci_hdr0_t * endpoint = (volatile pci_hdr0_t *) dev;
@@ -89,12 +96,16 @@ int discoverPCIE() {
                                 ++bar;
                                 goto allocate;
                             }
+
+
                             uint32_t addr = active_bar[0];
                             active_bar[0] = 0xFFFFFFFF;
                             uint32_t size = ~(active_bar[0] & ~0xF) + 1;
                             if (size != 0) {
+
                                 //TODO: decode BARs and write to conf
                                 //Iprintf("found PCI bar 32bit (%x)[%x] -> bus: (%x) dev: (%x)\n", addr, size, bus, dev_n);
+
                             }
                             active_bar[0] = addr;
 
