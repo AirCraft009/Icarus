@@ -22,7 +22,7 @@
 const uint16_t COLS = 80;
 const uint16_t ROWS= 25;
 const uint64_t videoMemStart =  KERNEL_PHYS_TO_VIRT(0xB8000);
-const uint64_t videoMemEnd =  KERNEL_PHYS_TO_VIRT(0xB8000 + COLS * ROWS);
+const uint64_t videoMemEnd =  KERNEL_PHYS_TO_VIRT(0xB8000 + (COLS * ROWS) * 2) ;
 static cursor curs;
 
 
@@ -193,6 +193,12 @@ void mprintf(cursor *cur, char *format, ...) {
     va_start(args, format);
     vprintf(cur, format, args);
     va_end(args);
+}
+
+void Imclear() {
+    Imemset((uint8_t *) videoMemStart, 0, (videoMemEnd - videoMemStart));
+    curs.x = 0;
+    curs.y = 0;
 }
 
 void cons_move_cursor(uint16_t offset) {

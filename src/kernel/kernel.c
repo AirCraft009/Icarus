@@ -36,6 +36,16 @@ static const uint8_t fill_vga[] = {
     0xEB, 0xEC                     // jmp -20 (back to cld, refills forever)
 };
 
+// 20 bytes, position independent, no stack use
+static const uint8_t color_vga[] = {
+    0xFC,                          // cld
+    0xBF, 0x00, 0x80, 0x0B, 0x00,  // mov edi, 0xB8000
+    0xB9, 0xE8, 0x03, 0x00, 0x00,  // mov ecx, 1000        (1000 dwords = 4000 bytes = 80x25x2)
+    0xB8, 0x11, 0x11, 0x11, 0x11,  // mov eax, 0x11111111
+    0xF3, 0xAB,                    // rep stosd
+    0xEB, 0xEC                     // jmp -20 (back to cld, refills forever)
+};
+
 static const uint8_t clear_vga[] = {
     0xFC,                          // cld
     0xBF, 0x00, 0x80, 0x0B, 0x00,  // mov edi, 0xB8000
@@ -90,25 +100,32 @@ void kmain(uint32_t magic, struct multiboot_info *mboot) {
     page_in(Kernel_PML4_TABLE, (void *)0xB8000, (void *)0xB8000, DEFAULT_PAGE_SIZE, WRITEABLE | 1 << USER_ACCESS_SHIFT);
 
     tcb_t * thread1 = create_thread(0, false, 1);
-    tcb_t * thread2 = create_thread(0, false, 1);
+    tcb_t * thread2 = create_thread(0, false, 10);
+    tcb_t * thread3 = create_thread(0, false, 5);
     struct_page_t *addr = thread_supply_new_mem_region(thread1, SUBSPACE_CODE, 2, DEFAULT_PAGE, WRITEABLE );
     struct_page_t *addr2 = thread_supply_new_mem_region(thread2, SUBSPACE_CODE, 2, DEFAULT_PAGE, WRITEABLE );
+    struct_page_t *addr3 = thread_supply_new_mem_region(thread3, SUBSPACE_CODE, 2, DEFAULT_PAGE, WRITEABLE );
     //test_walk_table((void *)KERNEL_PHYS_TO_VIRT(thread1->page_table), (void *)KERNEL_PHYS_TO_VIRT(2 * HUGE_PS));
     Imemcpy((void *) addr, fill_vga, sizeof(fill_vga));
     Imemcpy((void *) addr2, clear_vga, sizeof(clear_vga));
+    Imemcpy((void *) addr3, color_vga, sizeof(color_vga));
     Iprintf("addr: (%x)\n", addr);
 
     thread1->state = PROCESS_READY;
     thread2->state = PROCESS_READY;
+    thread3->state = PROCESS_READY;
     scheduler_init(thread1);
     scheduler_add_thread(thread2);
+    scheduler_add_thread(thread3);
     //Iprintf("rip: (%x)\n", thread1->regsiters.psp.rip);
+    //Imclear();
+    Iprintf("::::::::::::::::::::SCHEDULING::::::::::::::::::::::::");
     __asm__ volatile ("sti");
     keyboard_ps2_init();
 
     lapic_write(LAPIC_TIMER_INITCNT, 0x0);
     lapic_write(LAPIC_LVT_TIMER, 32 | LAPIC_TIMER_PERIODIC);
-    lapic_write(LAPIC_TIMER_INITCNT, LAPIC_TICKS_PER_MS * 5000);
+    lapic_write(LAPIC_TIMER_INITCNT, LAPIC_TICKS_PER_MS * 300);
 
     //TODO: build a table to hold all important subtables and system_statistics
     while (1)

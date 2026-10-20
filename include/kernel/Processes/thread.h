@@ -87,6 +87,7 @@ typedef struct THREAD_CONTROL_BLOCK {
 
 
     // Memory management information
+    // TODO: add bookkeeping for the UML (unified mapping layer)
     page_map_l4_entry *page_table;  // physical addr of pml4 table
     thread_memory_t memory;
 
