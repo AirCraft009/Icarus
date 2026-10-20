@@ -101,11 +101,11 @@ int page_in_regions(mem_map *mmap, page_map_l4_entry * pml4) {
         uint64_t addr = ALIGN_UP(start, HUGE_PS);
         while (addr < end) {
             uint64_t remaining = end - addr;
-            uint64_t sz;
+            uint64_t sz = 0;
 
             if ((addr % SUPER_PS) == 0 && remaining >= SUPER_PS)
                 sz = SUPER_PS;
-            else if (remaining >= HUGE_PS)
+            else if ((addr % HUGE_PAGE) == 0 && remaining >= HUGE_PS)
                 sz = HUGE_PS;
             else
                 sz = DEFAULT_PAGE_SIZE;
@@ -121,7 +121,6 @@ int page_in_regions(mem_map *mmap, page_map_l4_entry * pml4) {
                 return -1;
             }
             addr += HUGE_PS;
-
         }
     }
     return 0;

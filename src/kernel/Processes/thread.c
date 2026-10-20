@@ -21,24 +21,23 @@ static TID_t TID_GEN = 1;
  * if it needs memory use the thread_supply_mem & thread_supply_new_mem
  * depending on whether it should be alr existing memory or newly allocated
  *
- * @param parent
- * @param is_priviledged
- * @param priority
- * @return
+ * @param owner the PID of the process owning the thread
+ * @param is_priviledged privilege lvl user vs. kernel
+ * @param priority priority for scheduling 0 - (UINT16_MAX - 1) (0 is most aggressive)
+ * @return address of the thread of NULL
  */
-tcb_t * create_thread(PID_t parent, bool is_priviledged, uint16_t priority) {
+tcb_t * create_thread(PID_t owner, bool is_priviledged, uint16_t priority) {
     if (priority == UINT16_MAX)     // the active prio is priority + 1 so this would overflow to 0
         return NULL;
 
     tcb_t * tcb = (tcb_t *) Imalloc(sizeof(tcb_t));
     Imemset(tcb, 0, sizeof(tcb_t));
     tcb->tid = TID_GEN ++;
-    tcb->parent_pid = parent;
 
     // set the cpu registers
     tcb->regsiters.psp.rflags = 0x202;              // default value bit 1 reserved always(1); bit 9 allow interrupts
-    tcb->regsiters.psp.rip = PROCESS_CODE_VIRT_ADDR;
-    tcb->regsiters.psp.rsp = PROCESS_STACK_VIRT_ADDR;
+    tcb->regsiters.psp.rip = THREAD_CODE_VIRT_ADDR;
+    tcb->regsiters.psp.rsp = THREAD_STACK_VIRT_ADDR;
     tcb->regsiters.psp.cs = is_priviledged? 0x08 : 0x23;
     tcb->regsiters.psp.ss = is_priviledged? 0x10 : 0x1b;
 
@@ -48,7 +47,7 @@ tcb_t * create_thread(PID_t parent, bool is_priviledged, uint16_t priority) {
     Imemcpy( (void *) KERNEL_PHYS_TO_VIRT(proc_pml4), (void *) KERNEL_PHYS_TO_VIRT(cur_pml4), sizeof(page_map_l4_entry) * 512);
     tcb->page_table = proc_pml4;
     //test_walk_table((void *)KERNEL_PHYS_TO_VIRT(tcb->page_table), (void *)KERNEL_PHYS_TO_VIRT(2 * HUGE_PS));
-    atomic_store(&tcb->state, PROCESS_NEW);
+    atomic_store(&tcb->state, THREAD_NEW);
     tcb->privileged = is_priviledged;
     tcb->priority = priority;
     tcb->active_priority = priority;
@@ -79,7 +78,7 @@ int thread_supply_mem_region(tcb_t *thread, ADDR_SUB_SPACE sub_space, struct_pag
         thread->memory.memory_limit += info_page->page_size;
     }
     //Iprintf("table: (%x)\n", ((page_map_l4_entry *)KERNEL_PHYS_TO_VIRT(thread->page_table))[511].present);
-    test_walk_table(((page_map_l4_entry *)KERNEL_PHYS_TO_VIRT(thread->page_table)),PROCESS_CODE_VIRT_ADDR);
+    test_walk_table(((page_map_l4_entry *)KERNEL_PHYS_TO_VIRT(thread->page_table)),THREAD_CODE_VIRT_ADDR);
     return 0;
 }
 
@@ -116,40 +115,44 @@ struct_page_t * thread_supply_new_mem_region(tcb_t *thread, ADDR_SUB_SPACE sub_s
  * @param thread to allocate to
  * @param allocation_info info for subspace page count and size
  * @param perm_info permissions for each subspace
- * @return the addr of a tms block to map into other thread mem_spaces (heap allocated make sure to dealloc)
- * fails are per subspace and leave a FRAME_ALLOC FAILED in the respective slot
+ * @param result addr to store the result of each frame in;
+ * @return 0 on success -1 on fail
  */
-thread_memory_supply_block_t * thread_supply_new_mem(
+int thread_supply_new_mem(
     tcb_t *thread,
-    thread_memory_allocation_info_t allocation_info,
-    thread_memory_permission_info_t perm_info) {
-    thread_memory_supply_block_t * result = Imalloc(sizeof(thread_memory_supply_block_t));
+    thread_memory_allocation_info_t *allocation_info,
+    thread_memory_permission_info_t *perm_info,
+    thread_memory_supply_block_t * result
+){
 
     result->code_memory = thread_supply_new_mem_region(
         thread,
         SUBSPACE_CODE,
-        allocation_info.code_pages,
-        perm_info.code_perms,
-        allocation_info.code_pages
+        allocation_info->code_pages,
+        perm_info->code_perms,
+        allocation_info->code_pages
         );
 
     result->mapping_memory = thread_supply_new_mem_region(
         thread,
         SUBSPACE_MAPPING,
-        allocation_info.mapping_pages,
-        perm_info.mapping_perms,
-        allocation_info.mapping_page_size
+        allocation_info->mapping_pages,
+        perm_info->mapping_perms,
+        allocation_info->mapping_page_size
     );
 
     result->stack_memory = thread_supply_new_mem_region(
         thread,
         SUBSPACE_STACK,
-        allocation_info.stack_pages,
-        perm_info.stack_perms,
-        allocation_info.stack_page_size
+        allocation_info->stack_pages,
+        perm_info->stack_perms,
+        allocation_info->stack_page_size
     );
 
-    return result;
+    return
+    ((uint64_t) result->code_memory == FRAME_ALLOC_FAILED)? -1 :
+    ((uint64_t) result->mapping_memory == FRAME_ALLOC_FAILED)? -1 :
+    ((uint64_t) result->stack_memory == FRAME_ALLOC_FAILED)? -1 : 0;
 }
 
 

@@ -132,7 +132,7 @@ void show_mem_map(mem_map *mmap, bool verbose) {
  *
  * @param count amount of pages allocated < 512
  * @param page_type size of each allocated page
- * @return NULL on fail
+ * @return FRAME_ALLOC_FAILED on fail
  */
 struct_page_t *ialloc_frames(uint64_t count, PAGE_TYPE page_type) {
     //TODO: make an independent method instead of relying on map_alloc_frame

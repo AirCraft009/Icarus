@@ -68,6 +68,8 @@ add_executable(Icarus_kernel
         src/kernel/Processes/Scheduling/set_context.asm
         src/kernel/util/MasterRecordTable.c
         src/kernel/util/MasterRecordTable.h
+        src/kernel/Processes/Process.c
+        include/kernel/Processes/Process.h
 )
 
 target_include_directories(Icarus_kernel PRIVATE include
