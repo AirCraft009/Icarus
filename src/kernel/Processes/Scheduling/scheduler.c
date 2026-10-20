@@ -38,7 +38,6 @@ tcb_t * scheduler_pick_next_thread(INTERRUPT_SRC src) {
     tcb_t *pointing_tcb = NULL;                  // tcb preceding active_tcb
 
     while (active_tcb) {
-        Iprintf("seeing task[%i]: (%x, state: %x)\n",active_tcb->active_priority, active_tcb, active_tcb->state);
         if (active_tcb->state != PROCESS_READY ) {
             active_tcb = active_tcb->next;
             continue;
@@ -55,12 +54,26 @@ tcb_t * scheduler_pick_next_thread(INTERRUPT_SRC src) {
 
         goto selected_task;
     }
-    // nothing found for 0 priority so choose first ready in queue
-    pointing_tcb = NULL;            // no prev
+    // nothing found for 0 priority so choose lowest ready in queue
     active_tcb = top_tcb;
-    while (active_tcb && active_tcb->state != PROCESS_READY) {
-        pointing_tcb = active_tcb;
+    // first find a tcb that is ready
+    while (active_tcb && active_tcb->state != PROCESS_READY)
         active_tcb = active_tcb->next;
+
+    // whole proc is skipped if iter == null
+    pointing_tcb = NULL;            // no prev
+    tcb_t * iter = active_tcb;
+    tcb_t * prev = NULL;            // no prev
+    // could do a check for 1 as next low but not sure if trade off is worth it
+    while (iter) {
+        if (iter->state == PROCESS_READY && active_tcb->active_priority > iter->active_priority) {
+            Iprintf("technically eligble[%i]: (%x, state: %x)\n",iter->active_priority, iter, iter->state);
+            active_tcb = iter;      // choose highest
+            pointing_tcb = prev;
+        }
+
+        prev = iter;
+        iter = iter->next;
     }
 
     if (!active_tcb){       // last has next ptr to NULL (no task is ready)
@@ -86,7 +99,7 @@ tcb_t * scheduler_pick_next_thread(INTERRUPT_SRC src) {
     }
 
     selected_task:
-        Iprintf("found task: %x (pml: %x, %x)\n", active_tcb, active_tcb->page_table, active_tcb->active_priority);
+        //Iprintf("found task: %x (pml: %x, %x)\n", active_tcb, active_tcb->page_table, active_tcb->active_priority);
         active_tcb->active_priority = active_tcb->priority + 1;
         active_tcb->state = PROCESS_RUNNING;
 
@@ -125,7 +138,6 @@ void context_switch(tcb_t *next_tcb, struct interrupt_frame *frame, INTERRUPT_SR
         //TODO: expand for other sources
         switch (src) {
             case INT_TMR: {
-                Iprintf("setting\n");
                 running_tcb->state = PROCESS_READY;
             }
             default: {
