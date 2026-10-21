@@ -12,6 +12,10 @@
 
 static PID_t PID_GEN = 1;
 
+//find a process vai it's PID
+
+
+
 pcb_t * init_process
 (
     PID_t parent_pid,

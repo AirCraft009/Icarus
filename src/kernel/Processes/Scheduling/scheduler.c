@@ -34,58 +34,48 @@ uint64_t thread_count = 0;
  * - entries around selection
  */
 tcb_t * scheduler_pick_next_thread(INTERRUPT_SRC src) {
-    tcb_t *active_tcb = top_tcb;
+    tcb_t *best_tcb;
     tcb_t *pointing_tcb = NULL;                  // tcb preceding active_tcb
+    {
+        tcb_t *active_tcb = top_tcb;
+        best_tcb = active_tcb;
+        uint16_t max_priority = UINT16_MAX;
 
-    while (active_tcb) {
-        if (active_tcb->state != THREAD_READY ) {
-            active_tcb = active_tcb->next;
-            continue;
-        }
+        while (active_tcb) {
+            if (active_tcb->state != THREAD_READY ) {
+                pointing_tcb = active_tcb;
+                active_tcb = active_tcb->next;
+                continue;
+            }
+            Iprintf("found task: %x (pml: %x, %x)\n", active_tcb, active_tcb->page_table, active_tcb->active_priority);
 
-        if (active_tcb->active_priority != 0) {
-            --active_tcb->active_priority;             // sneaky speed??
-            pointing_tcb = active_tcb;
+            if (active_tcb->active_priority >= max_priority) {
+                pointing_tcb = active_tcb;
+                --active_tcb->active_priority;             // sneaky speed??
+                active_tcb = active_tcb->next;
+                continue;
+            }
+
+            best_tcb = active_tcb;
+            max_priority = active_tcb->active_priority;
             active_tcb = active_tcb->next;
-            continue;
         }
-        if (active_tcb == top_tcb)
+        if (best_tcb == top_tcb)
             pointing_tcb = NULL;
-
-        goto selected_task;
-    }
-    // nothing found for 0 priority so choose lowest ready in queue
-    active_tcb = top_tcb;
-    // first find a tcb that is ready
-    while (active_tcb && active_tcb->state != THREAD_READY)
-        active_tcb = active_tcb->next;
-
-    // whole proc is skipped if iter == null
-    pointing_tcb = NULL;            // no prev
-    tcb_t * iter = active_tcb;
-    tcb_t * prev = NULL;            // no prev
-    // could do a check for 1 as next low but not sure if trade off is worth it
-    while (iter) {
-        if (iter->state == THREAD_READY && active_tcb->active_priority > iter->active_priority) {
-            Iprintf("technically eligble[%i]: (%x, state: %x)\n",iter->active_priority, iter, iter->state);
-            active_tcb = iter;      // choose highest
-            pointing_tcb = prev;
-        }
-
-        prev = iter;
-        iter = iter->next;
     }
 
-    if (!active_tcb){       // last has next ptr to NULL (no task is ready)
+
+
+    if (!best_tcb){       // last has next ptr to NULL (no task is ready)
         Iprintf("none found\n");
         switch (src) {
             // no ready task at all so check if the currently running task can be ran again.
             //TODO: expand for more interrupts
             case INT_TMR: {
-                active_tcb = last_tcb;
+                best_tcb = last_tcb;
                 // is already in the correct position js update the priority
-                active_tcb->active_priority = active_tcb->priority + 1;
-                return active_tcb;
+                best_tcb->active_priority = best_tcb->priority + 1;
+                return best_tcb;
             }
             default:
                 goto wait;
@@ -98,23 +88,21 @@ tcb_t * scheduler_pick_next_thread(INTERRUPT_SRC src) {
             ;
     }
 
-    selected_task:
-        //Iprintf("found task: %x (pml: %x, %x)\n", active_tcb, active_tcb->page_table, active_tcb->active_priority);
-        active_tcb->active_priority = active_tcb->priority + 1;
-        active_tcb->state = THREAD_RUNNING;
+    Iprintf("found task: %x (pml: %x, %x)\n", best_tcb, best_tcb->page_table, best_tcb->active_priority);
+    best_tcb->active_priority = best_tcb->priority + 1;
+    best_tcb->state = THREAD_RUNNING;
 
-        if (pointing_tcb == NULL)
-            top_tcb = active_tcb->next;
-        else
-            pointing_tcb->next = active_tcb->next;
+    if (pointing_tcb == NULL)
+        top_tcb = best_tcb->next;
+    else
+        pointing_tcb->next = best_tcb->next;
 
-        // put it last in queue
-        last_tcb->next = active_tcb;
-        last_tcb = active_tcb;
-        last_tcb->next = NULL;
+    // put it last in queue
+    last_tcb->next = best_tcb;
+    last_tcb = best_tcb;
+    last_tcb->next = NULL;
 
-    //__asm__ volatile ("cli; hlt");
-    return active_tcb;
+    return best_tcb;
 }
 
 /**
@@ -232,4 +220,8 @@ tcb_t * spawn_alloc_thread(
     //TODO: find a way to cleanly handle return from thread_supply_mem
     thread_supply_new_mem(tcb, alloc_info, perms, supply);
     return tcb;
+}
+
+int scheduler_stop_thread(tcb_t * tcb) {
+
 }

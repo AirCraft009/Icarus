@@ -59,17 +59,6 @@ static const uint8_t clear_vga[] = {
 static const uint8_t loop[] = {
     0xEB, 0xFE
 };
-
-static const uint8_t w_char[] = {
-    0x66,
-    0xC7,
-    0x04,
-    0x25,
-    0x04, 0x80, 0x0B, 0x00,
-    0x21, 0x4F,
-    0xEB, 0xFE
-};
-
 //235372403 = 256809072
 void kmain(uint32_t magic, struct multiboot_info *mboot) {
     cursor *cur = shellio_init("ICARUS\n");
@@ -118,7 +107,7 @@ void kmain(uint32_t magic, struct multiboot_info *mboot) {
         0,
         false,
         10,
-        fill_vga,
+        loop,
         sizeof(fill_vga),
         &alloc
         );
@@ -127,7 +116,7 @@ void kmain(uint32_t magic, struct multiboot_info *mboot) {
     0,
     false,
     10,
-    clear_vga,
+    loop,
     sizeof(clear_vga),
     &alloc
     );
@@ -136,7 +125,7 @@ void kmain(uint32_t magic, struct multiboot_info *mboot) {
     0,
     false,
     10,
-    color_vga,
+    loop,
     sizeof(color_vga),
     &alloc
     );

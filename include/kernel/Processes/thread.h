@@ -96,6 +96,7 @@ typedef struct THREAD_CONTROL_BLOCK {
 
     // Pointer to link TCBs in a scheduler queue
     struct THREAD_CONTROL_BLOCK* next;
+    struct THREAD_CONTROL_BLOCK* prev;
 } tcb_t;
 
 tcb_t * create_thread(PID_t parent, bool is_priviledged, uint16_t priority);
