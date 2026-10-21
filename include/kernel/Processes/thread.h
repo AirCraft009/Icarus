@@ -75,10 +75,10 @@ typedef struct THREAD_MEMORY_PERMISSION_INFO {
 typedef struct THREAD_CONTROL_BLOCK {
     PID_t pid;                   // Process ID
     TID_t tid;                   // thread ID
-    cpu_regs regsiters;
+    cpu_regs registers;          // registers for restoring cpu state
     // _Atomic bc it is a flag for the scheduler
     // e.g the transition from New -> Ready
-    THREAD_state_t state;       // Current state of the process
+    THREAD_state_t state;        // Current state of the process
     uint16_t priority;           // constant priority
     uint16_t active_priority;    // priority in the active switch cycle
     bool privileged;

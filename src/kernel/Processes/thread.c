@@ -35,11 +35,11 @@ tcb_t * create_thread(PID_t owner, bool is_priviledged, uint16_t priority) {
     tcb->tid = TID_GEN ++;
 
     // set the cpu registers
-    tcb->regsiters.psp.rflags = 0x202;              // default value bit 1 reserved always(1); bit 9 allow interrupts
-    tcb->regsiters.psp.rip = THREAD_CODE_VIRT_ADDR;
-    tcb->regsiters.psp.rsp = THREAD_STACK_VIRT_ADDR;
-    tcb->regsiters.psp.cs = is_priviledged? 0x08 : 0x23;
-    tcb->regsiters.psp.ss = is_priviledged? 0x10 : 0x1b;
+    tcb->registers.psp.rflags = 0x202;              // default value bit 1 reserved always(1); bit 9 allow interrupts
+    tcb->registers.psp.rip = THREAD_CODE_VIRT_ADDR;
+    tcb->registers.psp.rsp = THREAD_STACK_VIRT_ADDR;
+    tcb->registers.psp.cs = is_priviledged? 0x08 : 0x23;
+    tcb->registers.psp.ss = is_priviledged? 0x10 : 0x1b;
 
     page_map_l4_entry * proc_pml4 = (page_map_l4_entry *) KERNEL_VIRT_TO_PHYS(ialloc_frames(1, DEFAULT_PAGE));      // get physical addr struct page is mapped into k_space
     // current pml4 js has the higher mapped kernel, by copying its zeroing lower and higher mapping the kernel
@@ -78,7 +78,7 @@ int thread_supply_mem_region(tcb_t *thread, ADDR_SUB_SPACE sub_space, struct_pag
         thread->memory.memory_limit += info_page->page_size;
     }
     //Iprintf("table: (%x)\n", ((page_map_l4_entry *)KERNEL_PHYS_TO_VIRT(thread->page_table))[511].present);
-    test_walk_table(((page_map_l4_entry *)KERNEL_PHYS_TO_VIRT(thread->page_table)),THREAD_CODE_VIRT_ADDR);
+    //test_walk_table(((page_map_l4_entry *)KERNEL_PHYS_TO_VIRT(thread->page_table)),THREAD_CODE_VIRT_ADDR);
     return 0;
 }
 

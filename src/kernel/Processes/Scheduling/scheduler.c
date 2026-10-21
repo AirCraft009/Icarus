@@ -15,7 +15,7 @@
 #include "kernel/util/mem_utils.h"
 #include "kernel/util/shellio.h"
 
-extern void _switch_threads(tcb_t *tcb);
+extern void _switch_threads(cpu_regs *regs);
 
 // holds the tcb currently at the top of the queue
 tcb_t *top_tcb = NULL;
@@ -124,12 +124,12 @@ tcb_t * scheduler_pick_next_thread(INTERRUPT_SRC src) {
  */
 void context_switch(tcb_t *next_tcb, struct interrupt_frame *frame, INTERRUPT_SRC src) {
     Imemcpy(
-        &running_tcb->regsiters,
+        &running_tcb->registers,
         &frame->gpo_regs,
         sizeof(cpu_reg_frame)
     );
     Imemcpy(
-        (void *) &running_tcb->regsiters + sizeof(cpu_reg_frame),
+        (void *) &running_tcb->registers + sizeof(cpu_reg_frame),
         &frame->cpu_regs,
         sizeof(cpu_push_frame)
         );
@@ -152,14 +152,15 @@ void context_switch(tcb_t *next_tcb, struct interrupt_frame *frame, INTERRUPT_SR
     //test_walk_table((void *) KERNEL_PHYS_TO_VIRT(next_tcb->page_table), (void *)KERNEL_PHYS_TO_VIRT(2 * HUGE_PS));
     // change pml4 table (it still has the kernel mappings so the current code should stay fine)
     write_cr3((uint64_t)next_tcb->page_table);
-    // Iprintf("thread: (%x)\n", next_tcb->tid);
     // Iprintf("calla (%x)", *(uint8_t *)THREAD_CODE_VIRT_ADDR);
 
 
     running_tcb = next_tcb;
     // send the EOI as late as possible
     lapic_write(LAPIC_EOI, 0);
-    _switch_threads(next_tcb);
+    Iprintf("thread cs: (%x)\n",* ((uint8_t *) &next_tcb->registers + 128));
+    Iprintf("thread ss: (%x)\n",* ((uint8_t *) &next_tcb->registers + 152));
+    _switch_threads(&next_tcb->registers);
 }
 
 /**
@@ -216,8 +217,6 @@ tcb_t * spawn_thread(
     tcb_t * tcb = create_thread(parent, is_priviledged, priority);
     //TODO: find a way to cleanly handle return from thread_supply_mem
     thread_supply_mem(tcb, mem_supply_block, perms);
-    tcb->state =THREAD_READY;
-    scheduler_add_thread(tcb);
     return tcb;
 }
 
@@ -232,7 +231,5 @@ tcb_t * spawn_alloc_thread(
     tcb_t * tcb = create_thread(parent, is_priviledged, priority);
     //TODO: find a way to cleanly handle return from thread_supply_mem
     thread_supply_new_mem(tcb, alloc_info, perms, supply);
-    tcb->state = THREAD_READY;
-    scheduler_add_thread(tcb);
     return tcb;
 }

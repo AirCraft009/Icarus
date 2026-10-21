@@ -60,6 +60,16 @@ static const uint8_t loop[] = {
     0xEB, 0xFE
 };
 
+static const uint8_t w_char[] = {
+    0x66,
+    0xC7,
+    0x04,
+    0x25,
+    0x04, 0x80, 0x0B, 0x00,
+    0x21, 0x4F,
+    0xEB, 0xFE
+};
+
 //235372403 = 256809072
 void kmain(uint32_t magic, struct multiboot_info *mboot) {
     cursor *cur = shellio_init("ICARUS\n");
@@ -94,18 +104,17 @@ void kmain(uint32_t magic, struct multiboot_info *mboot) {
         Iprintf("The PS2 Controller doesn't work\n");
 
     Iprintf("Ticks per Ms: (%i)", LAPIC_TICKS_PER_MS);
-    // TODO: TESTING BC OF THREADS
     page_in(Kernel_PML4_TABLE, (void *)0xB8000, (void *)0xB8000, DEFAULT_PAGE_SIZE, WRITEABLE | 1 << USER_ACCESS_SHIFT);
 
-
+    Iprintf("::::::::::::::::::::SCHEDULING::::::::::::::::::::::::\n");
     thread_memory_allocation_info_t alloc =
         {
-        1,  DEFAULT_PAGE_SIZE,
-        1, DEFAULT_PAGE_SIZE,
+        2,  DEFAULT_PAGE_SIZE,
+        2, DEFAULT_PAGE_SIZE,
         4, DEFAULT_PAGE_SIZE
     };
 
-    create_process(
+    create_initial_process(
         0,
         false,
         10,
@@ -119,7 +128,7 @@ void kmain(uint32_t magic, struct multiboot_info *mboot) {
     false,
     10,
     clear_vga,
-    sizeof(color_vga),
+    sizeof(clear_vga),
     &alloc
     );
 
@@ -127,14 +136,14 @@ void kmain(uint32_t magic, struct multiboot_info *mboot) {
     0,
     false,
     10,
-    clear_vga,
+    color_vga,
     sizeof(color_vga),
     &alloc
     );
 
 
-    Iprintf("::::::::::::::::::::SCHEDULING::::::::::::::::::::::::");
     __asm__ volatile ("sti");
+    Iprintf("::::::::::::::::::::RAHHHHHHHHHHHHHHHHHHHH::::::::::::::::::::::::\n");
     keyboard_ps2_init();
 
     lapic_write(LAPIC_TIMER_INITCNT, 0x0);
