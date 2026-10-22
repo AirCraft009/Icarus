@@ -36,37 +36,37 @@ uint64_t thread_count = 0;
 tcb_t * scheduler_pick_next_thread(INTERRUPT_SRC src) {
     tcb_t *best_tcb;
     tcb_t *pointing_tcb = NULL;                  // tcb preceding active_tcb
-    {
-        tcb_t *active_tcb = top_tcb;
-        best_tcb = active_tcb;
-        uint16_t max_priority = UINT16_MAX;
+    tcb_t *active_tcb = top_tcb;
+    best_tcb = active_tcb;
+    uint16_t max_priority = UINT16_MAX;
 
-        while (active_tcb) {
-            if (active_tcb->state != THREAD_READY ) {
-                pointing_tcb = active_tcb;
-                active_tcb = active_tcb->next;
-                continue;
-            }
-            Iprintf("found task: %x (pml: %x, %x)\n", active_tcb, active_tcb->page_table, active_tcb->active_priority);
-
-            if (active_tcb->active_priority >= max_priority) {
-                pointing_tcb = active_tcb;
-                --active_tcb->active_priority;             // sneaky speed??
-                active_tcb = active_tcb->next;
-                continue;
-            }
-
-            best_tcb = active_tcb;
-            max_priority = active_tcb->active_priority;
+    while (active_tcb) {
+        if (active_tcb->state != THREAD_READY ) {
+            pointing_tcb = active_tcb;
             active_tcb = active_tcb->next;
+            continue;
         }
-        if (best_tcb == top_tcb)
-            pointing_tcb = NULL;
+        Iprintf("found task: %x (state: %x, %x, %x)\n", active_tcb->tid, active_tcb->state, max_priority, active_tcb->active_priority);
+
+        if (active_tcb->active_priority >= max_priority) {
+            pointing_tcb = active_tcb;
+            --active_tcb->active_priority;             // sneaky speed??
+            active_tcb = active_tcb->next;
+            continue;
+        }
+        Iprintf("eligble %x\n", active_tcb->tid);
+
+        best_tcb = active_tcb;
+        max_priority = active_tcb->active_priority;
+        active_tcb = active_tcb->next;
     }
+    if (best_tcb == top_tcb)
+        pointing_tcb = NULL;
 
 
 
-    if (!best_tcb){       // last has next ptr to NULL (no task is ready)
+
+    if (max_priority == UINT16_MAX){       // last has next ptr to NULL (no task is ready)
         Iprintf("none found\n");
         switch (src) {
             // no ready task at all so check if the currently running task can be ran again.
@@ -125,6 +125,7 @@ void context_switch(tcb_t *next_tcb, struct interrupt_frame *frame, INTERRUPT_SR
     if (running_tcb != &dummy_tcb) {        // don't change state of dummy bc it has NULL val
         //TODO: expand for other sources
         switch (src) {
+            Iprintf("setting");
             case INT_TMR: {
                 running_tcb->state = THREAD_READY;
             }

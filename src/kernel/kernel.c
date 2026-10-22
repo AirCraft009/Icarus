@@ -137,7 +137,7 @@ void kmain(uint32_t magic, struct multiboot_info *mboot) {
 
     lapic_write(LAPIC_TIMER_INITCNT, 0x0);
     lapic_write(LAPIC_LVT_TIMER, 32 | LAPIC_TIMER_PERIODIC);
-    lapic_write(LAPIC_TIMER_INITCNT, LAPIC_TICKS_PER_MS * 500);
+    lapic_write(LAPIC_TIMER_INITCNT, LAPIC_TICKS_PER_MS * 10000);
 
     //TODO: build a table to hold all important subtables and system_statistics
     while (1)
