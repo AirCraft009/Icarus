@@ -26,7 +26,7 @@ static TID_t TID_GEN = 1;
  * @param priority priority for scheduling 0 - (UINT16_MAX - 1) (0 is most aggressive)
  * @return address of the thread of NULL
  */
-tcb_t * create_thread(PID_t owner, bool is_priviledged, uint16_t priority) {
+tcb_t * create_thread(bool is_priviledged, uint16_t priority) {
     if (priority == UINT16_MAX)     // the active prio is priority + 1 so this would overflow to 0
         return NULL;
 

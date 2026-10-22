@@ -99,7 +99,7 @@ typedef struct THREAD_CONTROL_BLOCK {
     struct THREAD_CONTROL_BLOCK* prev;
 } tcb_t;
 
-tcb_t * create_thread(PID_t parent, bool is_priviledged, uint16_t priority);
+tcb_t * create_thread(bool is_priviledged, uint16_t priority);
 int thread_supply_mem_region(tcb_t *thread, ADDR_SUB_SPACE sub_space, struct_page_t * info_page, uint64_t permissions);
 struct_page_t * thread_supply_new_mem_region(tcb_t *thread, ADDR_SUB_SPACE sub_space,  uint64_t pages, PAGE_TYPE p_size, uint64_t permissions);
 int * thread_supply_mem(tcb_t * thread, thread_memory_supply_block_t supply_block, thread_memory_permission_info_t perms);

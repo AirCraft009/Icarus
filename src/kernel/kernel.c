@@ -107,7 +107,7 @@ void kmain(uint32_t magic, struct multiboot_info *mboot) {
         0,
         false,
         10,
-        loop,
+        fill_vga,
         sizeof(fill_vga),
         &alloc
         );
@@ -115,8 +115,8 @@ void kmain(uint32_t magic, struct multiboot_info *mboot) {
     create_process(
     0,
     false,
-    10,
-    loop,
+    15,
+    clear_vga,
     sizeof(clear_vga),
     &alloc
     );
@@ -125,10 +125,11 @@ void kmain(uint32_t magic, struct multiboot_info *mboot) {
     0,
     false,
     10,
-    loop,
+    color_vga,
     sizeof(color_vga),
     &alloc
     );
+    //__asm__ volatile ("cli; hlt");
 
 
     __asm__ volatile ("sti");
@@ -137,7 +138,7 @@ void kmain(uint32_t magic, struct multiboot_info *mboot) {
 
     lapic_write(LAPIC_TIMER_INITCNT, 0x0);
     lapic_write(LAPIC_LVT_TIMER, 32 | LAPIC_TIMER_PERIODIC);
-    lapic_write(LAPIC_TIMER_INITCNT, LAPIC_TICKS_PER_MS * 10000);
+    lapic_write(LAPIC_TIMER_INITCNT, LAPIC_TICKS_PER_MS * 500);
 
     //TODO: build a table to hold all important subtables and system_statistics
     while (1)
