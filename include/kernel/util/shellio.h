@@ -23,5 +23,6 @@ void cons_new_lines(uint16_t count);
 void cons_write_c(char c);
 void cons_write_str(char *str);
 void Iprintf(char *format, ...);
+void Imclear();
 
 #endif //ICARUS_SHELLIO_H

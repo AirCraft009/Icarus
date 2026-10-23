@@ -9,13 +9,21 @@
 #include "kernel_helper.h"
 #include "kernel/interrupts/APIC.h"
 #include "kernel/interrupts/ISR.h"
-#include "kernel/Memory/alloc.h"
-#include "kernel/Memory/memory_mapping.h"
 #include "kernel/Processes/thread.h"
 #include "kernel/util/mem_utils.h"
 #include "kernel/util/shellio.h"
 
-extern void _switch_threads(tcb_t *tcb);
+static inline uint16_t saturating_sub16(uint16_t a, uint16_t b)
+{
+    return a >= b ? a - b : 0;
+}
+
+static inline uint16_t saturating_dec16(uint16_t a)
+{
+    return a >= 1 ? a - 1 : 0;
+}
+
+extern void _switch_threads(cpu_regs *regs);
 
 // holds the tcb currently at the top of the queue
 tcb_t *top_tcb = NULL;
@@ -35,44 +43,40 @@ uint64_t thread_count = 0;
  */
 tcb_t * scheduler_pick_next_thread(INTERRUPT_SRC src) {
     tcb_t *active_tcb = top_tcb;
-    tcb_t *pointing_tcb = NULL;                  // tcb preceding active_tcb
+    tcb_t *best_tcb = active_tcb;
+    uint16_t max_priority = UINT16_MAX;
 
     while (active_tcb) {
-        Iprintf("seeing task[%i]: (%x, state: %x)\n",active_tcb->active_priority, active_tcb, active_tcb->state);
-        if (active_tcb->state != PROCESS_READY ) {
+        if (active_tcb->state != THREAD_READY ) {
             active_tcb = active_tcb->next;
             continue;
         }
 
-        if (active_tcb->active_priority != 0) {
-            --active_tcb->active_priority;             // sneaky speed??
-            pointing_tcb = active_tcb;
+        if (active_tcb->active_priority >= max_priority) {
+            active_tcb->active_priority = saturating_dec16(active_tcb->active_priority);             // sneaky speed??
             active_tcb = active_tcb->next;
             continue;
         }
-        if (active_tcb == top_tcb)
-            pointing_tcb = NULL;
 
-        goto selected_task;
-    }
-    // nothing found for 0 priority so choose first ready in queue
-    pointing_tcb = NULL;            // no prev
-    active_tcb = top_tcb;
-    while (active_tcb && active_tcb->state != PROCESS_READY) {
-        pointing_tcb = active_tcb;
+        best_tcb = active_tcb;
+        active_tcb->active_priority = saturating_dec16(active_tcb->active_priority);        // still decrease priority bc
+        max_priority = active_tcb->active_priority;
         active_tcb = active_tcb->next;
     }
 
-    if (!active_tcb){       // last has next ptr to NULL (no task is ready)
+
+
+
+    if (max_priority == UINT16_MAX){       // last has next ptr to NULL (no task is ready)
         Iprintf("none found\n");
         switch (src) {
             // no ready task at all so check if the currently running task can be ran again.
             //TODO: expand for more interrupts
             case INT_TMR: {
-                active_tcb = last_tcb;
+                best_tcb = last_tcb;
                 // is already in the correct position js update the priority
-                active_tcb->active_priority = active_tcb->priority + 1;
-                return active_tcb;
+                best_tcb->active_priority = best_tcb->priority + 1;
+                return best_tcb;
             }
             default:
                 goto wait;
@@ -85,23 +89,30 @@ tcb_t * scheduler_pick_next_thread(INTERRUPT_SRC src) {
             ;
     }
 
-    selected_task:
-        Iprintf("found task: %x (pml: %x, %x)\n", active_tcb, active_tcb->page_table, active_tcb->active_priority);
-        active_tcb->active_priority = active_tcb->priority + 1;
-        active_tcb->state = PROCESS_RUNNING;
+    //Iprintf("{SELECTED TASK: %x (pml: %x, %x)}\n", best_tcb->tid, best_tcb, best_tcb->active_priority);
+    best_tcb->active_priority = best_tcb->priority + 1;
+    best_tcb->state = THREAD_RUNNING;
 
-        if (pointing_tcb == NULL)
-            top_tcb = active_tcb->next;
-        else
-            pointing_tcb->next = active_tcb->next;
+    if (best_tcb->prev == NULL) {       // is top
+        top_tcb = best_tcb->next;
+        top_tcb->prev = NULL;
+    }
+    else if (best_tcb->next == NULL) {  // is last
+        return best_tcb;                // correct position alr
+    }
+    else {
+        // swap ptrs
+        best_tcb->prev->next = best_tcb->next;
+        best_tcb->next->prev = best_tcb->prev;
+    }
 
-        // put it last in queue
-        last_tcb->next = active_tcb;
-        last_tcb = active_tcb;
-        last_tcb->next = NULL;
 
-    //__asm__ volatile ("cli; hlt");
-    return active_tcb;
+    // put it last in queue
+    last_tcb->next = best_tcb;
+    best_tcb->prev = last_tcb;
+    best_tcb->next = NULL;
+    last_tcb = best_tcb;
+    return best_tcb;
 }
 
 /**
@@ -111,12 +122,12 @@ tcb_t * scheduler_pick_next_thread(INTERRUPT_SRC src) {
  */
 void context_switch(tcb_t *next_tcb, struct interrupt_frame *frame, INTERRUPT_SRC src) {
     Imemcpy(
-        &running_tcb->regsiters,
+        &running_tcb->registers,
         &frame->gpo_regs,
         sizeof(cpu_reg_frame)
     );
     Imemcpy(
-        (void *) &running_tcb->regsiters + sizeof(cpu_reg_frame),
+        (void *) &running_tcb->registers + sizeof(cpu_reg_frame),
         &frame->cpu_regs,
         sizeof(cpu_push_frame)
         );
@@ -124,30 +135,31 @@ void context_switch(tcb_t *next_tcb, struct interrupt_frame *frame, INTERRUPT_SR
     if (running_tcb != &dummy_tcb) {        // don't change state of dummy bc it has NULL val
         //TODO: expand for other sources
         switch (src) {
+            Iprintf("setting");
             case INT_TMR: {
-                Iprintf("setting\n");
-                running_tcb->state = PROCESS_READY;
+                running_tcb->state = THREAD_READY;
             }
             default: {
-                running_tcb->state = PROCESS_READY;
+                running_tcb->state = THREAD_READY;
             };
         }
     }
 
 
-    next_tcb->state = PROCESS_RUNNING;
+    next_tcb->state = THREAD_RUNNING;
     //Iprintf("pre: %x\n", next_tcb->page_table);
     //test_walk_table((void *) KERNEL_PHYS_TO_VIRT(next_tcb->page_table), (void *)KERNEL_PHYS_TO_VIRT(2 * HUGE_PS));
     // change pml4 table (it still has the kernel mappings so the current code should stay fine)
     write_cr3((uint64_t)next_tcb->page_table);
-    // Iprintf("thread: (%x)\n", next_tcb->tid);
-    // Iprintf("calla (%x)", *(uint8_t *)PROCESS_CODE_VIRT_ADDR);
+    // Iprintf("calla (%x)", *(uint8_t *)THREAD_CODE_VIRT_ADDR);
 
 
     running_tcb = next_tcb;
     // send the EOI as late as possible
     lapic_write(LAPIC_EOI, 0);
-    _switch_threads(next_tcb);
+    // Iprintf("thread cs: (%x)\n",* ((uint8_t *) &next_tcb->registers + 128));
+    // Iprintf("thread ss: (%x)\n",* ((uint8_t *) &next_tcb->registers + 152));
+    _switch_threads(&next_tcb->registers);
 }
 
 /**
@@ -155,31 +167,47 @@ void context_switch(tcb_t *next_tcb, struct interrupt_frame *frame, INTERRUPT_SR
  */
 void scheduler_init(tcb_t * tcb) {
     //minimal init for the dummy thread
-    dummy_tcb.state = PROCESS_DENIED;     // make sure process doesn't get scheduled
+    dummy_tcb.state = THREAD_DENIED;     // make sure process doesn't get scheduled
     dummy_tcb.priority = 0;
 
     running_tcb = &dummy_tcb;
     last_tcb = &dummy_tcb;
     last_tcb->next = NULL;
+    last_tcb->prev = tcb;
 
     top_tcb = tcb;
     //test_walk_table((void *)KERNEL_PHYS_TO_VIRT(tcb->page_table), (void *)KERNEL_PHYS_TO_VIRT(2 * HUGE_PS));
     top_tcb->next = last_tcb;
-    tcb->state = PROCESS_READY;
+    top_tcb->prev = NULL;
+    tcb->state = THREAD_READY;
+    ++thread_count;
 }
 
 
-
+/**
+ * adds a thread to the scheduler and disables ints
+ */
 void scheduler_add_thread(tcb_t *tcb) {
     __asm volatile ("cli");
     last_tcb->next = tcb;
+    tcb->prev = last_tcb;
+    tcb->next = NULL;
     last_tcb = tcb;
-    last_tcb->next = NULL;
+    ++thread_count;
 }
 
 void schedule(struct interrupt_frame *frame, INTERRUPT_SRC src) {
+    Iprintf("_________________________________\n");
     tcb_t * next = scheduler_pick_next_thread(src);
+    Iprintf("_________________________________\n");
     context_switch(next, frame, src);
+}
+
+/**
+ * removes a thread and disables ints
+ */
+void stop_thread(tcb_t * tcb) {
+    __asm volatile ("cli");
 }
 
 
@@ -190,11 +218,9 @@ tcb_t * spawn_thread(
     thread_memory_supply_block_t mem_supply_block,
     thread_memory_permission_info_t perms
 ) {
-    tcb_t * tcb = create_thread(parent, is_priviledged, priority);
+    tcb_t * tcb = create_thread(is_priviledged, priority);
     //TODO: find a way to cleanly handle return from thread_supply_mem
     thread_supply_mem(tcb, mem_supply_block, perms);
-    tcb->state =PROCESS_READY;
-    scheduler_add_thread(tcb);
     return tcb;
 }
 
@@ -202,13 +228,16 @@ tcb_t * spawn_alloc_thread(
     PID_t parent,
     bool is_priviledged,
     uint16_t priority,
-    thread_memory_allocation_info_t alloc_info,
-    thread_memory_permission_info_t perms
+    thread_memory_allocation_info_t *alloc_info,
+    thread_memory_permission_info_t *perms,
+    thread_memory_supply_block_t *supply
 ) {
-    tcb_t * tcb = create_thread(parent, is_priviledged, priority);
+    tcb_t * tcb = create_thread(is_priviledged, priority);
     //TODO: find a way to cleanly handle return from thread_supply_mem
-    thread_supply_new_mem(tcb, alloc_info, perms);
-    tcb->state =PROCESS_READY;
-    scheduler_add_thread(tcb);
+    thread_supply_new_mem(tcb, alloc_info, perms, supply);
     return tcb;
+}
+
+int scheduler_stop_thread(tcb_t * tcb) {
+
 }

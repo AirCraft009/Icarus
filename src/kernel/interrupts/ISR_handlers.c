@@ -24,17 +24,17 @@ void Stack_segment_fault(struct interrupt_frame *frame) {
 }
 
 void page_fault_handler(struct interrupt_frame *frame){
-    Iprintf("firstB (%x)\n", *(uint8_t *)PROCESS_CODE_VIRT_ADDR);
+    Iprintf("firstB (%x)\n", *(uint8_t *)THREAD_CODE_VIRT_ADDR);
     Iprintf("#Page Fault detected: (%x)\nerror: %x\n", frame->cr2, frame->error_code);
     //TODO: stop user process
     __asm__ volatile ("cli; hlt"); // Completely hangs the computer
 }
 
 void general_protection_fault_handler(struct interrupt_frame *frame){
-    Iprintf( "#General Fault detected\nsegment: (%i)\nerror: (%i)\nRAX (%x)\nCR2 (%x)\nCR3: (%x)\nCR4: (%x)", frame->cpu_regs.ss, frame->error_code, frame->gpo_regs.rax, frame->cr2, frame->cr3, frame->cr4);
+    Iprintf( "#General Fault detected\nsegment: (%i)\nerror: (%x)\nRAX (%x)\nCR2 (%x)\nCR3: (%x)\nCR4: (%x)\n", frame->cpu_regs.ss, frame->error_code, frame->gpo_regs.rax, frame->cr2, frame->cr3, frame->cr4);
 
     uint8_t * instruction_data = (uint8_t*)frame->cpu_regs.rip;
-    Iprintf("rip: b1=%x,b2=%x,b3=%x\n", instruction_data[0],instruction_data[1],instruction_data[2]);
+    Iprintf("rip(%x): b1=%x,b2=%x,b3=%x\n", instruction_data, instruction_data[0],instruction_data[1],instruction_data[2]);
     Iprintf("fulldata=");
     for (int i = 0; i < 10; i++) {
         Iprintf("%x ", instruction_data[i]);

@@ -4,4 +4,6 @@ cmake-build-debug
 *.elf
 *.iso
 *.bin
-*.
+*.png
+*.txt
+*.ini

@@ -111,8 +111,37 @@ int page_in(page_map_l4_entry *pml4, const void *virt_addr, const void *phys_add
     return 0;
 }
 
+phys_addr_t walk_table(page_map_l4_entry * pml4, virt_addr_t virt_addr) {
+    page_map_l4_entry *pml4_entry = &pml4[VA_PML4_INDEX(virt_addr)];
+    if (pml4_entry->present == 0) {
+        return INVALID_PHYS_ADDR;
+    }
 
-phys_addr_t test_walk_table(page_map_l4_entry *pml4, const phys_addr_t virt_addr) {
+    pdpt_entry_t *pdpt_entry = &((pdpt_entry_t *) KERNEL_PHYS_TO_VIRT(pml4_entry->page_ppn << 12))[VA_PDPT_INDEX(virt_addr)];
+    if (pdpt_entry->present == 0)
+        return INVALID_PHYS_ADDR;
+
+    if (pdpt_entry->huge == 1)
+        return pdpt_entry->page_ppn << 12;
+
+
+    pd_entry_t *pd_entry = &((pd_entry_t *) KERNEL_PHYS_TO_VIRT(pdpt_entry->page_ppn << 12))[VA_PD_INDEX(virt_addr)];
+    if (pd_entry->present == 0)
+        return INVALID_PHYS_ADDR;
+
+    if (pd_entry->huge == 1)
+        return pd_entry->page_ppn << 12;
+
+
+    PageTableEntry *pt_entry = &((PageTableEntry *) KERNEL_PHYS_TO_VIRT(pd_entry->page_ppn << 12))[VA_PT_INDEX(virt_addr)];
+    if (pt_entry->present == 0)
+        return INVALID_PHYS_ADDR;
+
+    return pt_entry->page_ppn << 12;
+}
+
+
+phys_addr_t test_walk_table(page_map_l4_entry *pml4, const virt_addr_t virt_addr) {
     Iprintf("Walking addr (%x) on (%x)\n", virt_addr, pml4);
     page_map_l4_entry *pml4_entry = &pml4[VA_PML4_INDEX(virt_addr)];
     if (pml4_entry->present == 0) {
