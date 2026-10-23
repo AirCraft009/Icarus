@@ -7,7 +7,6 @@
 #pragma once
 
 #include <cpuid.h>
-#include "shellio.h"
 
 
 enum {

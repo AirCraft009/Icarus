@@ -72,6 +72,8 @@ add_executable(Icarus_kernel
         include/kernel/Processes/Process.h
         src/userland/syscall/ABI.c
         src/userland/syscall/ABI.h
+        src/kernel/syscall/syscall.c
+        src/kernel/syscall/syscall.h
 )
 
 target_include_directories(Icarus_kernel PRIVATE include

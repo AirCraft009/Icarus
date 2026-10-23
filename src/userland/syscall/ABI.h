@@ -6,5 +6,4 @@
 #define ICARUS_ABI_H
 #pragma once
 
-
 #endif //ICARUS_ABI_H

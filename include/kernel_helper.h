@@ -28,6 +28,11 @@
 #define PCI_INDEX_PORT 0xCF8
 #define PCI_DATA_PORT 0xCFC
 
+#define MSR_EFER 0xC0000080
+#define MSR_STAR  0xC0000081
+#define MSR_LSTAR 0xC0000082
+#define MSR_FMASK 0xC0000084
+
 static __inline uint64_t read_cr3(void){
     uint64_t value;
     __asm__ volatile ("mov %%cr3, %0" : "=r"(value));
@@ -72,13 +77,10 @@ static __inline void cpuSetMSR(uint32_t msr, uint32_t lo, uint32_t hi) {
     );
 }
 
-static __inline void cpuGetMSR(uint32_t msr, uint32_t *lo, uint32_t *hi) {
-    __asm__ __volatile__(
-        "rdmsr"
-        : "=a"(*lo), "=d"(*hi)
-        : "c"(msr)
-    );
+static __inline void wrmsr(uint32_t msr, uint64_t val) {
+    cpuSetMSR(msr, (uint32_t) val, val >> 0x20);
 }
+
 
 
 // outb and inb from https://www.osdev.org/howtos/2/

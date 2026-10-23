@@ -20,6 +20,7 @@
 #include "kernel/Processes/Process.h"
 #include "kernel/Processes/thread.h"
 #include "kernel/Processes/Scheduling/scheduler.h"
+#include "syscall/syscall.h"
 
 extern uint64_t *gdt_descriptor;
 
@@ -86,6 +87,10 @@ void kmain(uint32_t magic, struct multiboot_info *mboot) {
     handle_ACPI();
 
     init_cpuid();
+    if (syscall_init() != 0) {
+        Iprintf("Syscalls can't be executed! !!!halting!!!\n");
+        __asm__ volatile ("cli; hlt"); // Completely hangs the computer
+    }
     enable_apic();
     enable_io_apics();
 
