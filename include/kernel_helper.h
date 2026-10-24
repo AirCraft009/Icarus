@@ -77,6 +77,14 @@ static __inline void cpuSetMSR(uint32_t msr, uint32_t lo, uint32_t hi) {
     );
 }
 
+static __inline void cpuGetMSR(uint32_t msr, uint32_t *lo, uint32_t *hi) {
+    __asm__ __volatile__(
+        "rdmsr"
+        : "=a"(*lo), "=d"(*hi)
+        : "c"(msr)
+    );
+}
+
 static __inline void wrmsr(uint32_t msr, uint64_t val) {
     cpuSetMSR(msr, (uint32_t) val, val >> 0x20);
 }

@@ -9,11 +9,6 @@
 #include "kernel/util/shellio.h"
 
 int syscall_init() {
-    if (!(CPUID_TABLE.features >> CPUID_FEAT_EDX_MSR & 0x1)) {
-        Iprintf("MSR not supported: ICARUS cannot run\n");
-        return -1;
-    }
-
     cpuSetMSR(MSR_EFER, 0x1, 0x0 );     // set bit 0 (syscall enable) I hope you get why
     // [47:32] AND 0xFFFC is the cs selector for kernel space
     // [47:32] + 0x8 is the cs selector for kernel space
@@ -23,5 +18,9 @@ int syscall_init() {
     wrmsr(MSR_LSTAR, 0x0);                                  // entry point for the syscall
     wrmsr(MSR_FMASK, 0x2);                                  // disable IF flags so that syscall isn't interrupted
     return 0;
+}
+
+uint64_t syscall_handler(uint64_t number, uint64_t first, uint64_t second,uint64_t third, uint64_t fourth, uint64_t fifth) {
+
 }
 

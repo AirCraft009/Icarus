@@ -27,6 +27,7 @@ extern uint64_t *gdt_descriptor;
 
 static page_map_l4_entry Kernel_PML4_TABLE[512] __attribute__((aligned(4096))) = {0};
 static alloc_t * allocator;
+static cpuid_info * CPUID_TABLE = {0};
 
 // 20 bytes, position independent, no stack use
 static const uint8_t fill_vga[] = {
@@ -86,11 +87,17 @@ void kmain(uint32_t magic, struct multiboot_info *mboot) {
     allocator = alloc_init(DEFAULT_PAGE_SIZE * 510, (void *) KERNEL_HEAP_ADDR);
     handle_ACPI();
 
-    init_cpuid();
-    if (syscall_init() != 0) {
-        Iprintf("Syscalls can't be executed! !!!halting!!!\n");
+    init_cpuid(CPUID_TABLE);
+    if (!(CPUID_TABLE->features >> CPUID_FEAT_EDX_MSR & 0x1)) {
+        Iprintf("MSR not supported: ICARUS cannot run\n");
         __asm__ volatile ("cli; hlt"); // Completely hangs the computer
     }
+
+
+    // if (syscall_init() != 0) {
+    //     Iprintf("Syscalls can't be executed! !!!halting!!!\n");
+    //     __asm__ volatile ("cli; hlt"); // Completely hangs the computer
+    // }
     enable_apic();
     enable_io_apics();
 
