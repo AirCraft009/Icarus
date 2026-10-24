@@ -70,6 +70,13 @@ void write_str(char *str, cursor *cur) {
     }
 }
 
+void write_str_len(uint8_t *str, uint64_t offset, uint64_t len) {
+    cursor cur = {offset % COLS, offset / COLS};
+    for (uint64_t i = 0; i < len; i++) {
+        write_c(*str++, &cur);
+    }
+}
+
 void vprintf(cursor *cur, char *format, va_list args) {
     if (format == NULL) {
         return;
