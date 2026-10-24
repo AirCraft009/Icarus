@@ -10,6 +10,7 @@
 
 #include "mem_utils.h"
 
+#define CHECK_CPUID_FEAT(features, feature_check) ((((uint64_t) features) & feature_check) != 0)
 
 enum {
     CPUID_FEAT_EBX_BRAND_INDEX        = 0xFF << 0,
@@ -97,8 +98,10 @@ static __inline__ char * init_cpuid(cpuid_info * table)
     Imemcpy(table->vendor + 4, &edx, 4);
     Imemcpy(table->vendor + 8, &ecx, 4);
     table->vendor[12] = '\0';
-
     table->max_leaf = eax;
+
+    __cpuid(1, eax, ebx, ecx, edx);
+
     table->features = edx;
     return table->vendor;
 }
