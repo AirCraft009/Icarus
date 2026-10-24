@@ -19,8 +19,9 @@ int syscall_init() {
     // [47:32] + 0x8 is the cs selector for kernel space
     // ([63:48] + 0x8) or 3 is ss user space
     // ([63:48] + 0x10) or 3 is cs user space
-    wrmsr(MSR_STAR, (0x10ULL << 48) | (0x08ULL << 32)); // cs selector = 0x8; ss = 0x10;
-    cpuSetMSR(MSR_EFER, 0x0, 0x10 );                      // set bit 0 (syscall enable) I hope you get why
+    wrmsr(MSR_STAR, (0x10ULL << 48) | (0x08ULL << 32));     // cs selector = 0x8; ss = 0x10;
+    wrmsr(MSR_LSTAR, 0x0);                                 // entry point for the syscall
+    wrmsr(MSR_FMASK, 0x2);                                  // disable IF flags so that syscall isn't interrupted
     return 0;
 }
 

@@ -21,9 +21,6 @@ _switch_threads:
     ;   : 160 bytes
     ;
 
-    ; build the iretq frame from the register struct (push order: SS first, RIP last)
-    mov word [abs 0xB8002], 0x2F41      ; white on green 'A', second cell
-
     push qword [rdi + 152]       ; ss
     push qword [rdi + 144]       ; rsp
     push qword [rdi + 136]       ; rflags (IF must be set for user threads)
@@ -46,9 +43,6 @@ _switch_threads:
     mov rbx, qword [rdi + 104]
     mov rax, qword [rdi + 112]
     mov rdi, qword [rdi + 72]           ; restore rdi last, this destroys the ptr to the struct
-
-    ; debug: write a white-on-red '!' to the top-left VGA cell
-    mov word [abs 0xB8000], 0x4F21
 
     iretq
 
