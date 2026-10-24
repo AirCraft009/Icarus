@@ -17,6 +17,7 @@ void move_cursor(uint16_t offset, cursor *cur);
 void new_lines(uint16_t count, cursor *cur);
 void write_c(char c, cursor *cur);
 void write_str(char *str, cursor *cur);
+void write_str_len(uint8_t *str, uint64_t offset, uint64_t len);
 void mprintf(cursor *cur,  char *format, ...);
 void cons_move_cursor(uint16_t offset);
 void cons_new_lines(uint16_t count);

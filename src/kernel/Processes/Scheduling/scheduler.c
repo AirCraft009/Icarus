@@ -159,6 +159,7 @@ void context_switch(tcb_t *next_tcb, struct interrupt_frame *frame, INTERRUPT_SR
     lapic_write(LAPIC_EOI, 0);
     // Iprintf("thread cs: (%x)\n",* ((uint8_t *) &next_tcb->registers + 128));
     // Iprintf("thread ss: (%x)\n",* ((uint8_t *) &next_tcb->registers + 152));
+    //TODO: restore stack ptr to frame and add 16.
     _switch_threads(&next_tcb->registers);
 }
 
@@ -197,9 +198,7 @@ void scheduler_add_thread(tcb_t *tcb) {
 }
 
 void schedule(struct interrupt_frame *frame, INTERRUPT_SRC src) {
-    Iprintf("_________________________________\n");
     tcb_t * next = scheduler_pick_next_thread(src);
-    Iprintf("_________________________________\n");
     context_switch(next, frame, src);
 }
 

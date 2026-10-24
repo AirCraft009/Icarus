@@ -3,3 +3,4 @@
 //
 
 #include "MasterRecordTable.h"
+master_record_table_t MasterRecordTable;

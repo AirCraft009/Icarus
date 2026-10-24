@@ -31,8 +31,10 @@
   - Basic scheduler
   - Ring 3
   - Syscalls
+    - Cross-compiler: https://wiki.osdev.org/GCC_Cross-Compiler#Why_cross-compilers_are_necessary
   - First user program
   - read from a storage device
+    
 
 ## Threads & Multithreading
   - expand threading to multiple CPU cores

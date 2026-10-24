@@ -7,8 +7,10 @@
 #pragma once
 
 #include <cpuid.h>
-#include "shellio.h"
 
+#include "mem_utils.h"
+
+#define CHECK_CPUID_FEAT(features, feature_check) ((((uint64_t) features) & feature_check) != 0)
 
 enum {
     CPUID_FEAT_EBX_BRAND_INDEX        = 0xFF << 0,
@@ -87,21 +89,21 @@ typedef struct {
     uint64_t features;
 } cpuid_info;
 
-static cpuid_info CPUID_TABLE;
-
-static __inline__ char * init_cpuid(void)
+static __inline__ char * init_cpuid(cpuid_info * table)
 {
     unsigned int eax, ebx, ecx, edx;
     __cpuid(0, eax, ebx, ecx, edx);
 
-    Imemcpy(CPUID_TABLE.vendor + 0, &ebx, 4);   // note the order: EBX, EDX, ECX
-    Imemcpy(CPUID_TABLE.vendor + 4, &edx, 4);
-    Imemcpy(CPUID_TABLE.vendor + 8, &ecx, 4);
-    CPUID_TABLE.vendor[12] = '\0';
+    Imemcpy(table->vendor + 0, &ebx, 4);   // note the order: EBX, EDX, ECX
+    Imemcpy(table->vendor + 4, &edx, 4);
+    Imemcpy(table->vendor + 8, &ecx, 4);
+    table->vendor[12] = '\0';
+    table->max_leaf = eax;
 
-    CPUID_TABLE.max_leaf = eax;
-    CPUID_TABLE.features = edx;
-    return CPUID_TABLE.vendor;
+    __cpuid(1, eax, ebx, ecx, edx);
+
+    table->features = edx;
+    return table->vendor;
 }
 
 #endif //ICARUS_CPUID_H

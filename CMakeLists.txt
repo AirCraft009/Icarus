@@ -70,6 +70,12 @@ add_executable(Icarus_kernel
         src/kernel/util/MasterRecordTable.h
         src/kernel/Processes/Process.c
         include/kernel/Processes/Process.h
+        src/userland/syscall/ABI.c
+        src/userland/syscall/ABI.h
+        src/kernel/syscall/syscall.c
+        src/kernel/syscall/syscall.h
+        src/kernel/syscall/syscall_entry.asm
+        include/kernel/syscall/core_information_table.h
 )
 
 target_include_directories(Icarus_kernel PRIVATE include
