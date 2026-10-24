@@ -1,9 +1,14 @@
 ## Syscall User-ABI
 
-### Instructions
+### SYSCALL: INSTRUCTION
 
 Use the syscall instruction instead of interrupts bc of extra speed.\
-Design a wrapper to restore state and pass args
+Design a wrapper to restore state and pass args\
+
+- They jump to a function specified via MSR
+- They don't save rsp so stack has to be manually restored
+- They switch cs; ss to kernel
+
 
 ### Stack PTR
 

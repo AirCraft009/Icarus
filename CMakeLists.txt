@@ -75,8 +75,8 @@ add_executable(Icarus_kernel
         src/kernel/syscall/syscall.c
         src/kernel/syscall/syscall.h
         src/kernel/syscall/syscall_entry.asm
-        src/kernel/syscall/core_local_storage.c
-        src/kernel/syscall/core_local_storage.h
+        src/kernel/syscall/core_information_table.c
+        src/kernel/syscall/core_information_table.h
 )
 
 target_include_directories(Icarus_kernel PRIVATE include
