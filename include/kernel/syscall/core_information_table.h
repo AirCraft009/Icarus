@@ -8,12 +8,11 @@
 #include <stdint.h>
 
 typedef struct LOCAL_CORE_KERNEL_INFORMATION_TABLE {
-     uint64_t rsp_scratch_space;             // during syscall into kernel space store rsp here
-     uint16_t rsp_proper;                    // store kernel rsp here
+     uint64_t selfPointer;        // offset 0: address of this structure itself
+     uint64_t kernelStackTop;     // offset 8
+     uint64_t savedUserStack;     // offset 16
+     uint64_t scratchSpace;       // offset 24
 }lcore_ktable_t;
 
-typedef struct LOCAL_CORE_USR_INFORMATION_TABLE {
-
-}lcore_utable_t;
 
 #endif //ICARUS_CORE_LOCAL_STORAGE_H

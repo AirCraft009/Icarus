@@ -25,7 +25,7 @@ Syscalls uses 4 MSRs
   - Bits 63:48 are the user base: on sysret, CS = base + 16 and SS = base + 8. This forces a particular GDT layout.
   - tho I might use iretq idk yet
 - IA32_LSTAR (0xC0000082): the 64-bit entry point (RIP) that syscall jumps to.
-- IA32_FMASK (0xC0000084): RFLAGS bits to clear on entry. Typically you clear IF so interrupts are off until you’re on a safe stack.
+- IA32_FMASK (0xC0000084): RFLAGS bits to clear on entry. Typically, you clear IF so interrupts are off until you’re on a safe stack.
 
 ### SWAPGS
 
