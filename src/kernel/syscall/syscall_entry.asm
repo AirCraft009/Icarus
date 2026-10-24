@@ -1,7 +1,7 @@
 global _syscall_entry
 extern syscall_handler
 
-user_rsp_scratch equ 0x0
+user_rsp_scratch equ 0x10
 kernel_rsp       equ 0x8
 
 _syscall_entry:

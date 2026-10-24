@@ -28,10 +28,13 @@
 #define PCI_INDEX_PORT 0xCF8
 #define PCI_DATA_PORT 0xCFC
 
-#define MSR_EFER 0xC0000080
-#define MSR_STAR  0xC0000081
-#define MSR_LSTAR 0xC0000082
-#define MSR_FMASK 0xC0000084
+#define MSR_EFER            0xC0000080
+#define MSR_STAR            0xC0000081
+#define MSR_LSTAR           0xC0000082
+#define MSR_FMASK           0xC0000084
+#define MSR_FSBASE          0xC0000100
+#define MSR_GSBASE          0xC0000101
+#define MSR_KernelGSBase    0xC0000102
 
 static __inline uint64_t read_cr3(void){
     uint64_t value;
