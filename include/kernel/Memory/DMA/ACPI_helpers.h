@@ -6,7 +6,6 @@
 #define ICARUS_ACPI_TABLES_H
 #pragma once
 #include <stdint.h>
-#include <assert.h>
 #include "kernel/Memory/PMM/mem_map.h"
 #include "kernel/Memory/DMA/ACPI.h"
 

@@ -2,7 +2,7 @@
 cmake_minimum_required(VERSION 3.20)
 project(Icarus C ASM_NASM)
 
-set(CMAKE_C_STANDARD 11)
+set(CMAKE_C_STANDARD 23)
 set(CMAKE_ASM_NASM_OBJECT_FORMAT elf64)
 
 set_source_files_properties(src/boot/boot.asm PROPERTIES LANGUAGE ASM_NASM)
@@ -76,6 +76,11 @@ add_executable(Icarus_kernel
         src/kernel/syscall/syscall.h
         src/kernel/syscall/syscall_entry.asm
         include/kernel/syscall/core_information_table.h
+        src/kernel/util/Files/tar_parse.c
+        include/kernel/util/Files/tar_parse.h
+        src/kernel/util/Files/elf_parse.c
+        include/kernel/util/Files/elf_parse.h
+        include/assert.h
 )
 
 target_include_directories(Icarus_kernel PRIVATE include
