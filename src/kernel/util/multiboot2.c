@@ -7,6 +7,7 @@
 
 #include "kernel/Memory/DMA/ACPI.h"
 #include "kernel/util/mem_utils.h"
+#include "kernel/util/Files/tar_parse.h"
 
 
 extern char _kernel_end_phys[];
@@ -61,6 +62,10 @@ int handle_multiboot2 (uint32_t magic, boot_info *info, page_map_l4_entry *pml4)
 				((struct multiboot_tag_module *) tag)->mod_start,
 				((struct multiboot_tag_module *) tag)->mod_end,
 				((struct multiboot_tag_module *) tag)->cmdline);
+				int tar_c = tar_mb2_init((struct multiboot_tag_module *) tag);
+				if (tar_c == -1) {
+					Iprintf("Failing to parse Tar files");
+				}
 				break;
 			case MULTIBOOT_TAG_TYPE_BASIC_MEMINFO:
 				Iprintf( "mem_lower = %uKB, mem_upper = %uKB\n",
@@ -95,6 +100,7 @@ int handle_multiboot2 (uint32_t magic, boot_info *info, page_map_l4_entry *pml4)
 
 			case MULTIBOOT_TAG_TYPE_FRAMEBUFFER:
 				break;
+
 			default:
 			break;
 			}

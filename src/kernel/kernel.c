@@ -108,6 +108,7 @@ void kmain(uint32_t magic, struct multiboot_info *mboot) {
     Iprintf("Ticks per Ms: (%i)", LAPIC_TICKS_PER_MS);
     page_in(Kernel_PML4_TABLE, (void *)0xB8000, (void *)0xB8000, DEFAULT_PAGE_SIZE, WRITEABLE | 1 << USER_ACCESS_SHIFT);
 
+
     Iprintf("::::::::::::::::::::SCHEDULING::::::::::::::::::::::::\n");
     thread_memory_allocation_info_t alloc =
         {
@@ -142,7 +143,7 @@ void kmain(uint32_t magic, struct multiboot_info *mboot) {
     sizeof(color_vga),
     &alloc
     );
-    //__asm__ volatile ("cli; hlt");
+    __asm__ volatile ("cli; hlt");
 
 
     __asm__ volatile ("sti");
