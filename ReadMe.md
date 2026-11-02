@@ -1,7 +1,22 @@
-## ICARUS
+# ICARUS
 
 A x64 operating system (Am I like that?)\
 I hope the name is obv enough
+
+## Build
+
+### Kernel
+
+Build on linux / wsl for windows\
+run ./build_sh
+
+### Cross-Compiler
+
+The icarus cross-compiler is based on gcc.\
+A binutils and a GCC repo are available to build it.
+
+
+
 
 ## dependencies
 
