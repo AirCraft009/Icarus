@@ -162,6 +162,10 @@ struct_page_t *ialloc_frames(uint64_t count, PAGE_TYPE page_type) {
     return (struct_page_t *) (uint64_t) info_page;
 }
 
+/**
+ * free a list of physical frames
+ * @param info_page the virt addr of a struct page
+ */
 int idealloc_frames(struct_page_t * info_page) {
     mem_map * mmap = (mem_map *) &_kernel_end;
     for (uint64_t i = 1; i < info_page->page_count; i++) {

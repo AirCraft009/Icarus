@@ -30,6 +30,8 @@ alloc_t *init_custom_alloc (uint64_t initial_size, void * heap_start, struct_pag
 alloc_t * alloc_init(uint64_t initial_size, void * heap_start);
 void * Imalloc_alocator(alloc_t * allocator, uint64_t size);
 void *Imalloc(uint64_t size);
+void *Icalloc(uint64_t units, uint64_t unit_size);
+void * Irealloc(void * ptr, uint64_t new_size);
 void free(void * addr);
 
 #endif //ICARUS_ALLOC_H

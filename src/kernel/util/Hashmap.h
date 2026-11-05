@@ -4,10 +4,12 @@
 
 #ifndef ICARUS_HASHMAP_H
 #define ICARUS_HASHMAP_H
+// hashmap implementation by me
+// https://github.com/AirCraft009/HashmapV2
 
-const int INITIAL_CAPACITY = 40;
 
-typedef struct Hashmap hashmap;
+
+
 hashmap * CreateBaseHashmap();
 hashmap * CreateHashmap(int capacity);
 void DestroyHashmap(hashmap *hash);

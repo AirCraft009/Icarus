@@ -81,6 +81,10 @@ add_executable(Icarus_kernel
         src/kernel/util/Files/elf_parse.c
         include/kernel/util/Files/elf_parse.h
         include/assert.h
+        src/kernel/Processes/process_management.c
+        src/kernel/Processes/process_management.h
+        src/kernel/util/Hashmap.c
+        src/kernel/util/Hashmap.h
 )
 
 target_include_directories(Icarus_kernel PRIVATE include

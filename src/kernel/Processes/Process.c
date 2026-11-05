@@ -12,7 +12,7 @@
 
 static PID_t PID_GEN = 1;
 
-//find a process vai it's PID
+//find a process via it's PID
 
 
 
