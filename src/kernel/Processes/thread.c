@@ -191,3 +191,14 @@ int * thread_supply_mem(tcb_t * thread, thread_memory_supply_block_t supply_bloc
     );
     return result;
 }
+
+int thread_exit(tcb_t * thread) {
+    thread->state = THREAD_TERMINATED;
+    struct_page_t * page = {};
+    // TODO: clean up memory
+    // remove thread from schedule list
+    thread->next->prev = thread->prev;
+    thread->prev->next = thread->next;
+    free(thread);
+    return 0;
+}

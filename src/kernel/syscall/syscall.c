@@ -35,10 +35,13 @@ int syscall_init() {
 /**
  * writes data at 'buf' with length 'len' to a data_consumer 'output_id'
  */
-int syscall_write(uint64_t output_id, uint8_t *buf, uint64_t len, uint64_t offset) {
+uint64_t syscall_write(uint64_t output_id, uint8_t *buf, uint64_t len, uint64_t offset) {
     // for now js write to console and ignore the output_id
     write_str_len(buf, offset, len);
     return 0;
+}
+uint64_t syscall_exit(uint64_t pid) {
+
 }
 
 
@@ -46,7 +49,9 @@ int syscall_write(uint64_t output_id, uint8_t *buf, uint64_t len, uint64_t offse
 uint64_t syscall_handler(uint64_t number, uint64_t first, uint64_t second,uint64_t third, uint64_t fourth, uint64_t fifth) {
     switch (number) {
         case 0:
-            syscall_write(first, (uint8_t *) second, third, fourth);
+             return syscall_write(first, (uint8_t *) second, third, fourth);
+        case 1:
+
     }
 }
 
