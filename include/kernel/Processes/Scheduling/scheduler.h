@@ -21,5 +21,6 @@ tcb_t * spawn_alloc_thread(
     thread_memory_permission_info_t *perms,
     thread_memory_supply_block_t *supply
 );
+int scheduler_stop_thread(tcb_t * thread);
 
 #endif //ICARUS_SCHEDULER_H

@@ -7,9 +7,9 @@
 #include "thread.h"
 typedef uint64_t PID_t;
 
-typedef struct {
+typedef struct THREAD_DESCRIPTOR{
     tcb_t * tcb;
-    tcb_t * next_tcb;
+    struct THREAD_DESCRIPTOR * next_tcb;
 } thread_descriptor_t;
 
 typedef struct PROCESS_CONTROL_BLOCK {

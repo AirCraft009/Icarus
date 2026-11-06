@@ -5,6 +5,7 @@
 #include "syscall.h"
 
 #include "kernel_helper.h"
+#include "../../icarus-def.h"
 #include "kernel/Memory/alloc.h"
 #include "kernel/syscall/core_information_table.h"
 #include "kernel/util/shellio.h"
@@ -35,23 +36,29 @@ int syscall_init() {
 /**
  * writes data at 'buf' with length 'len' to a data_consumer 'output_id'
  */
-uint64_t syscall_write(uint64_t output_id, uint8_t *buf, uint64_t len, uint64_t offset) {
+long syscall_write(uint64_t output_id, uint8_t *buf, uint64_t len, uint64_t offset) {
     // for now js write to console and ignore the output_id
     write_str_len(buf, offset, len);
     return 0;
 }
-uint64_t syscall_exit(uint64_t pid) {
+long syscall_exit_thread() {
 
 }
 
+long syscall_exit_process() {
 
+}
 
-uint64_t syscall_handler(uint64_t number, uint64_t first, uint64_t second,uint64_t third, uint64_t fourth, uint64_t fifth) {
+long syscall_handler(uint64_t number, uint64_t first, uint64_t second,uint64_t third, uint64_t fourth, uint64_t fifth) {
     switch (number) {
-        case 0:
+        case SYS_WRITE:
              return syscall_write(first, (uint8_t *) second, third, fourth);
-        case 1:
-
+        case SYS_EXIT_THREAD:
+            return syscall_exit_thread();
+        case SYS_EXIT_PROCESS:
+            return syscall_exit_process();
+        default:
+            return -1;
     }
 }
 

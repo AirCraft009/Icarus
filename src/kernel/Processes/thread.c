@@ -197,8 +197,6 @@ int thread_exit(tcb_t * thread) {
     struct_page_t * page = {};
     // TODO: clean up memory
     // remove thread from schedule list
-    thread->next->prev = thread->prev;
-    thread->prev->next = thread->next;
     free(thread);
     return 0;
 }

@@ -68,7 +68,7 @@ tcb_t * scheduler_pick_next_thread(INTERRUPT_SRC src) {
 
 
     if (max_priority == UINT16_MAX){       // last has next ptr to NULL (no task is ready)
-        Iprintf("none found\n");
+        //Iprintf("none found\n");
         switch (src) {
             // no ready task at all so check if the currently running task can be ran again.
             //TODO: expand for more interrupts
@@ -237,6 +237,8 @@ tcb_t * spawn_alloc_thread(
     return tcb;
 }
 
-int scheduler_stop_thread(tcb_t * tcb) {
-
+int scheduler_stop_thread(tcb_t * thread) {
+    thread->next->prev = thread->prev;
+    thread->prev->next = thread->next;
+    thread_exit(thread);
 }

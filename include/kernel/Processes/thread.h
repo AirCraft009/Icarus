@@ -110,5 +110,6 @@ int thread_supply_new_mem(
     thread_memory_permission_info_t *perm_info,
     thread_memory_supply_block_t * result
 );
+int thread_exit(tcb_t * thread);
 
 #endif //ICARUS_THREAD_H

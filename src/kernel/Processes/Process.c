@@ -82,7 +82,7 @@ pcb_t * init_process
 
     // struct page is overridden here and no longer contains freeing info
     Imemcpy((void *)sp->code_memory,(void *) code_location, code_size);
-    //__asm__ volatile ("cli; hlt"); // Completely hangs the computer
+
     return pcb;
 }
 
@@ -161,4 +161,13 @@ pcb_t * create_initial_process
     scheduler_init(tcb);
     tcb->state = THREAD_READY;
     return pcb;
+}
+
+void process_exit(pcb_t * pcb) {
+    thread_descriptor_t * thread_ptr = pcb->process_threads;
+    while (thread_ptr) {
+        scheduler_stop_thread(thread_ptr->tcb);
+        thread_ptr = thread_ptr->next_tcb;
+    }
+
 }
