@@ -3,6 +3,7 @@
 //
 
 #include <stdint.h>
+#include "../../include/string.h"
 
 /**
  *  set a region of memory to a specific value.
