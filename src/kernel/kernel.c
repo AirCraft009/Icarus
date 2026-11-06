@@ -143,7 +143,7 @@ void kmain(uint32_t magic, struct multiboot_info *mboot) {
     sizeof(color_vga),
     &alloc
     );
-    __asm__ volatile ("cli; hlt");
+   // __asm__ volatile ("cli; hlt");
 
 
     __asm__ volatile ("sti");

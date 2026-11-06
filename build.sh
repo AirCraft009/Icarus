@@ -15,7 +15,7 @@
 set -euo pipefail
 
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-SOURCE_DIR="$PROJECT_ROOT/src"
+SOURCE_DIR="$PROJECT_ROOT/src/kernel"
 INCLUDE_DIR="$PROJECT_ROOT/include"
 BUILD_DIR="${BUILD_DIR:-$PROJECT_ROOT/build}"
 OBJECT_DIR="$BUILD_DIR/obj"

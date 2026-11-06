@@ -5,11 +5,11 @@ project(Icarus C ASM_NASM)
 set(CMAKE_C_STANDARD 23)
 set(CMAKE_ASM_NASM_OBJECT_FORMAT elf64)
 
-set_source_files_properties(src/boot/boot.asm PROPERTIES LANGUAGE ASM_NASM)
+set_source_files_properties(src/kernel/boot/boot.asm PROPERTIES LANGUAGE ASM_NASM)
 set_source_files_properties(src/kernel/interrupts/isr.asm PROPERTIES LANGUAGE ASM_NASM)
 
 add_executable(Icarus_kernel
-        src/boot/boot.asm
+        src/kernel/boot/boot.asm
         src/kernel/kernel.c
         src/kernel/interrupts/isr.asm
         src/kernel/interrupts/IDT.c
@@ -81,8 +81,8 @@ add_executable(Icarus_kernel
         src/kernel/util/Files/elf_parse.c
         include/kernel/util/Files/elf_parse.h
         include/assert.h
-        src/kernel/Processes/process_management.c
-        src/kernel/Processes/process_management.h
+        process_management.c
+        process_management.h
         src/kernel/util/Hashmap.c
         src/kernel/util/Hashmap.h
 )
@@ -119,7 +119,7 @@ target_link_options(Icarus_kernel PRIVATE
 
 # Relink when the linker script changes
 set_target_properties(Icarus_kernel PROPERTIES
-        LINK_DEPENDS ${PROJECT_SOURCE_DIR}/src/linker.ld
+        LINK_DEPENDS src/kernel/linker.ld
 )
 
 # Stage the ISO tree
