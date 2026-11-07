@@ -87,6 +87,8 @@ void kmain(uint32_t magic, struct multiboot_info *mboot) {
 
     allocator = alloc_init(DEFAULT_PAGE_SIZE * 510, (void *) KERNEL_HEAP_ADDR);
     handle_ACPI();
+    Iprintf("HERE\n");
+    parse_tar_module();
 
     init_cpuid(&CPUID_TABLE);
     if (!CHECK_CPUID_FEAT(CPUID_TABLE.features, CPUID_FEAT_EDX_MSR)) {
@@ -143,7 +145,7 @@ void kmain(uint32_t magic, struct multiboot_info *mboot) {
     sizeof(color_vga),
     &alloc
     );
-   // __asm__ volatile ("cli; hlt");
+    __asm__ volatile ("cli; hlt");
 
 
     __asm__ volatile ("sti");

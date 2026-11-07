@@ -4,8 +4,12 @@
 
 #include "kernel/util/Files/tar_parse.h"
 
+#include "kernel_helper.h"
 #include "kernel/Memory/alloc.h"
+#include "kernel/Memory/memory_mapping.h"
+#include "kernel/Memory/paging.h"
 #include "kernel/Memory/PMM/mem_map.h"
+#include "kernel/util/shellio.h"
 
 // Snippets from osdev wiki
 //https://wiki.osdev.org/Tar
@@ -26,7 +30,7 @@ struct tar_header
 
 struct tar_header **headers;
 
-unsigned int getsize(const char *in)
+unsigned int tar_getsize(const char *in)
 {
 
     unsigned int size = 0;
@@ -40,7 +44,7 @@ unsigned int getsize(const char *in)
 
 }
 
-unsigned int parse(virt_addr_t address)
+unsigned int tar_parse(virt_addr_t address)
 {
 
     unsigned int i;
@@ -53,7 +57,7 @@ unsigned int parse(virt_addr_t address)
         if (header->filename[i] == '\0')
             break;
 
-        unsigned int size = getsize(header->size);
+        unsigned int size = tar_getsize(header->size);
 
         headers[i] = header;
 
@@ -76,21 +80,25 @@ static uint64_t parse_octal(const char *text, uint64_t length) {
     return value;
 }
 
-uint64_t tar_count_files(const void *archive_start, uint64_t archive_length) {
+uint64_t tar_count_files(const void *archive_start, uint32_t archive_length) {
     const uint8_t *cursor = archive_start;
     const uint8_t *archive_end = cursor + archive_length;
     uint64_t file_count = 0;
 
+    Iprintf("TAR SIZE: %x\n", archive_length);
     while (cursor + TAR_BLOCK_SIZE <= archive_end) {
         const struct tar_header *header = (const struct tar_header *)cursor;
+        Iprintf("TAR NAME: %i\n", header->filename);
 
         if (header->filename[0] == '\0') {
+            Iprintf("GAME OVER}\n");
             break; // zero block = end of archive
         }
 
         uint64_t file_size = parse_octal(header->size, sizeof(header->size));
 
         if (header->typeflag[0] == '0' || header->typeflag[0] == '\0') {
+            Iprintf("NEW GAME\n");
             file_count++;
         }
 
@@ -102,9 +110,18 @@ uint64_t tar_count_files(const void *archive_start, uint64_t archive_length) {
 }
 
 int tar_mb2_init(struct multiboot_tag_module * mb2_module) {
-    uint64_t count = tar_count_files((void *) mb2_module->mod_start, (uint64_t) mb2_module->mod_end - (uint64_t) mb2_module->mod_start);
+    uint64_t size = mb2_module->mod_end - mb2_module->mod_start;
+    Iprintf("TAR FILE: %x\n", size);
+    virt_addr_t * cur_ptr = (virt_addr_t *) mb2_module->mod_start;
+    while ((uint32_t) cur_ptr > mb2_module->mod_end) {
+        page_in((page_map_l4_entry *) read_cr3(), cur_ptr , (virt_addr_t *)  KERNEL_VIRT_TO_PHYS(cur_ptr), DEFAULT_PAGE_SIZE, WRITEABLE | CACHE_DISABLED );
+        cur_ptr += DEFAULT_PAGE_SIZE;
+    }
+    uint64_t count = tar_count_files((void *) KERNEL_PHYS_TO_VIRT(mb2_module->mod_start), size);
+    Iprintf("COUNT %i\n", count);
     headers = (struct tar_header **) Imalloc(sizeof (struct tar_header *) * count);
-    int check_count = parse(mb2_module->mod_start);
+    int check_count = tar_parse(KERNEL_PHYS_TO_VIRT(mb2_module->mod_start));
+    Iprintf("TAR FILE\n");
     if (check_count != count) {return -1;}
     return check_count;
 }

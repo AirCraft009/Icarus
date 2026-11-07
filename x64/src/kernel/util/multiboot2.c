@@ -11,8 +11,9 @@
 
 
 extern char _kernel_end_phys[];
-static struct RSDP_t rsdp = {'\0'};
-static struct XSDP_t rsdp_new = {'\0'};
+static struct RSDP_t rsdp = {0};
+static struct XSDP_t rsdp_new = {0};
+static struct multiboot_tag_module module = {0};
 
 
 /**
@@ -62,10 +63,7 @@ int handle_multiboot2 (uint32_t magic, boot_info *info, page_map_l4_entry *pml4)
 				((struct multiboot_tag_module *) tag)->mod_start,
 				((struct multiboot_tag_module *) tag)->mod_end,
 				((struct multiboot_tag_module *) tag)->cmdline);
-				int tar_c = tar_mb2_init((struct multiboot_tag_module *) tag);
-				if (tar_c == -1) {
-					Iprintf("Failing to parse Tar files");
-				}
+				memcpy(&module, (struct multiboot_tag_module *) tag, tag->size);
 				break;
 			case MULTIBOOT_TAG_TYPE_BASIC_MEMINFO:
 				Iprintf( "mem_lower = %uKB, mem_upper = %uKB\n",
@@ -121,8 +119,6 @@ int handle_multiboot2 (uint32_t magic, boot_info *info, page_map_l4_entry *pml4)
 		return -1;
 	}
 
-	//handle_ACPI();
-
 	Iprintf("I'm good fool");
 	return 0;
 }
@@ -137,4 +133,16 @@ void handle_ACPI() {
 	else {
 		Iprintf( "No RSDP found (ACPI devices are non functional)\n");
 	}
+}
+
+/**
+ * parse a possible module passed by mb2
+ */
+void parse_tar_module() {
+	//TODO: RETHINK THIS DECISION
+	//js return / fail quietly bc this isn't nec for the OS
+	if (module.type != MULTIBOOT_TAG_TYPE_MODULE) return;
+	int tar_c = tar_mb2_init(&module);
+	if (tar_c == -1)
+		Iprintf("Failing to parse Tar files");
 }
