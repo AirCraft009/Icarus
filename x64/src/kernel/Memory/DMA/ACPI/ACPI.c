@@ -4,10 +4,11 @@
 
 #include "kernel/Memory/DMA/ACPI.h"
 
+#include <string.h>
+
 #include "kernel_helper.h"
 #include "kernel/Memory/memory_mapping.h"
 #include "kernel/Memory/DMA/MMIO.h"
-#include "kernel/util/mem_utils.h"
 #include "kernel/util/shellio.h"
 #include "kernel/Memory/DMA/ACPI_helpers.h"
 #include "kernel/Memory/DMA/MADT.h"
@@ -47,17 +48,17 @@ uint8_t calculate_checksum(uint8_t *buffer, uint64_t length) {
 
 
 int handle_table(struct ACPISDTHeader *h) {
-    if (!Istrncmp(h->Signature, "FACP", 4)){
+    if (!strncmp(h->Signature, "FACP", 4)){
         CHECKSUM(&FADT, h->Length);
-        Imemcpy(&FADT, h, MIN(h->Length, sizeof(struct FADT_TABLE)));
+        memcpy(&FADT, h, MIN(h->Length, sizeof(struct FADT_TABLE)));
         if (h->Length < sizeof(struct FADT_TABLE)) {FADT.FullLength = 0;}
         else FADT.FullLength = 1;
     }
-    else if (!Istrncmp(h->Signature, "MCFG", 4)) {
+    else if (!strncmp(h->Signature, "MCFG", 4)) {
         CHECKSUM(&MCFG, h->Length);
-        Imemcpy(&MCFG, h, h->Length);
+        memcpy(&MCFG, h, h->Length);
     }
-    else if (!Istrncmp(h->Signature, "APIC", 4)) {
+    else if (!strncmp(h->Signature, "APIC", 4)) {
         CHECKSUM(&MCFG, h->Length);
         handle_MADT(h);
     }
@@ -93,7 +94,7 @@ int categoriseTablesRSDT(struct RSDT *rsdt){
 
 
 int handle_new_acpi(struct XSDP_t * xsdp) {
-    if (Istrncmp(xsdp->Signature, SIGNATURE, sizeof(xsdp->Signature)) != 0)
+    if (strncmp(xsdp->Signature, SIGNATURE, sizeof(xsdp->Signature)) != 0)
         return -1;
 
     CHECKSUM( xsdp, 20);
@@ -116,7 +117,7 @@ int handle_new_acpi(struct XSDP_t * xsdp) {
 }
 
 int handle_old_acpi(struct RSDP_t * rsdp) {
-    if (Istrncmp(rsdp->Signature, SIGNATURE, sizeof(rsdp->Signature)) != 0)
+    if (strncmp(rsdp->Signature, SIGNATURE, sizeof(rsdp->Signature)) != 0)
         return -1;
 
     CHECKSUM(rsdp, 20);

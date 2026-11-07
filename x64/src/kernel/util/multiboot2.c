@@ -6,7 +6,7 @@
 #include "kernel/Memory/memory_mapping.h"
 
 #include "kernel/Memory/DMA/ACPI.h"
-#include "kernel/util/mem_utils.h"
+#include <string.h>
 #include "kernel/util/Files/tar_parse.h"
 
 
@@ -88,14 +88,14 @@ int handle_multiboot2 (uint32_t magic, boot_info *info, page_map_l4_entry *pml4)
 				 * however we need the Direct kernel mapping to correctly access and parse the struct
 				 * if we don't want a #PF (I've met him he's not very nice )
 				 */
-				Imemcpy(&rsdp, tag + 1 , sizeof(struct RSDP_t));
+				memcpy(&rsdp, tag + 1 , sizeof(struct RSDP_t));
 				// acpi 1.0 (https://edc.intel.com/content/www/us/en/publications/specification-nuc12dcm-nuc12edb/acpi/)
 				// rsdp & xsdp structs ( https://wiki.osdev.org/RSDP#Fields)
 				break;
 
 			case MULTIBOOT_TAG_TYPE_ACPI_NEW:
 				// same as above
-				Imemcpy(&rsdp_new , tag + 1, sizeof(struct XSDP_t));
+				memcpy(&rsdp_new , tag + 1, sizeof(struct XSDP_t));
 				break;
 
 			case MULTIBOOT_TAG_TYPE_FRAMEBUFFER:
@@ -128,10 +128,10 @@ int handle_multiboot2 (uint32_t magic, boot_info *info, page_map_l4_entry *pml4)
 }
 
 void handle_ACPI() {
-	if (Istrncmp(rsdp_new.Signature, "\0", 1) != 0) {
+	if (strncmp(rsdp_new.Signature, "\0", 1) != 0) {
 		handle_new_acpi(&rsdp_new);
 	}
-	else if (Istrncmp(rsdp.Signature, "\0", 1) != 0) {
+	else if (strncmp(rsdp.Signature, "\0", 1) != 0) {
 		handle_old_acpi(&rsdp);
 	}
 	else {

@@ -28,8 +28,6 @@ add_executable(Icarus_kernel
         x64/include/kernel/util/BitMap.h
         x64/src/kernel/GDT/gdt.c
         x64/include/kernel/GDT/gdt.h
-        x64/src/kernel/util/mem_utils.c
-        x64/include/kernel/util/mem_utils.h
         x64/include/kernel_helper.h
         x64/src/kernel/Memory/PMM/mem_map.c
         x64/include/kernel/Memory/PMM/mem_map.h
@@ -89,6 +87,7 @@ add_executable(Icarus_kernel
 
 target_include_directories(Icarus_kernel PRIVATE x64/include
         x64/include
+        x64/include/icarus-libc
 )
 
 target_compile_options(Icarus_kernel PRIVATE

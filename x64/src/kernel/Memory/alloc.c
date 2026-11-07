@@ -17,7 +17,7 @@
 #include "page_definitions.h"
 #include "kernel/Memory/paging.h"
 #include "kernel/Memory/PMM/mem_map.h"
-#include "kernel/util/mem_utils.h"
+#include <string.h>
 #include "kernel/util/shellio.h"
 
 
@@ -203,7 +203,7 @@ void *Icalloc(uint64_t units, uint64_t unit_size) {
     uint64_t size = units * unit_size;
     alloc_t * alloc = (alloc_t *) KERNEL_HEAP_ADDR;
     void * ptr = Imalloc_alocator((alloc_t *) KERNEL_HEAP_ADDR, size);
-    Imemset(ptr, 0, size);
+    memset(ptr, 0, size);
     return ptr;
 }
 
@@ -212,7 +212,7 @@ void *Icalloc(uint64_t units, uint64_t unit_size) {
  */
 void * Irealloc(void * ptr, uint64_t new_size) {
     void * ptr2 = Imalloc(new_size);
-    Imemcpy(ptr, ptr2, new_size);
+    memcpy(ptr, ptr2, new_size);
     free(ptr);
     return ptr2;
 }

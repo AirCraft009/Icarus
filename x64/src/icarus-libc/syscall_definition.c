@@ -1,8 +1,8 @@
 //
 // Created by Mxsxll on 6.11.2026.
 //
-#include "../../syscall_definition.h"
-#include "../include/stdlib.h"
+#include "../include/syscall_definition.h"
+#include "../include/icarus-libc/stdlib.h"
 #include <stdint.h>
 
 static inline long icarus_syscall3(uint64_t number, uint64_t first, uint64_t second, uint64_t third)

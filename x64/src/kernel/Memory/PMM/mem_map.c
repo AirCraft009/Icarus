@@ -11,7 +11,7 @@
 #include "kernel_helper.h"
 #include "kernel/Memory/memory_mapping.h"
 #include "kernel/util/BitMap.h"
-#include "kernel/util/mem_utils.h"
+#include <string.h>
 #include "kernel/util/shellio.h"
 
 extern char _kernel_end[];
@@ -48,7 +48,7 @@ void memmap_register_region(mem_map *mmap, uint64_t start, uint64_t end) {
  * zeros out the bitmap and sets the padded spaces to 1 (use for fresh systems)
  */
 void zero_mem_map(mem_map *mmap) {
-    Imemset(mmap->bitmap.data, 0, mmap->bitmap.size / 8);
+    memset(mmap->bitmap.data, 0, mmap->bitmap.size / 8);
 
     for (uint32_t i = 0; i < mmap->region_count; i++) {
         mem_region *region = &mmap->regions[i];

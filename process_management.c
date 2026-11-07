@@ -10,7 +10,7 @@
 #include <string.h>
 
 #include "kernel/Memory/alloc.h"
-#include "kernel/util/mem_utils.h"
+#include <string.h>
 
 #define  INITIAL_CAPACITY 40
 
@@ -91,7 +91,7 @@ bool proc_mapSet(proc_map *hash, uint8_t * key, void *value) {
     int idx = hashStr(key) % hash->capacity;
 
     for (int i = 0; i < hash->capacity; i++) {
-        if (hash->list[idx].key == NULL || Istrncmp(hash->list[idx].key, key, hash->key_size) == 0) {
+        if (hash->list[idx].key == NULL || strncmp(hash->list[idx].key, key, hash->key_size) == 0) {
             hash->list[idx].key = strndup(key, hash->key_size);
             hash->list[idx].value = value;
             hash->size ++;

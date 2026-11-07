@@ -2,10 +2,10 @@
 // Created by Mxsxll on 21.09.2026.
 //
 
+#include "../include/icarus-libc/string.h"
 #include "kernel_helper.h"
 #include "../GDT/Tss.h"
 #include "kernel/Memory/PMM/mem_map.h"
-#include "kernel/util/mem_utils.h"
 #include "kernel/util/shellio.h"
 
 
@@ -28,10 +28,10 @@ static uint64_t tss_alloc_stack(void) {
 
 void init_tss(tss_t * tss) {
     // Clear everything (reserved fields included)
-    Imemset(tss, 0, sizeof(tss_t));
+    memset(tss, 0, sizeof(tss_t));
 
     // RSP0: kernel stack used on ring3 for ring0 transitions
-    uint64_t rsp0 = tss_alloc_stack();
+    const uint64_t rsp0 = tss_alloc_stack();
     Iprintf("TSS - RSP STACK: (%x)\n", rsp0);
     tss->rsp0 = rsp0;
 

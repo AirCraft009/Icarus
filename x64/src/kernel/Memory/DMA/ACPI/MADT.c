@@ -4,12 +4,13 @@
 
 #include "kernel/Memory/DMA/MADT.h"
 
+#include <string.h>
+
 #include "kernel_helper.h"
 #include "kernel/Memory/DMA/ACPI_helpers.h"
 #include "kernel/Memory/alloc.h"
 #include "kernel/Memory/memory_mapping.h"
 #include "kernel/Memory/DMA/MMIO.h"
-#include "kernel/util/mem_utils.h"
 #include "kernel/util/shellio.h"
 
 madt_info * APIC_INFO;
@@ -52,7 +53,7 @@ uint64_t handle_MADT(struct ACPISDTHeader *header) {
     Iprintf("total: %x\n", total);
     if (!info)
         return FRAME_ALLOC_FAILED;
-    Imemset(info, 0, sizeof(total));
+    memset(info, 0, sizeof(total));
 
     uint8_t *cur = (uint8_t *)(info + 1);
     info->cpus       = (cpu_info *)cur;       cur += n_cpu  * sizeof(cpu_info);

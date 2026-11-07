@@ -8,7 +8,7 @@
 
 #include "kernel_helper.h"
 #include "kernel/Memory/paging.h"
-#include "kernel/util/mem_utils.h"
+#include <string.h>
 #include "kernel/util/shellio.h"
 
 /*

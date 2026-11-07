@@ -11,7 +11,7 @@
 #include "kernel/Memory/alloc.h"
 #include "kernel/Memory/memory_mapping.h"
 #include "kernel/Memory/paging.h"
-#include "kernel/util/mem_utils.h"
+#include <string.h>
 // TID 0 is kernel
 static TID_t TID_GEN = 1;
 
@@ -31,7 +31,7 @@ tcb_t * create_thread(bool is_priviledged, uint16_t priority) {
         return NULL;
 
     tcb_t * tcb = (tcb_t *) Imalloc(sizeof(tcb_t));
-    Imemset(tcb, 0, sizeof(tcb_t));
+    memset(tcb, 0, sizeof(tcb_t));
     tcb->tid = TID_GEN ++;
 
     // set the cpu registers

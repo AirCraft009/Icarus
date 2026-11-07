@@ -6,7 +6,7 @@
 #include "kernel/GDT/gdt.h"
 #include "kernel/interrupts/APIC.h"
 #include "kernel/interrupts/IDT.h"
-#include "kernel/util/mem_utils.h"
+#include <string.h>
 #include "kernel/util/shellio.h"
 #include "../../include/kernel/Memory/memory_mapping.h"
 #include "kernel/Drivers/PS2/PS2_Controller.h"
@@ -69,7 +69,7 @@ void kmain(uint32_t magic, struct multiboot_info *mboot) {
     // initialize the Interrupt Descriptor table
     idt_init();
 
-    Imemset(&Kernel_PML4_TABLE[0], 0, sizeof(Kernel_PML4_TABLE));
+    memset(&Kernel_PML4_TABLE[0], 0, sizeof(Kernel_PML4_TABLE));
 
     //parse the struct given to use from the multiboot2 header
     //init the bitmap for free memory

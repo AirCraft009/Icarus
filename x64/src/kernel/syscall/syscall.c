@@ -5,7 +5,7 @@
 #include "syscall.h"
 
 #include "kernel_helper.h"
-#include "../../icarus-def.h"
+#include "syscall_definition.h"
 #include "kernel/Memory/alloc.h"
 #include "kernel/syscall/core_information_table.h"
 #include "kernel/util/shellio.h"

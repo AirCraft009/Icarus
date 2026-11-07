@@ -16,7 +16,7 @@
 #include <stdint.h>
 
 #include "kernel_helper.h"
-#include "kernel/util/mem_utils.h"
+#include <string.h>
 
 
 const uint16_t COLS = 80;
@@ -40,8 +40,8 @@ void move_cursor(uint16_t offset, cursor *cur) {
     //     uint64_t needed_offset = ptr - (videoMemEnd - (COLS * 2));
     //     uint64_t needed_rows = needed_offset / (COLS * 2) + (needed_offset % (COLS * 2))? 1 : 0;
     //     uint64_t needed_bytes = needed_rows * COLS * 2;
-    //     Imemcpy((uint64_t *)videoMemStart,(uint64_t *) (videoMemStart + needed_bytes), needed_bytes);
-    //     Imemset((uint64_t *)(videoMemEnd - needed_bytes), 0, needed_bytes);
+    //     memcpy((uint64_t *)videoMemStart,(uint64_t *) (videoMemStart + needed_bytes), needed_bytes);
+    //     memset((uint64_t *)(videoMemEnd - needed_bytes), 0, needed_bytes);
     // }
 }
 
@@ -203,7 +203,7 @@ void mprintf(cursor *cur, char *format, ...) {
 }
 
 void Imclear() {
-    Imemset((uint8_t *) videoMemStart, 0, (videoMemEnd - videoMemStart));
+    memset((uint8_t *) videoMemStart, 0, (videoMemEnd - videoMemStart));
     curs.x = 0;
     curs.y = 0;
 }

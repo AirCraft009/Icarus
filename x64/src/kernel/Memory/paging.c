@@ -6,7 +6,7 @@
 
 #include "kernel_helper.h"
 #include "kernel/Memory/memory_mapping.h"
-#include "kernel/util/mem_utils.h"
+#include <string.h>
 #include "kernel/util/shellio.h"
 
 extern char _kernel_end[];
@@ -44,7 +44,7 @@ int page_in(page_map_l4_entry *pml4, const void *virt_addr, const void *phys_add
             Iprintf("ERROR PML4!\n");
             return -1;
         }
-        Imemset((void *) KERNEL_PHYS_TO_VIRT(pdpt), 0, DEFAULT_PAGE_SIZE);
+        memset((void *) KERNEL_PHYS_TO_VIRT(pdpt), 0, DEFAULT_PAGE_SIZE);
         pml4_entry->page_ppn = pdpt >> 12;
         pml4_entry->present = 1;
     }
@@ -68,7 +68,7 @@ int page_in(page_map_l4_entry *pml4, const void *virt_addr, const void *phys_add
             Iprintf("ERROR PDPT!\n");
             return -1;
         }
-        Imemset((void *) KERNEL_PHYS_TO_VIRT(pd), 0, DEFAULT_PAGE_SIZE);
+        memset((void *) KERNEL_PHYS_TO_VIRT(pd), 0, DEFAULT_PAGE_SIZE);
         pdpt_entry->page_ppn = pd >> 12;
         pdpt_entry->present  = 1;
     }
@@ -92,7 +92,7 @@ int page_in(page_map_l4_entry *pml4, const void *virt_addr, const void *phys_add
             Iprintf("ERROR PT!\n");
             return -1;
         }
-        Imemset((void *) KERNEL_PHYS_TO_VIRT(pt), 0, DEFAULT_PAGE_SIZE);
+        memset((void *) KERNEL_PHYS_TO_VIRT(pt), 0, DEFAULT_PAGE_SIZE);
         pd_entry->page_ppn = pt >> 12;
         pd_entry->present  = 1;
     }

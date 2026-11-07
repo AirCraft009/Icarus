@@ -8,7 +8,7 @@ I hope the name is obv enough
 ### Kernel
 
 Build on linux / wsl for windows\
-run ./build_sh
+run ./build_sh iso
 
 ## Cross-Compiler
 

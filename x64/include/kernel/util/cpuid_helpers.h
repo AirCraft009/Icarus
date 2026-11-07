@@ -7,8 +7,7 @@
 #pragma once
 
 #include <cpuid.h>
-
-#include "mem_utils.h"
+#include <string.h>
 
 #define CHECK_CPUID_FEAT(features, feature_check) ((((uint64_t) features) & feature_check) != 0)
 
@@ -94,9 +93,9 @@ static __inline__ char * init_cpuid(cpuid_info * table)
     unsigned int eax, ebx, ecx, edx;
     __cpuid(0, eax, ebx, ecx, edx);
 
-    Imemcpy(table->vendor + 0, &ebx, 4);   // note the order: EBX, EDX, ECX
-    Imemcpy(table->vendor + 4, &edx, 4);
-    Imemcpy(table->vendor + 8, &ecx, 4);
+    memcpy(table->vendor + 0, &ebx, 4);   // note the order: EBX, EDX, ECX
+    memcpy(table->vendor + 4, &edx, 4);
+    memcpy(table->vendor + 8, &ecx, 4);
     table->vendor[12] = '\0';
     table->max_leaf = eax;
 

@@ -8,7 +8,7 @@
 #include "kernel/Memory/alloc.h"
 #include "kernel/Memory/memory_mapping.h"
 #include "kernel/Processes/Scheduling/scheduler.h"
-#include "kernel/util/mem_utils.h"
+#include <string.h>
 
 static PID_t PID_GEN = 1;
 
@@ -81,7 +81,7 @@ pcb_t * init_process
     }
 
     // struct page is overridden here and no longer contains freeing info
-    Imemcpy((void *)sp->code_memory,(void *) code_location, code_size);
+    memcpy((void *)sp->code_memory,(void *) code_location, code_size);
 
     return pcb;
 }
