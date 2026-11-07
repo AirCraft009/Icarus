@@ -59,7 +59,6 @@ NASM_FLAGS=(
 # Flags for linking (same as target_link_options in CMake).
 LINK_FLAGS=(
     -m64
-    -nostdlib
     -static
     -no-pie
     -fno-pie

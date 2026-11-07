@@ -42,11 +42,13 @@ long syscall_write(uint64_t output_id, uint8_t *buf, uint64_t len, uint64_t offs
     return 0;
 }
 long syscall_exit_thread() {
-
+    Iprintf("exit");
+    return 0;
 }
 
 long syscall_exit_process() {
-
+    Iprintf("exit process");
+    return 0;
 }
 
 long syscall_handler(uint64_t number, uint64_t first, uint64_t second,uint64_t third, uint64_t fourth, uint64_t fifth) {
