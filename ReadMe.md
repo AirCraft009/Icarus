@@ -10,12 +10,31 @@ I hope the name is obv enough
 Build on linux / wsl for windows\
 run ./build_sh
 
-### Cross-Compiler
+## Cross-Compiler
 
 The icarus cross-compiler is based on gcc.\
 A binutils and a GCC repo are available to build it.
 
+- clone icarus-cc
+- clone icarus-binutils
+- setup a folder to house the icarus cross-compiler
+  - mkdir -r ~/opt/icarus-cross
+- //TODO: add explanation of how to build gcc and binutils
+- add this as a script
 
+``icarus-shell.env``
+```bash
+#!/bin/bash
+export PREFIX="$HOME/opt/icarus-cross"
+export TARGET=x86_64-icarus
+export PATH="$PREFIX/bin:$PATH"
+```
+then
+- source (path to)icarus-shell.env
+
+### Building libc
+
+- run ``make && make all``
 
 
 ## dependencies
