@@ -3,7 +3,7 @@
 //
 
 #include <stdint.h>
-#include "../../include/string.h"
+#include "../include/string.h"
 
 /**
  *  set a region of memory to a specific value.
@@ -77,6 +77,13 @@ int memcmp(const void *str1, const void *str2, uint64_t count) {
             return s1[-1] < s2[-1] ? -1 : 1;
     }
     return 0;
+}
+
+size_t strlen(const char *string){
+    size_t length = 0;
+    while (string[length] != '\0')
+        length++;
+    return length;
 }
 
 

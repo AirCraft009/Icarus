@@ -5,13 +5,13 @@
 #include "kernel/Processes/thread.h"
 
 #include <stdatomic.h>
+#include <string.h>
 
 #include "kernel_helper.h"
 #include "kernel/Memory/alloc.h"
 #include "kernel/Memory/memory_mapping.h"
 #include "kernel/Memory/paging.h"
 #include "kernel/util/mem_utils.h"
-#include "kernel/util/shellio.h"
 // TID 0 is kernel
 static TID_t TID_GEN = 1;
 
@@ -44,7 +44,7 @@ tcb_t * create_thread(bool is_priviledged, uint16_t priority) {
     page_map_l4_entry * proc_pml4 = (page_map_l4_entry *) KERNEL_VIRT_TO_PHYS(ialloc_frames(1, DEFAULT_PAGE));      // get physical addr struct page is mapped into k_space
     // current pml4 js has the higher mapped kernel, by copying its zeroing lower and higher mapping the kernel
     page_map_l4_entry * cur_pml4 = (page_map_l4_entry *) read_cr3();
-    Imemcpy( (void *) KERNEL_PHYS_TO_VIRT(proc_pml4), (void *) KERNEL_PHYS_TO_VIRT(cur_pml4), sizeof(page_map_l4_entry) * 512);
+    memcpy( (void *) KERNEL_PHYS_TO_VIRT(proc_pml4), (void *) KERNEL_PHYS_TO_VIRT(cur_pml4), sizeof(page_map_l4_entry) * 512);
     tcb->page_table = proc_pml4;
     //test_walk_table((void *)KERNEL_PHYS_TO_VIRT(tcb->page_table), (void *)KERNEL_PHYS_TO_VIRT(2 * HUGE_PS));
     atomic_store(&tcb->state, THREAD_NEW);

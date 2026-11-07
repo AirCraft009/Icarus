@@ -3,7 +3,7 @@ PREFIX  := $(HOME)/opt/icarus-cross
 CC      := $(PREFIX)/bin/$(TARGET)-gcc
 AR      := $(PREFIX)/bin/$(TARGET)-ar
 
-SOURCES := $(wildcard src/*.c)
+SOURCES := $(wildcard src/*.c) $(wildcard src/*/*.c)
 OBJECTS := $(SOURCES:src/%.c=build/%.o)
 
 all: build/libc.a

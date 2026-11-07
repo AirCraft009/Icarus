@@ -240,5 +240,5 @@ tcb_t * spawn_alloc_thread(
 int scheduler_stop_thread(tcb_t * thread) {
     thread->next->prev = thread->prev;
     thread->prev->next = thread->next;
-    thread_exit(thread);
+    return thread_exit(thread);
 }
