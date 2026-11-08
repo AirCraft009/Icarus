@@ -12,6 +12,7 @@
 #define KERNEL_VMA 0xFFFFFFFF80000000UL
 #define KERNEL_HEAP_ADDR 0xFFFFFF0000000000UL
 #define KERNEL_MMIO 0xFFFFFE0000000000UL
+#define KERNEL_MODULE 0xFFFFFD0000000000UL
 
 #define INVALID_PHYS_ADDR UINT64_MAX
 // page size for each bitmap entry
@@ -24,6 +25,9 @@
 
 #define MMIO_PHYS_TO_VIRT(p) ((uintptr_t)(p) + KERNEL_MMIO)
 #define MMIO_VIRT_TO_PHYS(p) ((uintptr_t)(p) - KERNEL_MMIO)
+
+#define MODULE_PHYS_TO_VIRT(p) ((uintptr_t)(p) + KERNEL_MMIO)
+#define MODULE_VIRT_TO_PHYS(p) ((uintptr_t)(p) - KERNEL_MMIO)
 
 #define PCI_INDEX_PORT 0xCF8
 #define PCI_DATA_PORT 0xCFC

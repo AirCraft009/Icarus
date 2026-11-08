@@ -59,11 +59,14 @@ int handle_multiboot2 (uint32_t magic, boot_info *info, page_map_l4_entry *pml4)
 				((struct multiboot_tag_string *) tag)->string);
 				break;
 			case MULTIBOOT_TAG_TYPE_MODULE:
+				Iprintf("A___________________________________\n");
+				Iprintf("B___________________________________\n");
 				Iprintf( "Module at 0x%i-0x%i. Command line %s\n",
 				((struct multiboot_tag_module *) tag)->mod_start,
 				((struct multiboot_tag_module *) tag)->mod_end,
 				((struct multiboot_tag_module *) tag)->cmdline);
 				memcpy(&module, (struct multiboot_tag_module *) tag, tag->size);
+				Iprintf("V___________________________________\n");
 				break;
 			case MULTIBOOT_TAG_TYPE_BASIC_MEMINFO:
 				Iprintf( "mem_lower = %uKB, mem_upper = %uKB\n",

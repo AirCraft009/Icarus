@@ -88,7 +88,9 @@ uint64_t tar_count_files(const void *archive_start, uint32_t archive_length) {
     Iprintf("TAR SIZE: %x\n", archive_length);
     while (cursor + TAR_BLOCK_SIZE <= archive_end) {
         const struct tar_header *header = (const struct tar_header *)cursor;
-        Iprintf("TAR NAME: %i\n", header->filename);
+        for (int i = 0; i < 100; ++i) {
+            Iprintf("%i", header->filename[i]);
+        }
 
         if (header->filename[0] == '\0') {
             Iprintf("GAME OVER}\n");
@@ -111,7 +113,10 @@ uint64_t tar_count_files(const void *archive_start, uint32_t archive_length) {
 
 int tar_mb2_init(struct multiboot_tag_module * mb2_module) {
     uint64_t size = mb2_module->mod_end - mb2_module->mod_start;
-    Iprintf("TAR FILE: %x\n", size);
+    Iprintf( "Module at 0x%i-0x%i. Command line %s\n",
+        mb2_module->mod_start,
+        mb2_module->mod_end,
+        mb2_module->cmdline);
     virt_addr_t * cur_ptr = (virt_addr_t *) mb2_module->mod_start;
     while ((uint32_t) cur_ptr > mb2_module->mod_end) {
         page_in((page_map_l4_entry *) read_cr3(), cur_ptr , (virt_addr_t *)  KERNEL_VIRT_TO_PHYS(cur_ptr), DEFAULT_PAGE_SIZE, WRITEABLE | CACHE_DISABLED );
