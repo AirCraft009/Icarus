@@ -28,26 +28,6 @@ int page_in_regions(mem_map *mmap, page_map_l4_entry * pml4);
 
 
 /**
- * finds a suitable location for the module loaded at startup
- */
-uint64_t find_module_location(uint32_t mod_size, struct multiboot_tag_mmap *mmap_tag) {
-    struct multiboot_mmap_entry *mmap_entry;
-    uint64_t highest_addr = 0;
-
-    for (mmap_entry = mmap_tag->entries;
-    (multiboot_uint8_t *) mmap_entry < (multiboot_uint8_t *) mmap_tag + mmap_tag->size;
-    mmap_entry = (multiboot_memory_map_t *) ((unsigned long) mmap_entry +
-    mmap_tag->entry_size))
-
-    {
-        if (mmap_entry->type == MULTIBOOT_MEMORY_AVAILABLE && mmap_entry->addr >= highest_addr && mmap_entry->len >= mod_size) {
-            highest_addr = mmap_entry->addr + mmap_entry->len - mod_size;
-        }
-    }
-    return highest_addr;
-}
-
-/**
  * initiate the kernel physical memory map located after the kernel end
  * reads the multiboot2 mmap info tag and build a bitmap w/ 4KiB blocks
  *

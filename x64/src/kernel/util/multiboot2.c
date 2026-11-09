@@ -13,7 +13,7 @@
 extern char _kernel_end_phys[];
 static struct RSDP_t rsdp = {0};
 static struct XSDP_t rsdp_new = {0};
-static struct multiboot_tag_module module = {0};
+static struct multiboot_tag_module reloc_module = {0};
 
 
 /**
@@ -28,6 +28,7 @@ int handle_multiboot2 (uint32_t magic, boot_info *info, page_map_l4_entry *pml4)
 	unsigned long size;
 
 	struct multiboot_tag *mmap = 0;
+	struct multiboot_tag_module module = {0};
 
 	if ((int)magic != MULTIBOOT2_BOOTLOADER_MAGIC)
 	{
@@ -59,14 +60,11 @@ int handle_multiboot2 (uint32_t magic, boot_info *info, page_map_l4_entry *pml4)
 				((struct multiboot_tag_string *) tag)->string);
 				break;
 			case MULTIBOOT_TAG_TYPE_MODULE:
-				Iprintf("A___________________________________\n");
-				Iprintf("B___________________________________\n");
 				Iprintf( "Module at 0x%i-0x%i. Command line %s\n",
 				((struct multiboot_tag_module *) tag)->mod_start,
 				((struct multiboot_tag_module *) tag)->mod_end,
 				((struct multiboot_tag_module *) tag)->cmdline);
-				memcpy(&module, (struct multiboot_tag_module *) tag, tag->size);
-				Iprintf("V___________________________________\n");
+				memcpy(&reloc_module, (struct multiboot_tag_module *) tag, tag->size);
 				break;
 			case MULTIBOOT_TAG_TYPE_BASIC_MEMINFO:
 				Iprintf( "mem_lower = %uKB, mem_upper = %uKB\n",
@@ -110,7 +108,6 @@ int handle_multiboot2 (uint32_t magic, boot_info *info, page_map_l4_entry *pml4)
 									  + ((tag->size + 7) & ~7));
 		Iprintf( "Total mbi size 0x%i\n", (unsigned) tag - addr);
 
-
 	if (mmap == 0) {
 		Iprintf( "MB2 MMAP tag not found. stopping execution!\n");
 		return -1;
@@ -144,8 +141,8 @@ void handle_ACPI() {
 void parse_tar_module() {
 	//TODO: RETHINK THIS DECISION
 	//js return / fail quietly bc this isn't nec for the OS
-	if (module.type != MULTIBOOT_TAG_TYPE_MODULE) return;
-	int tar_c = tar_mb2_init(&module);
+	if (reloc_module.type != MULTIBOOT_TAG_TYPE_MODULE) return;
+	int tar_c = tar_mb2_init(&reloc_module);
 	if (tar_c == -1)
 		Iprintf("Failing to parse Tar files");
 }

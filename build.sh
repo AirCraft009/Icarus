@@ -141,9 +141,6 @@ build_user() {
             *.S) "$COMPILER" -static "$source_file" -o "$binary_file" ;;
         esac
     done < <(find "$USER_DIR" \( -name '*main.c' -o -name '*main.S' \) -print0 | sort -z)
-
-    echo "$INIT_RAM_FS"
-    tar --format=ustar --owner=0 --group=0 --numeric-owner -czvf "$INIT_RAM_FS/initramfs.tar"  "$INIT_RAM_FS/src/"
 }
 
 stage_iso() {
@@ -160,6 +157,8 @@ build_iso() {
 build_tar(){
   stage_iso
   build_user
+  echo "$INIT_RAM_FS"
+  tar --format=ustar --owner=0 --group=0 --numeric-owner -cvf "$INIT_RAM_FS/initramfs.tar" -C "$INIT_RAM_FS/src" .
   echo "TAR $TAR_FILE"
   cp "$BUILT_TAR_FILE" "$TAR_FILE"
 }

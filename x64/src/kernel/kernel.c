@@ -79,7 +79,6 @@ void kmain(uint32_t magic, struct multiboot_info *mboot) {
         __asm__ volatile ("cli; hlt"); // Completely hangs the computer
     };
 
-    __asm__ volatile ("cli; hlt");
     // call lgdt from high addr again (addr: 0x1088FD)
     gdt_init();
 

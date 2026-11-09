@@ -66,6 +66,7 @@
 
 int handle_mb2_mmap(struct multiboot_tag *mmap_tag, page_map_l4_entry *pml4);
 phys_addr_t test_walk_table(page_map_l4_entry *pml4, const virt_addr_t virt_addr);
+uint64_t place_module(struct multiboot_tag_module * module_tag, struct multiboot_tag_mmap *mmap_tag, page_map_l4_entry * pml4);
 
 
 #endif //ICARUS_MEMORY_MAPPING_H

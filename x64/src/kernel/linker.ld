@@ -1,5 +1,6 @@
 ENTRY(_start)
 KERNEL_VMA = 0xFFFFFFFF80000000;
+MAX_BITMAP_SIZE = 0x1000000;
 
 /*
  Set the code running in protected mode to virtual addr 1M
@@ -38,11 +39,14 @@ SECTIONS {
       *(COMMON)
       *(.bss .bss.*)
       __bss_end = .;
-    }
 
-    . = ALIGN(4096);
-    _kernel_end = .;
-    _kernel_end_phys = . - KERNEL_VMA;
+      . = ALIGN(4096);
+      _kernel_end = .;
+      _kernel_end_phys = . - KERNEL_VMA;
+      . += 0x1000000;
+      _bitmap_end = .;
+      _bitmap_end_phys = . - KERNEL_VMA;
+    }
 
     /DISCARD/ : { *(.comment) *(.eh_frame) *(.note*) }
 }
