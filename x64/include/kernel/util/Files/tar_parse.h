@@ -22,5 +22,5 @@ struct tar_header
 
 unsigned int tar_parse(virt_addr_t address);
 int tar_mb2_init(struct multiboot_tag_module * mb2_module);
-extern struct tar_header **headers;
+extern struct tar_header **files;
 #endif //ICARUS_TAR_PARSE_H
