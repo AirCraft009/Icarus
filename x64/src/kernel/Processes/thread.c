@@ -1,0 +1,202 @@
+//
+// Created by cocon on 13.10.2026.
+//
+
+#include "kernel/Processes/thread.h"
+
+#include <stdatomic.h>
+#include <string.h>
+
+#include "kernel_helper.h"
+#include "kernel/Memory/alloc.h"
+#include "kernel/Memory/memory_mapping.h"
+#include "kernel/Memory/paging.h"
+#include <string.h>
+// TID 0 is kernel
+static TID_t TID_GEN = 1;
+
+/**
+ *
+ * creates a thread control block.
+ * if it needs memory use the thread_supply_mem & thread_supply_new_mem
+ * depending on whether it should be alr existing memory or newly allocated
+ *
+ * @param owner the PID of the process owning the thread
+ * @param is_priviledged privilege lvl user vs. kernel
+ * @param priority priority for scheduling 0 - (UINT16_MAX - 1) (0 is most aggressive)
+ * @return address of the thread of NULL
+ */
+tcb_t * create_thread(bool is_priviledged, uint16_t priority) {
+    if (priority == UINT16_MAX)     // the active prio is priority + 1 so this would overflow to 0
+        return NULL;
+
+    tcb_t * tcb = (tcb_t *) Imalloc(sizeof(tcb_t));
+    memset(tcb, 0, sizeof(tcb_t));
+    tcb->tid = TID_GEN ++;
+
+    // set the cpu registers
+    tcb->registers.psp.rflags = 0x202;              // default value bit 1 reserved always(1); bit 9 allow interrupts
+    tcb->registers.psp.rip = THREAD_CODE_VIRT_ADDR;
+    tcb->registers.psp.rsp = THREAD_STACK_VIRT_ADDR;
+    tcb->registers.psp.cs = is_priviledged? 0x08 : 0x23;
+    tcb->registers.psp.ss = is_priviledged? 0x10 : 0x1b;
+
+    page_map_l4_entry * proc_pml4 = (page_map_l4_entry *) KERNEL_VIRT_TO_PHYS(ialloc_frames(1, DEFAULT_PAGE));      // get physical addr struct page is mapped into k_space
+    // current pml4 js has the higher mapped kernel, by copying its zeroing lower and higher mapping the kernel
+    page_map_l4_entry * cur_pml4 = (page_map_l4_entry *) read_cr3();
+    memcpy( (void *) KERNEL_PHYS_TO_VIRT(proc_pml4), (void *) KERNEL_PHYS_TO_VIRT(cur_pml4), sizeof(page_map_l4_entry) * 512);
+    tcb->page_table = proc_pml4;
+    //test_walk_table((void *)KERNEL_PHYS_TO_VIRT(tcb->page_table), (void *)KERNEL_PHYS_TO_VIRT(2 * HUGE_PS));
+    atomic_store(&tcb->state, THREAD_NEW);
+    tcb->privileged = is_priviledged;
+    tcb->priority = priority;
+    tcb->active_priority = priority;
+    return tcb;
+}
+
+
+/**
+ * supplies a thread w/ existing memory
+ * it appends to memory already owned by the thread / maps it contiguously
+ * doesn't change the state
+ *
+ * @param thread the tcb of the thread in question
+ * @param permissions permission for mapped pages (user access is defined by the type of thread)
+ * @return 0 on success -1 if paging failed
+ */
+int thread_supply_mem_region(tcb_t *thread, ADDR_SUB_SPACE sub_space, struct_page_t * info_page, uint64_t permissions) {
+    for (uint64_t i = 0; i < info_page->page_count; i++) {
+        if (page_in(
+            (void *) KERNEL_PHYS_TO_VIRT(thread->page_table),
+            (void *) (SUB_SPACE_TO_ADDR(sub_space) + thread->memory.fields[sub_space]),
+            (void *) info_page->page_addr[i],
+            info_page->page_size,
+            permissions | (!thread->privileged << USER_ACCESS_SHIFT)
+        ) != 0)
+            return -1;
+        thread->memory.fields[sub_space] += info_page->page_size;
+        thread->memory.memory_limit += info_page->page_size;
+    }
+    //Iprintf("table: (%x)\n", ((page_map_l4_entry *)KERNEL_PHYS_TO_VIRT(thread->page_table))[511].present);
+    //test_walk_table(((page_map_l4_entry *)KERNEL_PHYS_TO_VIRT(thread->page_table)),THREAD_CODE_VIRT_ADDR);
+    return 0;
+}
+
+/**
+ * supplies a thread w/ newly allocated memory
+ * it appends to memory already owned by the thread / maps it contiguously
+ * doesn't change the state
+ *
+ * @param thread the tcb of the thread in question
+ * @param sub_space what space the memory should be supplied to / mapped into
+ * @param permissions permission for mapped pages (user access is defined by the type of thread)
+ * @return the addr of the struct page (direct kernel mapping) or FRAME_ALLOC_FAILED
+ */
+struct_page_t * thread_supply_new_mem_region(tcb_t *thread, ADDR_SUB_SPACE sub_space,  uint64_t pages, PAGE_TYPE p_size, uint64_t permissions) {
+    uint64_t size = PAGE_TYPE_TO_SIZE(p_size);
+    struct_page_t * info = ialloc_frames(pages, size);
+    if ((uint64_t)(info) == FRAME_ALLOC_FAILED)
+        return (void *) FRAME_ALLOC_FAILED;
+    if (thread_supply_mem_region(
+        thread,
+        sub_space,
+        info,
+        permissions
+    ) != 0)
+        return (void *) FRAME_ALLOC_FAILED;
+
+    return info;
+}
+
+
+/**
+ * supplies a thread w/ new memory in multiple sub-spaces
+ *
+ * @param thread to allocate to
+ * @param allocation_info info for subspace page count and size
+ * @param perm_info permissions for each subspace
+ * @param result addr to store the result of each frame in;
+ * @return 0 on success -1 on fail
+ */
+int thread_supply_new_mem(
+    tcb_t *thread,
+    thread_memory_allocation_info_t *allocation_info,
+    thread_memory_permission_info_t *perm_info,
+    thread_memory_supply_block_t * result
+){
+
+    result->code_memory = thread_supply_new_mem_region(
+        thread,
+        SUBSPACE_CODE,
+        allocation_info->code_pages,
+        perm_info->code_perms,
+        allocation_info->code_pages
+        );
+
+    result->mapping_memory = thread_supply_new_mem_region(
+        thread,
+        SUBSPACE_MAPPING,
+        allocation_info->mapping_pages,
+        perm_info->mapping_perms,
+        allocation_info->mapping_page_size
+    );
+
+    result->stack_memory = thread_supply_new_mem_region(
+        thread,
+        SUBSPACE_STACK,
+        allocation_info->stack_pages,
+        perm_info->stack_perms,
+        allocation_info->stack_page_size
+    );
+
+    return
+    ((uint64_t) result->code_memory == FRAME_ALLOC_FAILED)? -1 :
+    ((uint64_t) result->mapping_memory == FRAME_ALLOC_FAILED)? -1 :
+    ((uint64_t) result->stack_memory == FRAME_ALLOC_FAILED)? -1 : 0;
+}
+
+
+/**
+ *
+ * map subspace regions into a threads memory
+ *
+ * @param thread to map into
+ * @param supply_block specifies each region size
+ * @param perms permissions for each region
+ * @return int[3] where each integer is a result from a subspace.
+ * 0 for ok -1 fails
+ */
+int * thread_supply_mem(tcb_t * thread, thread_memory_supply_block_t supply_block, thread_memory_permission_info_t perms) {
+    int * result = Imalloc(sizeof(int) * 3);
+
+    result[0] = thread_supply_mem_region(
+        thread,
+        SUBSPACE_CODE,
+        supply_block.code_memory,
+        perms.code_perms
+    );
+
+    result[1] = thread_supply_mem_region(
+        thread,
+        SUBSPACE_MAPPING,
+        supply_block.mapping_memory,
+        perms.mapping_perms
+    );
+
+    result[2] = thread_supply_mem_region(
+        thread,
+        SUBSPACE_STACK,
+        supply_block.stack_memory,
+        perms.stack_perms
+    );
+    return result;
+}
+
+int thread_exit(tcb_t * thread) {
+    thread->state = THREAD_TERMINATED;
+    struct_page_t * page = {};
+    // TODO: clean up memory
+    // remove thread from schedule list
+    free(thread);
+    return 0;
+}

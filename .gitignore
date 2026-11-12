@@ -1,5 +1,7 @@
 .idea
 build
+build-libc
+root-fs
 cmake-build-debug
 *.elf
 *.iso

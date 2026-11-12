@@ -1,0 +1,236 @@
+//
+// Created by cocon on 20.09.2026.
+//
+
+// temporary file while working w/ legacy text mode
+// text input output for debugging & similar
+// All text will be in white on black bg
+
+
+#include "kernel/util/shellio.h"
+
+#include <assert.h>
+#include <stdarg.h>
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
+
+#include "kernel_helper.h"
+#include <string.h>
+
+
+const uint16_t COLS = 80;
+const uint16_t ROWS= 25;
+const uint64_t videoMemStart =  KERNEL_PHYS_TO_VIRT(0xB8000);
+const uint64_t videoMemEnd =  KERNEL_PHYS_TO_VIRT(0xB8000 + (COLS * ROWS) * 2) ;
+static cursor curs;
+
+
+
+void move_cursor(uint16_t offset, cursor *cur) {
+
+    uint16_t rows = offset / ROWS;
+    uint16_t cols = offset % ROWS;
+
+    cur->x = (cur->x + cols) % COLS;
+    cur->y = (cur->y + rows) % ROWS;
+
+    // uint64_t ptr = videoMemStart + (cur->x + cur->y * COLS) * 2;
+    // if (ptr > videoMemEnd - COLS * 2) {
+    //     uint64_t needed_offset = ptr - (videoMemEnd - (COLS * 2));
+    //     uint64_t needed_rows = needed_offset / (COLS * 2) + (needed_offset % (COLS * 2))? 1 : 0;
+    //     uint64_t needed_bytes = needed_rows * COLS * 2;
+    //     memcpy((uint64_t *)videoMemStart,(uint64_t *) (videoMemStart + needed_bytes), needed_bytes);
+    //     memset((uint64_t *)(videoMemEnd - needed_bytes), 0, needed_bytes);
+    // }
+}
+
+void new_lines(uint16_t count, cursor *cur) {
+    cur->y += count;
+    cur->x = 0;
+}
+
+void write_c(char c, cursor *cur) {
+    if (c == '\n') {
+        new_lines(1, cur);
+        return;
+    }
+    if (c == '\r') {
+        cur->x = 0;
+        return;
+    }
+    char * vidptr = (char *) videoMemStart + (cur->x + cur->y * COLS) * 2;
+    *vidptr = c;
+    move_cursor(1, cur);
+}
+
+void write_str(char *str, cursor *cur) {
+    while (*str) {
+        write_c(*str++, cur);
+    }
+}
+
+void write_str_len(uint8_t *str, uint64_t offset, uint64_t len) {
+    cursor cur = {offset % COLS, offset / COLS};
+    for (uint64_t i = 0; i < len; i++) {
+        write_c(*str++, &cur);
+    }
+}
+
+void vprintf(cursor *cur, char *format, va_list args) {
+    if (format == NULL) {
+        return;
+    }
+
+    
+    bool format_next = false;
+    while (*format) {
+        char c = *format++;
+
+        if (c == '%') {
+            format_next = true;
+            continue;
+        }
+
+        if (format_next) {
+            format_next = false;
+            switch (c) {
+                case 'i': {
+                    int int_arg = va_arg(args, int);
+                    char buf[20];
+                    int len = 0;
+                    bool neg = int_arg < 0;
+                    unsigned int uval = neg ? -(unsigned int)int_arg : (unsigned int)int_arg;
+                    do {
+                        buf[len++] = '0' + uval % 10;
+                        uval /= 10;
+                    } while (uval > 0);
+                    if (neg) write_c('-', cur);
+                    for (int i = len - 1; i >= 0; i--) {
+                        write_c(buf[i], cur);
+                    }
+                    break;
+                }
+                case 'u': {
+                    int int_arg = va_arg(args, int);
+                    char buf[20];
+                    int len = 0;
+                    unsigned int uval = (unsigned int)int_arg;
+                    do {
+                        buf[len++] = '0' + uval % 10;
+                        uval /= 10;
+                    } while (uval > 0);
+                    for (int i = len - 1; i >= 0; i--) {
+                        write_c(buf[i], cur);
+                    }
+                    break;
+                }
+                case 'h': {
+                    int int16_arg = va_arg(args, int); /* promoted */
+                    char hbuf[20];
+                    int hlen = 0;
+                    bool neg = int16_arg < 0;
+                    unsigned int uval = neg ? -(unsigned int)int16_arg : (unsigned int)int16_arg;
+                    do {
+                        hbuf[hlen++] = '0' + uval % 10;
+                        uval /= 10;
+                    } while (uval > 0);
+                    if (neg) write_c('-', cur);
+                    for (int i = hlen - 1; i >= 0; i--) {
+                        write_c(hbuf[i], cur);
+                    }
+                    break;
+                }
+                case 'l': {
+                    uint64_t v = va_arg(args, uint64_t);
+                    char lbuf[21];               /* 20 digits + margin */
+                    int llen = 0;
+                    do {
+                        lbuf[llen++] = '0' + (v % 10);
+                        v /= 10;
+                    } while (v > 0);
+                    while (llen--) write_c(lbuf[llen], cur);
+                    break;
+                }
+                case 'x': {   // 64-bit hex, good for pointers
+                    uint64_t v = va_arg(args, uint64_t);
+                    char xbuf[16];
+                    int xlen = 0;
+                    do {
+                        xbuf[xlen++] = "0123456789abcdef"[v & 0xf];
+                        v >>= 4;
+                    } while (v > 0);
+                    write_c('0', cur); write_c('x', cur);
+                    while (xlen--) write_c(xbuf[xlen], cur);
+                    break;
+                }
+                case 's':
+                    write_str(va_arg(args, char *), cur);
+                    break;
+                case 'c':
+                    write_c(va_arg(args, int), cur);
+                    break;
+                case 'b':
+                    write_str(va_arg(args, int)? "true" : "false", cur);
+                default:
+                    write_c('%', cur);
+                    write_c(c, cur);
+                    break;
+            }
+            continue;
+        }
+        write_c(c, cur);
+    }
+}
+
+/**
+ *
+ * very basic printf supporting
+ *
+ * c - char
+ * s - string
+ * i - int/whole number (up to 20 digits)
+ *
+ * @param cur
+ * @param format
+ * @param ...
+ */
+void mprintf(cursor *cur, char *format, ...) {
+    va_list args;
+    va_start(args, format);
+    vprintf(cur, format, args);
+    va_end(args);
+}
+
+void Imclear() {
+    memset((uint8_t *) videoMemStart, 0, (videoMemEnd - videoMemStart));
+    curs.x = 0;
+    curs.y = 0;
+}
+
+void cons_move_cursor(uint16_t offset) {
+    move_cursor(offset, &curs);
+}
+
+void cons_new_lines(uint16_t count) {
+    new_lines(count, &curs);
+}
+void cons_write_c(char c) {
+    write_c(c, &curs);
+}
+void cons_write_str(char *str) {
+    write_str(str, &curs);
+}
+
+void Iprintf(char *format, ...) {
+    va_list args;
+    va_start(args, format);
+    vprintf(&curs, format, args);
+    va_end(args);
+}
+
+cursor *shellio_init(char * starting_text){
+    curs = (cursor) {0,0};
+    mprintf( &curs, "Init Shell: %s", starting_text);
+    return &curs;
+}
