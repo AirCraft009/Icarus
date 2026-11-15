@@ -6,6 +6,7 @@
 
 #include <stdint.h>
 
+#include "kernel_helper.h"
 #include "string.h"
 #include "kernel/Processes/Process.h"
 
@@ -59,7 +60,9 @@ int load_elf(elf_header_t * elf_file, PID_t current_pid, bool is_privileged, uin
             is_privileged,
             priority,
             elf_file->e_entry,
-
-        )
+            (void *) elf_file->e_phoff,
+            elf_file->e_ehsize,
+            DEFAULT_PAGE_SIZE * 4
+        );
     }
 }

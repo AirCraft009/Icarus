@@ -112,12 +112,6 @@ void kmain(uint32_t magic, struct multiboot_info *mboot) {
 
 
     Iprintf("::::::::::::::::::::SCHEDULING::::::::::::::::::::::::\n");
-    thread_memory_allocation_info_t alloc =
-        {
-        2,  DEFAULT_PAGE_SIZE,
-        2, DEFAULT_PAGE_SIZE,
-        4, DEFAULT_PAGE_SIZE
-    };
 
     create_initial_process(
         0,
@@ -126,7 +120,7 @@ void kmain(uint32_t magic, struct multiboot_info *mboot) {
         0x0000048000000000,
         fill_vga,
         sizeof(fill_vga),
-        &alloc
+        DEFAULT_PAGE_SIZE * 4
         );
 
     create_process(
@@ -136,7 +130,7 @@ void kmain(uint32_t magic, struct multiboot_info *mboot) {
     0x0000048000000000,
     clear_vga,
     sizeof(clear_vga),
-    &alloc
+    DEFAULT_PAGE_SIZE * 4
     );
 
     create_process(
@@ -146,7 +140,7 @@ void kmain(uint32_t magic, struct multiboot_info *mboot) {
     0x0000048000000000,
     color_vga,
     sizeof(color_vga),
-    &alloc
+    DEFAULT_PAGE_SIZE * 4
     );
 
 

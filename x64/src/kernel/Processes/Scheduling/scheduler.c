@@ -4,6 +4,7 @@
 
 #include "kernel/Processes/Scheduling/scheduler.h"
 
+#include <stdatomic.h>
 #include <stddef.h>
 
 #include "kernel_helper.h"
@@ -11,6 +12,9 @@
 #include "kernel/interrupts/ISR.h"
 #include "kernel/Processes/thread.h"
 #include <string.h>
+
+#include "kernel/Memory/alloc.h"
+#include "kernel/Memory/paging.h"
 #include "kernel/util/shellio.h"
 
 static inline uint16_t saturating_sub16(uint16_t a, uint16_t b)
@@ -210,33 +214,52 @@ void stop_thread(tcb_t * tcb) {
 }
 
 
-tcb_t * spawn_thread(
-    PID_t parent,
-    bool is_priviledged,
-    uint16_t priority,
-    thread_memory_supply_block_t mem_supply_block,
-    thread_memory_permission_info_t perms
-) {
-    tcb_t * tcb = create_thread(is_priviledged, priority);
+/**
+ *
+ * spawn a new thread to a process
+ * - create the thread
+ * - ensure proper access to mem and page-tables
+ * - add it to scheduler
+ *
+ *
+ * @param parent the parent process of the thread
+ * @param p_virt the virtual addr where this thread should start execution
+ * @return NULL or tcb_t
+ */
+tcb_t * spawn_thread(pcb_t * parent, virt_addr_t p_virt) {
+    // race conditions should not exist here
+    // - thread is built of the latest entry in process thread
+    // - the new thread is added to the linked list via an atomic store
+    // TODO: recheck
+
+    // check if p_virt is mapped in the process page-table to avoid illegal execution
+    page_map_l4_entry * proc_table = parent->head_thread->page_table;
+    if (!is_mapped(proc_table, p_virt))
+        return NULL;
+
+    tcb_t * tcb = create_thread
+    (
+        parent->pid,
+        parent->head_thread->privileged,
+        parent->head_thread->priority,
+        p_virt
+    );
+    if (!tcb)
+        return NULL;
+
+    tcb->page_table = proc_table;
+
+    thread_descriptor_t * desc = Imalloc(sizeof(thread_descriptor_t));
+    desc->tcb = tcb;
+    // TODO: expand with mutex over pcb
+    thread_descriptor_t *curr_top = atomic_load(&parent->process_threads);
+    atomic_store(&desc->next_tcb, curr_top);
+    atomic_store(&parent->process_threads, desc);
+
+    scheduler_add_thread(tcb);
     //TODO: find a way to cleanly handle return from thread_supply_mem
-    thread_supply_mem(tcb, mem_supply_block, perms);
     return tcb;
 }
-
-tcb_t * spawn_alloc_thread(
-    PID_t parent,
-    bool is_priviledged,
-    uint16_t priority,
-    thread_memory_allocation_info_t *alloc_info,
-    thread_memory_permission_info_t *perms,
-    thread_memory_supply_block_t *supply
-) {
-    tcb_t * tcb = create_thread(is_priviledged, priority);
-    //TODO: find a way to cleanly handle return from thread_supply_mem
-    thread_supply_new_mem(tcb, alloc_info, perms, supply);
-    return tcb;
-}
-
 int scheduler_stop_thread(tcb_t * thread) {
     thread->next->prev = thread->prev;
     thread->prev->next = thread->next;

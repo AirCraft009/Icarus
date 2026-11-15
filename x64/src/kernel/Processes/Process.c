@@ -14,40 +14,54 @@ static PID_t PID_GEN = 1;
 
 //find a process via it's PID
 
-
-
 pcb_t * init_process
 (
     PID_t parent_pid,
     bool is_priviledged,
     uint16_t priority,
-    const void * code_location,
+    uint64_t code_location,
+    const void * src_code,
     uint64_t code_size,
-    thread_memory_allocation_info_t *allocation_info
+    uint64_t stack_size
 ) {
     //TODO: implement unified mapping layer and replace mappings w/ a better struct
 
     PID_t pid = PID_GEN++;
 
-    //set default permissions for memory in processes
-    thread_memory_permission_info_t permissions = {
-        WRITEABLE,
-        WRITEABLE | CACHE_DISABLED,
-        WRITEABLE,
-    };
-    thread_memory_supply_block_t * sp = Imalloc(sizeof (thread_memory_supply_block_t));
-    if (!sp) return NULL;
-
-    tcb_t * thread = spawn_alloc_thread(pid, is_priviledged, priority, allocation_info, &permissions, sp);
+    tcb_t * thread = create_thread(pid, is_priviledged, priority, code_location);
 
     if (!thread) {
-        free(sp);
         return NULL;
     }
 
+    page_map_l4_entry * proc_pml4 = (page_map_l4_entry *) KERNEL_VIRT_TO_PHYS(ialloc_frames(1, DEFAULT_PAGE));      // get physical addr struct page is mapped into k_space
+    // current pml4 js has the higher mapped kernel, by copying its zeroing lower and higher mapping the kernel
+    page_map_l4_entry * cur_pml4 = (page_map_l4_entry *) read_cr3();
+    memcpy( (void *) KERNEL_PHYS_TO_VIRT(proc_pml4), (void *) KERNEL_PHYS_TO_VIRT(cur_pml4), sizeof(page_map_l4_entry) * 512);
+    thread->page_table = proc_pml4;
+
+    thread_map_stack
+    (
+        thread,
+        MEM_SIZE_TO_PAGE_COUNT(stack_size, DEFAULT_PAGE),
+        DEFAULT_PAGE ,
+        PT_EXECUTION_DISABLED | PT_WRITEABLE
+    );
+
+    thread_map
+    (
+        thread,
+        code_location,
+        MEM_SIZE_TO_PAGE_COUNT(code_size, DEFAULT_PAGE),
+        DEFAULT_PAGE,
+        0
+    );
+
+    // leave mappings for now
+
+
     pcb_t * pcb = Imalloc(sizeof(pcb_t));
     if (!pcb) {
-        free(sp);
         free(thread);
         return NULL;
     }
@@ -56,7 +70,6 @@ pcb_t * init_process
     pcb->parent_pid = parent_pid;
     thread_descriptor_t * thread_ptr = Imalloc(sizeof(thread_descriptor_t));
     if (!thread_ptr) {
-        free(sp);
         free(thread);
         free(pcb);
         return NULL;
@@ -65,23 +78,10 @@ pcb_t * init_process
     thread_ptr->next_tcb = NULL;
     pcb->process_threads = thread_ptr;
 
-
-    // dealloc all if one failed
-    if (
-        (uint64_t) sp->code_memory == FRAME_ALLOC_FAILED ||
-        (uint64_t) sp->mapping_memory == FRAME_ALLOC_FAILED ||
-        (uint64_t) sp->stack_memory == FRAME_ALLOC_FAILED
-        )
-    {
-        if ((uint64_t) sp->code_memory != FRAME_ALLOC_FAILED) idealloc_frames(sp->code_memory);
-        if ((uint64_t) sp->mapping_memory != FRAME_ALLOC_FAILED) idealloc_frames(sp->mapping_memory);
-        if ((uint64_t) sp->stack_memory != FRAME_ALLOC_FAILED) idealloc_frames(sp->stack_memory);
-        free(sp);
-        return NULL;
-    }
-
     // struct page is overridden here and no longer contains freeing info
-    memcpy((void *)sp->code_memory,(void *) code_location, code_size);
+    memcpy((void *)code_location,(void *) src_code, code_size);
+    scheduler_add_thread(thread);
+    thread->state = THREAD_READY;
 
     return pcb;
 }
@@ -93,7 +93,7 @@ pcb_t * init_process
  *
  * @param is_priviledged is the process kernel or userspace
  * @param priority initial priority of the process
- * @param code_location location of copy to execute in mem TODO: expand / replace w/ disk access
+ * @param src_code location of copy to execute in mem TODO: expand / replace w/ disk access
  * @param code_size size of code in bytes
  * @return NULL on failure (if any allocation fails all is freed and the thread is never dispatched)
  */
@@ -102,17 +102,19 @@ pcb_t * create_process
     PID_t parent_pid,
     bool is_priviledged,
     uint16_t priority,
-    const void * code_location,
+    uint64_t code_location,
+    const void * src_code,
     uint64_t code_size,
-    thread_memory_allocation_info_t *allocation_info
+    uint64_t stack_size
 ) {
     pcb_t * pcb = init_process(
         parent_pid,
         is_priviledged,
         priority,
         code_location,
+        src_code,
         code_size,
-        allocation_info
+        stack_size
         );
 
     if (!pcb) return NULL;
@@ -140,19 +142,20 @@ pcb_t * create_initial_process
     PID_t parent_pid,
     bool is_priviledged,
     uint16_t priority,
-    const void * code_location,
+    uint64_t code_location,
+    const void * code_src,
     uint64_t code_size,
-    thread_memory_allocation_info_t *allocation_info
+    uint64_t stack_size
 ) {
     pcb_t * pcb = init_process(
     parent_pid,
     is_priviledged,
     priority,
     code_location,
+    code_src,
     code_size,
-    allocation_info
+    stack_size
     );
-    //__asm__ volatile ("cli; hlt"); // Completely hangs the computer
 
     if (!pcb) return NULL;
 
