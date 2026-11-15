@@ -2,7 +2,7 @@
 // Created by cocon on 29.10.2026.
 //
 
-#include "kernel/util/Files/tar_parse.h"
+#include "kernel/util/Files/tar.h"
 
 #include "kernel_helper.h"
 #include "kernel/Memory/alloc.h"
