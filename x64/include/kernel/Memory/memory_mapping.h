@@ -7,7 +7,8 @@
 #pragma once
 #include "page_definitions.h"
 #include "kernel/util/multiboot2.h"
-#include "kernel/Memory/PMM/mem_map.h"
+
+//TODO: move helpers to paging.h or page_definitions
 
 #define PAGE_S 4096
 #define HUGE_PS 2097152
@@ -30,17 +31,17 @@
 ((((int64_t)(va) << 16) >> 16) == (int64_t)(va))
 
 // Helpers for setting the Page Permissions
-#define WRITEABLE_SHIFT 0x1
-#define USER_ACCESS_SHIFT 0x3
-#define WRITE_THROUGH_SHIFT 0x7
-#define CACHE_DISABLED_SHIFT 0xF
-#define EXECUTION_DISABLED_SHIFT 0x3F
+#define PT_WRITEABLE_SHIFT 0x1
+#define PT_USER_ACCESS_SHIFT 0x3
+#define PT_WRITE_THROUGH_SHIFT 0x7
+#define PT_CACHE_DISABLED_SHIFT 0xF
+#define PT_EXECUTION_DISABLED_SHIFT 0x3F
 
-#define WRITEABLE (0x1 << WRITEABLE_SHIFT)
-#define USER_ACCESS (0x1 << USER_ACCESS_SHIFT)
-#define WRITE_THROUGH (0x1 << WRITE_THROUGH_SHIFT)
-#define CACHE_DISABLED (0x1 << CACHE_DISABLED_SHIFT)
-#define EXECUTION_DISABLED (0x1 << EXECUTION_DISABLED_SHIFT)
+#define PT_WRITEABLE (0x1 << PT_WRITEABLE_SHIFT)
+#define PT_USER_ACCESS (0x1 << PT_USER_ACCESS_SHIFT)
+#define PT_WRITE_THROUGH (0x1 << PT_WRITE_THROUGH_SHIFT)
+#define PT_CACHE_DISABLED (0x1 << PT_CACHE_DISABLED_SHIFT)
+#define PT_EXECUTION_DISABLED (0x1L << PT_EXECUTION_DISABLED_SHIFT)
 
 
 
@@ -50,23 +51,21 @@
 // NX / PWT / PCD are deliberately NOT touched here.
 #define APPLY_UPPER_PERMS(e, p)                                   \
     do {                                                          \
-        if (PERM_BIT(p, USER_ACCESS_SHIFT)) (e)->user_access = 1; \
-        if (PERM_BIT(p, WRITEABLE_SHIFT))   (e)->writeable   = 1; \
+        if (PERM_BIT(p,PT_USER_ACCESS_SHIFT)) (e)->user_access = 1; \
+        if (PERM_BIT(p, PT_WRITEABLE_SHIFT))   (e)->writeable   = 1; \
     } while (0)
 
 // Leaf entry apply what the caller asked for.
 #define APPLY_LEAF_PERMS(e, p)                                                    \
     do {                                                                          \
-        (e)->user_access         = PERM_BIT(p, USER_ACCESS_SHIFT);                \
-        (e)->writeable           = PERM_BIT(p, WRITEABLE_SHIFT);                  \
-        (e)->write_through       = PERM_BIT(p, WRITE_THROUGH_SHIFT);              \
-        (e)->cache_disabled      = PERM_BIT(p, CACHE_DISABLED_SHIFT);             \
-        (e)->execution_disabled  = PERM_BIT(p, EXECUTION_DISABLED_SHIFT);         \
+        (e)->user_access         = PERM_BIT(p,PT_USER_ACCESS_SHIFT);                \
+        (e)->writeable           = PERM_BIT(p, PT_WRITEABLE_SHIFT);                  \
+        (e)->write_through       = PERM_BIT(p, PT_WRITE_THROUGH_SHIFT);              \
+        (e)->cache_disabled      = PERM_BIT(p, PT_CACHE_DISABLED_SHIFT);             \
+        (e)->execution_disabled  = PERM_BIT(p, PT_EXECUTION_DISABLED_SHIFT);         \
     } while (0)
 
 int handle_mb2_mmap(struct multiboot_tag *mmap_tag, page_map_l4_entry *pml4);
-phys_addr_t test_walk_table(page_map_l4_entry *pml4, const virt_addr_t virt_addr);
-uint64_t place_module(struct multiboot_tag_module * module_tag, struct multiboot_tag_mmap *mmap_tag, page_map_l4_entry * pml4);
 
 
 #endif //ICARUS_MEMORY_MAPPING_H

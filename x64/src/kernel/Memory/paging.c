@@ -7,6 +7,8 @@
 #include "kernel_helper.h"
 #include "kernel/Memory/memory_mapping.h"
 #include <string.h>
+
+#include "kernel/Memory/alloc.h"
 #include "kernel/util/shellio.h"
 
 extern char _kernel_end[];
@@ -140,6 +142,10 @@ phys_addr_t walk_table(page_map_l4_entry * pml4, virt_addr_t virt_addr) {
     return pt_entry->page_ppn << 12;
 }
 
+bool is_mapped(page_map_l4_entry * pml4, virt_addr_t virt_addr) {
+    return  walk_table(pml4, virt_addr) != INVALID_PHYS_ADDR;
+}
+
 
 phys_addr_t test_walk_table(page_map_l4_entry *pml4, const virt_addr_t virt_addr) {
     Iprintf("Walking addr (%x) on (%x)\n", virt_addr, pml4);
@@ -215,5 +221,160 @@ int page_out(page_map_l4_entry *pml4, uint64_t virt_addr) {
     invlpg((void *) virt_addr);
     return 0;
 }
+
+
+/* Effective permissions along a walk:
+ * writeable and user_access are only set if EVERY level allows them (AND),
+ * execution_disabled is set if ANY level disables execution (OR). */
+static uint64_t perms_combine(uint64_t inherited,
+                              uint64_t writeable,
+                              uint64_t user_access,
+                              uint64_t execution_disabled)
+{
+    uint64_t result = inherited;
+    if (!writeable)        result &= ~(uint64_t)PT_WRITEABLE;
+    if (!user_access)      result &= ~(uint64_t)PT_USER_ACCESS;
+    if (execution_disabled) result |= (uint64_t)PT_EXECUTION_DISABLED;
+    return result;
+}
+
+/* Cache attributes only come from the leaf entry. */
+static uint64_t perms_apply_cache(uint64_t perms, uint64_t write_through, uint64_t cache_disabled){
+    if (write_through) perms |= (uint64_t)PT_WRITE_THROUGH;
+    if (cache_disabled) perms |= (uint64_t)PT_CACHE_DISABLED;
+    return perms;
+}
+
+/* Appends a mapped range, merging it into the last region if it is adjacent
+ * in virtual memory and has identical permissions. Returns 0 on success. */
+static int region_list_add(region_list_t *list, uint64_t start, uint64_t len, uint64_t perms){
+    mapped_region_t *tail = list->tail;
+
+    if (tail != NULL && tail->start + tail->len == start && tail->perms == perms) {
+        tail->len += len;
+        return 0;
+    }
+
+    mapped_region_t *node = (mapped_region_t *)REGION_ALLOC(sizeof(mapped_region_t));
+    if (node == NULL) {
+        return -1;
+    }
+    node->start = start;
+    node->len   = len;
+    node->perms = perms;
+    node->next  = NULL;
+
+    if (tail != NULL) {
+        tail->next = node;
+    } else {
+        list->head = node;
+    }
+    list->tail = node;
+    return 0;
+}
+
+void page_regions_free(mapped_region_t *head){
+    while (head != NULL) {
+        mapped_region_t *next = head->next;
+        REGION_FREE(head);
+        head = next;
+    }
+}
+
+static int walk_page_table(const PageTableEntry *page_table, uint64_t base,
+                           uint64_t inherited, region_list_t *list)
+{
+    for (uint64_t index = 0; index < ENTRIES_PER_TABLE; index++) {
+        const PageTableEntry *entry = &page_table[index];
+        if (!entry->present) continue;
+
+        uint64_t perms = perms_combine(inherited, entry->writeable, entry->user_access,
+                                       entry->execution_disabled);
+        perms = perms_apply_cache(perms, entry->write_through, entry->cache_disabled);
+
+        if (region_list_add(list, base | (index << 12), PAGE_S, perms) != 0) return -1;
+    }
+    return 0;
+}
+
+static int walk_page_directory(const pd_entry_t *page_directory, uint64_t base,
+                               uint64_t inherited, region_list_t *list)
+{
+    for (uint64_t index = 0; index < ENTRIES_PER_TABLE; index++) {
+        const pd_entry_t *entry = &page_directory[index];
+        if (!entry->present) continue;
+
+        uint64_t perms = perms_combine(inherited, entry->writeable, entry->user_access,
+                                       entry->execution_disabled);
+        uint64_t entry_base = base | (index << 21);
+
+        if (entry->huge) {
+            perms = perms_apply_cache(perms, entry->write_through, entry->cache_disabled);
+            if (region_list_add(list, entry_base, HUGE_PS, perms) != 0) return -1;
+        } else {
+            const PageTableEntry *page_table =
+                (const PageTableEntry *)PHYS_TO_VIRT((uint64_t)entry->page_ppn << 12);
+            if (walk_page_table(page_table, entry_base, perms, list) != 0) return -1;
+        }
+    }
+    return 0;
+}
+
+static int walk_pdpt(const pdpt_entry_t *pdpt, uint64_t base,
+                     uint64_t inherited, region_list_t *list)
+{
+    for (uint64_t index = 0; index < ENTRIES_PER_TABLE; index++) {
+        const pdpt_entry_t *entry = &pdpt[index];
+        if (!entry->present) continue;
+
+        uint64_t perms = perms_combine(inherited, entry->writeable, entry->user_access,
+                                       entry->execution_disabled);
+        uint64_t entry_base = base | (index << 30);
+
+        if (entry->huge) {
+            perms = perms_apply_cache(perms, entry->write_through, entry->cache_disabled);
+            if (region_list_add(list, entry_base, SUPER_PS, perms) != 0) return -1;
+        } else {
+            const pd_entry_t *page_directory =
+                (const pd_entry_t *)PHYS_TO_VIRT((uint64_t)entry->page_ppn << 12);
+            if (walk_page_directory(page_directory, entry_base, perms, list) != 0) return -1;
+        }
+    }
+    return 0;
+}
+
+/**
+ * Walks the whole page table and returns a linked list of mapped regions in
+ * ascending virtual address order (lower half first, then the upper half).
+ * Returns NULL if nothing is mapped or if allocation failed.
+ * Release the result with page_regions_free().
+ */
+mapped_region_t *page_table_get_regions(const page_map_l4_entry *table){
+    region_list_t list = { NULL, NULL };
+
+    for (uint64_t index = 0; index < ENTRIES_PER_TABLE; index++) {
+        const page_map_l4_entry *entry = &table[index];
+        if (!entry->present) continue;
+
+        uint64_t base = index << 39;
+        if (index >= 256) {
+            base |= 0xFFFF000000000000ULL;   /* sign-extend into canonical form */
+        }
+
+        uint64_t perms = perms_combine(PERMS_INITIAL, entry->writeable, entry->user_access,
+                                       entry->execution_disabled);
+
+        const pdpt_entry_t *pdpt =
+            (const pdpt_entry_t *)PHYS_TO_VIRT((uint64_t)entry->page_ppn << 12);
+
+        if (walk_pdpt(pdpt, base, perms, &list) != 0) {
+            page_regions_free(list.head);
+            return NULL;
+        }
+    }
+    return list.head;
+}
+
+
 
 

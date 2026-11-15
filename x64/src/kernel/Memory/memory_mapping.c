@@ -114,7 +114,7 @@ int page_in_regions(mem_map *mmap, page_map_l4_entry * pml4) {
                     (void *)KERNEL_PHYS_TO_VIRT(addr),
                     (void *)addr,
                     HUGE_PS,
-                    WRITEABLE) != 0)
+                    PT_WRITEABLE) != 0)
             {
                 return -1;
             }
