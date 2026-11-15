@@ -44,7 +44,7 @@ int discoverPCIE() {
             for (int dev_n = 0; dev_n < 32; ++dev_n) {
                 // get the start addr of the device block
                 volatile phys_addr_t dev_phys = (phys_addr_t)  ecam_addr(base, start_bus, bus, dev_n, 0, 0);
-                volatile pci_hdr_common_t * dev = (pci_hdr_common_t *) map_mmio(dev_phys, DEFAULT_PAGE_SIZE, CACHE_DISABLED | WRITEABLE);
+                volatile pci_hdr_common_t * dev = (pci_hdr_common_t *) map_mmio(dev_phys, DEFAULT_PAGE_SIZE, PT_CACHE_DISABLED | PT_WRITEABLE);
 
                 uint16_t vendor = dev->vendor_id;
                 if (vendor == 0xFFFF)
@@ -58,7 +58,7 @@ int discoverPCIE() {
                 for (int fn = 0; fn < functions; ++fn) {
                     //Iprintf("fn %i at b = %i d = %i\n", fn, bus, dev_n);
                     dev_phys = (phys_addr_t)  ecam_addr(base, start_bus, bus, dev_n, fn, 0);
-                    dev = (pci_hdr_common_t *) map_mmio(dev_phys, DEFAULT_PAGE_SIZE, CACHE_DISABLED | WRITEABLE);
+                    dev = (pci_hdr_common_t *) map_mmio(dev_phys, DEFAULT_PAGE_SIZE, PT_CACHE_DISABLED | PT_WRITEABLE);
                     uint8_t type = header & 0x3;
                     vendor = dev->vendor_id;
                     if (vendor == 0xFFFF)
@@ -110,7 +110,7 @@ int discoverPCIE() {
                             active_bar[0] = addr;
 
                             allocate:
-                                map_mmio(addr, size, WRITEABLE | CACHE_DISABLED);
+                                map_mmio(addr, size, PT_WRITEABLE | PT_CACHE_DISABLED);
                         }
                     }else {
                         Iprintf("config of Bridge-dev\n");

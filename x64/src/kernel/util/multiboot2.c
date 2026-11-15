@@ -7,7 +7,7 @@
 
 #include "kernel/Memory/DMA/ACPI.h"
 #include <string.h>
-#include "kernel/util/Files/tar_parse.h"
+#include "kernel/util/Files/tar.h"
 
 
 extern char _kernel_end_phys[];

@@ -104,7 +104,7 @@ int handle_new_acpi(struct XSDP_t * xsdp) {
 
     CHECKSUM (xsdp, xsdp->Length)
     void * root_phys = (void *)  xsdp->XsdtAddress;
-    if (map_mmio((phys_addr_t) root_phys, DEFAULT_PAGE_SIZE, WRITEABLE | CACHE_DISABLED) == FRAME_ALLOC_FAILED) {
+    if (map_mmio((phys_addr_t) root_phys, DEFAULT_PAGE_SIZE, PT_WRITEABLE | PT_CACHE_DISABLED) == FRAME_ALLOC_FAILED) {
         Iprintf("error while mapping mmio\n");
         return -1;
     }
@@ -125,7 +125,7 @@ int handle_old_acpi(struct RSDP_t * rsdp) {
     int version = rsdp->Revision + 1;
 
     struct RSDT * root_phys = (struct RSDT *) (rsdp->RsdtAddress);
-    virt_addr_t ret = map_mmio((phys_addr_t) root_phys, DEFAULT_PAGE_SIZE, WRITEABLE | CACHE_DISABLED);
+    virt_addr_t ret = map_mmio((phys_addr_t) root_phys, DEFAULT_PAGE_SIZE, PT_WRITEABLE | PT_CACHE_DISABLED);
     if (ret == FRAME_ALLOC_FAILED) {
         Iprintf("error while mapping mmio\n");
         return -1;

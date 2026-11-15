@@ -68,16 +68,14 @@ add_executable(Icarus_kernel
         x64/src/kernel/util/MasterRecordTable.h
         x64/src/kernel/Processes/Process.c
         x64/include/kernel/Processes/Process.h
-        x64/src/userland/syscall/ABI.c
-        x64/src/userland/syscall/ABI.h
         x64/src/kernel/syscall/syscall.c
         x64/src/kernel/syscall/syscall.h
         x64/src/kernel/syscall/syscall_entry.asm
         x64/include/kernel/syscall/core_information_table.h
-        x64/src/kernel/util/Files/tar_parse.c
-        x64/include/kernel/util/Files/tar_parse.h
-        x64/src/kernel/util/Files/elf_parse.c
-        x64/include/kernel/util/Files/elf_parse.h
+        x64/src/kernel/util/Files/tar.c
+        x64/include/kernel/util/Files/tar.h
+        x64/src/kernel/util/Files/elf.c
+        x64/include/kernel/util/Files/elf.h
         x64/include/assert.h
         process_management.c
         process_management.h

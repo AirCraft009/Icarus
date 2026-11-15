@@ -179,7 +179,7 @@ uint32_t lapic_ticks_per_ms() {
     }
 
     // MMIO mapped space so (ig we first map)
-    map_mmio(x_timer.Address, DEFAULT_PAGE_SIZE, WRITEABLE | CACHE_DISABLED);
+    map_mmio(x_timer.Address, DEFAULT_PAGE_SIZE, PT_WRITEABLE | PT_CACHE_DISABLED);
     return calibrate_lapic_ticks_per_ms(MMIO_PHYS_TO_VIRT(x_timer.Address), (FADT.Flags >> 8) & 0x1, true);
 }
 
