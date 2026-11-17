@@ -9,6 +9,7 @@
 #include <string.h>
 
 #include "kernel/Memory/alloc.h"
+#include "kernel/Memory/PMM/phys_alloc.h"
 #include "kernel/util/shellio.h"
 
 extern char _kernel_end[];

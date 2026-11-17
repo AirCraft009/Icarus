@@ -5,6 +5,7 @@
 #include "kernel/interrupts/PIC.h"
 
 #include "kernel_helper.h"
+#include "kernel/util/shellio.h"
 
 /**
  * remaps the PIC interrupts to avoid collisions w/ the cpu exceptions
@@ -17,5 +18,5 @@ void disable_PIC() {
     outportb(0x21, 0x04);  outportb(0xA1, 0x02);   // ICW3: slave is on master's IRQ2
     outportb(0x21, 0x01);  outportb(0xA1, 0x01);   // ICW4: 8086 mode
     outportb(0x21, 0xFF);  outportb(0xA1, 0xFF);   // mask all lines (this also disables it)
-
+    Iprintf("!!!!!!!!!!!!!!!!!!disabled!!!!!!!!!!!!!!!!!!!!!!!!!\n");
 }

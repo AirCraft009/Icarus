@@ -2,7 +2,7 @@
 // Created by cocon on 25.09.2026.
 //
 
-#include "kernel/Memory/PMM/mem_map.h"
+#include "kernel/Memory/PMM/phys_alloc.h"
 
 #include <stdbool.h>
 
@@ -18,6 +18,20 @@ extern char _kernel_end[];
 
 phys_addr_t map_alloc_frame_contiguous(mem_map * mmap, uint64_t page_count);
 phys_addr_t map_alloc_frame(mem_map * mmap, PAGE_TYPE page_size);
+
+/**
+ * returns bit index of first run of n free frames in w, or -1
+ */
+static inline int find_run_in_word(uint64_t word, unsigned run_length) {
+    uint64_t free_mask = ~word;          // free = 1
+    unsigned covered = 1;
+    while (covered * 2 <= run_length) {
+        free_mask &= free_mask >> covered;
+        covered *= 2;
+    }
+    if (covered < run_length) free_mask &= free_mask >> (run_length - covered);
+    return free_mask ? __builtin_ctzll(free_mask) : -1;
+}
 
 void memmap_register_region(mem_map *mmap, uint64_t start, uint64_t end) {
 
@@ -63,7 +77,7 @@ void zero_mem_map(mem_map *mmap) {
  * sets a region of memory to 1(filled)
  * @param start_addr a 4096 aligned physical addr
  * @param end_addr a 4096 aligned physical addr
- * @return
+ * @return returns 0 on success and -1 if the indi are out of range or an error occurs
  */
 int set_mem_region(mem_map *mmap, uint64_t start_addr, uint64_t end_addr) {
     if (start_addr < mmap->regions[0].start_addr || end_addr > mmap->regions[mmap->region_count - 1].start_addr + mmap->regions[mmap->region_count - 1].len_bytes) {
@@ -110,10 +124,6 @@ int zero_mem_region(mem_map *mmap, uint64_t start_addr, uint64_t end_addr) {
     return 0;
 }
 
-void show_mem(bool verbose) {
-    show_mem_map((mem_map *) &_kernel_end, verbose);
-}
-
 void show_mem_map(mem_map *mmap, bool verbose) {
     for (uint32_t i = 0; i < mmap->region_count; i++) {
         mem_region *region = &mmap->regions[i];
@@ -124,93 +134,6 @@ void show_mem_map(mem_map *mmap, bool verbose) {
         }
     }
 }
-
-
-/**
- * allocate frames.
- * tries to allocate at least 1 frame even on 0 requested
- *
- * @param count amount of pages allocated < 512
- * @param page_type size of each allocated page
- * @return FRAME_ALLOC_FAILED on fail
- */
-struct_page_t *ialloc_frames(uint64_t count, PAGE_TYPE page_type) {
-    //TODO: make an independent method instead of relying on map_alloc_frame
-    //TODO: make structpage a linkedlist so that arbitrary amount of pages can be allocated
-    if (count > 510)        // rn this bc the struct_page only has space for 510 entries  (will build a linked list later)
-        return (struct_page_t *) FRAME_ALLOC_FAILED;
-
-    uint64_t page_size = PAGE_TYPE_TO_SIZE(page_type);
-    mem_map * mmap = (mem_map *) &_kernel_end;
-    struct_page_t *info_page = (struct_page_t *) KERNEL_PHYS_TO_VIRT(map_alloc_frame(mmap, page_type));
-    info_page->page_count = count;
-    info_page->page_addr[0] = (phys_addr_t) KERNEL_VIRT_TO_PHYS(info_page);
-    info_page->page_size = page_size;
-
-    for (uint64_t i = 1; i < count; i++) {
-        info_page->page_addr[i] = map_alloc_frame(mmap, page_type);
-        if (info_page->page_addr[i] == FRAME_ALLOC_FAILED) {
-            Iprintf("allocation failed\n");
-            return (struct_page_t *) FRAME_ALLOC_FAILED;
-        }
-    }
-
-
-    // for (uint64_t i = 0; i < count; i++) {
-    //     cons_mprintf("actually allocated: %x\n", info_page->page_addr[i]);
-    // }
-    return (struct_page_t *) (uint64_t) info_page;
-}
-
-/**
- * free a list of physical frames
- * @param info_page the virt addr of a struct page
- */
-int idealloc_frames(struct_page_t * info_page) {
-    mem_map * mmap = (mem_map *) &_kernel_end;
-    for (uint64_t i = 1; i < info_page->page_count; i++) {
-        if (map_dealloc_frame(mmap,  ALIGN_DOWN(info_page->page_addr[i], info_page->page_size), info_page->page_size) != 0) {
-            return -1;
-        }
-    }
-
-    map_dealloc_frame(mmap, ALIGN_DOWN(info_page->page_addr[0], DEFAULT_PAGE_SIZE), info_page->page_size);
-    return 0;
-}
-
-phys_addr_t alloc_kframe(uint64_t size) {
-    mem_map * mmap = (mem_map *) &_kernel_end;
-    return map_alloc_frame_contiguous(mmap, ALIGN_UP(size, DEFAULT_PAGE_SIZE) / DEFAULT_PAGE_SIZE);
-}
-
-int dealloc_kframe(phys_addr_t start, uint64_t size) {
-    mem_map * mmap = (mem_map *) &_kernel_end;
-    return map_dealloc_frame(mmap, start, size);
-}
-
-/**
- * Allocate contiguous physical memory
- * @size is the total size of all 4KiB regions (should be aligned to 4KiB)
- */
-phys_addr_t ialloc_kframe(uint64_t pages, PAGE_TYPE page_size) {
-    mem_map * mmap = (mem_map *) &_kernel_end;
-    return map_alloc_frame_contiguous(mmap, pages);
-}
-
-/**
- * returns bit index of first run of n free frames in w, or -1
- */
-static inline int find_run_in_word(uint64_t word, unsigned run_length) {
-    uint64_t free_mask = ~word;          // free = 1
-    unsigned covered = 1;
-    while (covered * 2 <= run_length) {
-        free_mask &= free_mask >> covered;
-        covered *= 2;
-    }
-    if (covered < run_length) free_mask &= free_mask >> (run_length - covered);
-    return free_mask ? __builtin_ctzll(free_mask) : -1;
-}
-
 
 /**
  * allocate a single page of physical memory
@@ -319,3 +242,4 @@ int map_dealloc_frame(mem_map *mmap, phys_addr_t phys_addr, uint64_t page_size) 
     }
     return 0;
 }
+

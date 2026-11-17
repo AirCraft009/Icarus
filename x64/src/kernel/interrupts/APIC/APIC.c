@@ -199,6 +199,7 @@ int enable_apic() {
     //cpu_set_apic_base(cpu_get_apic_base());
     disable_PIC();
 
+
     /* Set the Spurious Interrupt Vector Register bit 8 to start receiving interrupts */
     void * apic = (void *) MMIO_PHYS_TO_VIRT(APIC_INFO->lapic_addr);
     *(uint32_t *) (apic + SPURIOUS_INT_VEC) = (1 << 8) | 0xFF;
@@ -219,6 +220,7 @@ uint32_t enable_io_apic(uint64_t ioapic_addr, ioapic_info *info) {
     info->ioapic_version = (ioapic_read(ioapic_addr, IOAPICVER) & 0xFF);
     info->ioapic_id = (ioapic_read(ioapic_addr, IOAPICID) >> IOAPICID_SHIFT & 0xF);
     info->total_size = sizeof(ioapic_info) + sizeof(ioapic_redirection_entry_t) * info->redirection_count;
+
 
     int reloc_reg = IOAPIC_RELOC_BASE_INDEX;
     for (int i = 0; i < info->redirection_count; ++i) {

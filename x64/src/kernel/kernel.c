@@ -16,7 +16,7 @@
 #include "kernel/Memory/alloc.h"
 #include "kernel/Memory/paging.h"
 #include "kernel/Memory/DMA/MADT.h"
-#include "kernel/Memory/PMM/mem_map.h"
+#include "kernel/Memory/PMM/phys_alloc.h"
 #include "kernel/Processes/Process.h"
 #include "kernel/Processes/thread.h"
 #include "kernel/Processes/Scheduling/scheduler.h"
@@ -112,45 +112,44 @@ void kmain(uint32_t magic, struct multiboot_info *mboot) {
 
 
     Iprintf("::::::::::::::::::::SCHEDULING::::::::::::::::::::::::\n");
-
     create_initial_process(
         0,
-        false,
-        10,
+        true,
+        11,
         0x0000048000000000,
-        fill_vga,
+        loop,
         sizeof(fill_vga),
         DEFAULT_PAGE_SIZE * 4
         );
 
     create_process(
     0,
-    false,
+    true,
     15,
     0x0000048000000000,
-    clear_vga,
+    loop,
     sizeof(clear_vga),
     DEFAULT_PAGE_SIZE * 4
     );
 
     create_process(
     0,
-    false,
-    10,
+    true,
+    9,
     0x0000048000000000,
-    color_vga,
+    loop,
     sizeof(color_vga),
     DEFAULT_PAGE_SIZE * 4
     );
 
 
-    __asm__ volatile ("sti");
     Iprintf("::::::::::::::::::::RAHHHHHHHHHHHHHHHHHHHH::::::::::::::::::::::::\n");
+    __asm__ volatile ("sti");
     keyboard_ps2_init();
 
     lapic_write(LAPIC_TIMER_INITCNT, 0x0);
     lapic_write(LAPIC_LVT_TIMER, 32 | LAPIC_TIMER_PERIODIC);
-    lapic_write(LAPIC_TIMER_INITCNT, LAPIC_TICKS_PER_MS * 500);
+    lapic_write(LAPIC_TIMER_INITCNT, LAPIC_TICKS_PER_MS * 1020);
 
     //TODO: build a table to hold all important subtables and system_statistics
     while (1)

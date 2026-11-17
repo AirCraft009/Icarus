@@ -10,6 +10,9 @@
 #include "kernel/Processes/Scheduling/scheduler.h"
 #include <string.h>
 
+#include "kernel/Memory/paging.h"
+#include "kernel/util/shellio.h"
+
 static PID_t PID_GEN = 1;
 
 //find a process via it's PID
@@ -19,7 +22,7 @@ pcb_t * init_process
     PID_t parent_pid,
     bool is_priviledged,
     uint16_t priority,
-    uint64_t code_location,
+    uint64_t code_virt,
     const void * src_code,
     uint64_t code_size,
     uint64_t stack_size
@@ -28,7 +31,7 @@ pcb_t * init_process
 
     PID_t pid = PID_GEN++;
 
-    tcb_t * thread = create_thread(pid, is_priviledged, priority, code_location);
+    tcb_t * thread = create_thread(pid, is_priviledged, priority, code_virt);
 
     if (!thread) {
         return NULL;
@@ -48,16 +51,16 @@ pcb_t * init_process
         PT_EXECUTION_DISABLED | PT_WRITEABLE
     );
 
-    thread_map
+    struct_page_t * code_p = thread_map
     (
         thread,
-        code_location,
+        code_virt,
         MEM_SIZE_TO_PAGE_COUNT(code_size, DEFAULT_PAGE),
         DEFAULT_PAGE,
         0
     );
 
-    // leave mappings for now
+    // TODO: add mappings
 
 
     pcb_t * pcb = Imalloc(sizeof(pcb_t));
@@ -77,11 +80,10 @@ pcb_t * init_process
     thread_ptr->tcb = thread;
     thread_ptr->next_tcb = NULL;
     pcb->process_threads = thread_ptr;
+    pcb->head_thread = thread;
 
     // struct page is overridden here and no longer contains freeing info
-    memcpy((void *)code_location,(void *) src_code, code_size);
-    scheduler_add_thread(thread);
-    thread->state = THREAD_READY;
+    memcpy((void *) KERNEL_PHYS_TO_VIRT(code_p->page_addr[0]),(void *) src_code, code_size);
 
     return pcb;
 }
@@ -121,8 +123,8 @@ pcb_t * create_process
 
     tcb_t * tcb = pcb->process_threads->tcb;
     if (!tcb) return NULL;
-    tcb->state = THREAD_READY;
     scheduler_add_thread(tcb);
+    tcb->state = THREAD_READY;
     return pcb;
 }
 

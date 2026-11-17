@@ -16,7 +16,7 @@
 #include "kernel/Memory/memory_mapping.h"
 #include "page_definitions.h"
 #include "kernel/Memory/paging.h"
-#include "kernel/Memory/PMM/mem_map.h"
+#include "kernel/Memory/PMM/phys_alloc.h"
 #include <string.h>
 #include "kernel/util/shellio.h"
 

@@ -5,7 +5,7 @@
 #ifndef ICARUS_THREAD_H
 #define ICARUS_THREAD_H
 #include "page_definitions.h"
-#include "kernel/Memory/PMM/mem_map.h"
+#include "kernel/Memory/PMM/phys_alloc.h"
 #include "kernel/util/cpu_regs.h"
 typedef uint64_t PID_t;
 typedef uint64_t TID_t;

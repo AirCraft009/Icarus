@@ -7,7 +7,7 @@
 #include "kernel_helper.h"
 #include "kernel/Memory/memory_mapping.h"
 #include "kernel/Memory/paging.h"
-#include "kernel/Memory/PMM/mem_map.h"
+#include "kernel/Memory/PMM/phys_alloc.h"
 #include "kernel/util/shellio.h"
 
 virt_addr_t map_mmio(phys_addr_t phys_addr, uint64_t size, uint64_t flags) {

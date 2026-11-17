@@ -5,7 +5,7 @@
 #include "../include/icarus-libc/string.h"
 #include "kernel_helper.h"
 #include "../GDT/Tss.h"
-#include "kernel/Memory/PMM/mem_map.h"
+#include "kernel/Memory/PMM/phys_alloc.h"
 #include "kernel/util/shellio.h"
 
 

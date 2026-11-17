@@ -47,12 +47,18 @@ void undefined_instruction_handler(struct interrupt_frame *frame) {
     cursor cur = (cursor) {0,0};
     uint8_t *fault_instr = (uint8_t *)frame->cpu_regs.rip;
 
-    Iprintf( "undefined instruction: %i", *fault_instr);
+    Iprintf( "undefined instruction: %x\n", *fault_instr);
+
+    Iprintf("fulldata=");
+    for (int i = 0; i < 10; i++) {
+        Iprintf("%x ", fault_instr[i]);
+    }
 
     if (frame->cpu_regs.cs == 0) {
         // ring 0 (kernel mode #UD) is not recoverable (FOR NOW MUHAHAHAHA)
         __asm__ volatile ("cli; hlt");
     }
+    __asm__ volatile ("cli; hlt");
 
     //TODO: stop user process
 }
@@ -61,6 +67,11 @@ void undefined_instruction_handler(struct interrupt_frame *frame) {
 void timer_interrupt_handler(struct interrupt_frame *frame) {
     Iprintf("scheduling\n");
     schedule(frame, INT_TMR);
+}
+
+void double_fault_handler(struct interrupt_frame *frame) {
+    Iprintf("double-fault %x\n", frame->error_code);
+    __asm__ volatile ("cli; hlt");
 }
 
 void keyboard_interrupt_handler(struct interrupt_frame *frame) {
@@ -74,16 +85,19 @@ void c_isr(
     struct interrupt_frame *frame
 )
 {
-    //Iprintf("Registered w/ fault handler: %x\n", frame->vector);
+    Iprintf("Registered w/ fault handler: %x\n", frame->vector);
     switch (frame->vector) {
         case 0:
             // Divide error
             break;
 
-        case 8:
+        case 6:
             undefined_instruction_handler(frame);
             break;
 
+        case 8:
+            double_fault_handler(frame);
+            break;
 
         case 12:
             Stack_segment_fault(frame);

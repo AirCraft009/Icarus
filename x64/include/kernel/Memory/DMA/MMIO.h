@@ -7,7 +7,7 @@
 #pragma once
 #include <stdint.h>
 
-#include "kernel/Memory/PMM/mem_map.h"
+#include "kernel/Memory/PMM/phys_alloc.h"
 
 virt_addr_t map_mmio(phys_addr_t phys_addr, uint64_t size, uint64_t flags);
 

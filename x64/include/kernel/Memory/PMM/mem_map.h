@@ -50,14 +50,11 @@ typedef struct StructPage {
 
 void memmap_register_region(mem_map *mmap, uint64_t start, uint64_t end);
 void show_mem_map(mem_map *mmap, bool verbose);
-void show_mem(bool verbose);
 int map_dealloc_frame(mem_map *mmap, phys_addr_t phys_addr, uint64_t page_size);
 int zero_mem_region(mem_map *mmap, uint64_t start_addr, uint64_t end_addr);
 int set_mem_region(mem_map *mmap, uint64_t start_addr, uint64_t end_addr);
 void zero_mem_map(mem_map *mmap);
-phys_addr_t ialloc_kframe(uint64_t pages, PAGE_TYPE page_size);
-struct_page_t *ialloc_frames(uint64_t count, PAGE_TYPE page_size);
 phys_addr_t map_alloc_frame(mem_map * mmap, PAGE_TYPE page_size);
-int idealloc_frames(struct_page_t *info_page);
+phys_addr_t map_alloc_frame_contiguous(mem_map * mmap, uint64_t page_count);
 
 #endif //ICARUS_MEM_MAP_H

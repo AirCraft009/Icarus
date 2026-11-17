@@ -40,6 +40,7 @@ int page_in(page_map_l4_entry *pml4, const void *virt_addr, const void *phys_add
 int page_out(page_map_l4_entry *pml4, uint64_t virt_addr);
 phys_addr_t test_walk_table(page_map_l4_entry *pml4, const virt_addr_t virt_addr);
 bool is_mapped(page_map_l4_entry * pml4, virt_addr_t virt_addr);
+phys_addr_t walk_table(page_map_l4_entry * pml4, virt_addr_t virt_addr);
 
 
 #endif //ICARUS_PAGING_H

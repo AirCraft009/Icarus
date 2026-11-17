@@ -4,7 +4,7 @@
 
 #ifndef ICARUS_TAR_PARSE_H
 #define ICARUS_TAR_PARSE_H
-#include "kernel/Memory/PMM/mem_map.h"
+#include "kernel/Memory/PMM/phys_alloc.h"
 #include "kernel/util/multiboot2.h"
 
 

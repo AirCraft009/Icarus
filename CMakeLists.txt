@@ -81,6 +81,8 @@ add_executable(Icarus_kernel
         process_management.h
         x64/src/kernel/util/Hashmap.c
         x64/src/kernel/util/Hashmap.h
+        x64/src/kernel/Memory/PMM/phys_alloc.c
+        x64/include/kernel/Memory/PMM/phys_alloc.h
 )
 
 target_include_directories(Icarus_kernel PRIVATE x64/include
