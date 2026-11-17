@@ -30,32 +30,56 @@ static alloc_t * allocator;
 static cpuid_info CPUID_TABLE = {0};
 
 // 20 bytes, position independent, no stack use
-static const uint8_t fill_vga[] = {
-    0xB8, 0xFF, 0xFF, 0xFF, 0xFF,  // mov eax, 0xFFFFFFFF (outside of loop to check if regs are preserved)
+// static const uint8_t fill_vga[] = {
+//     0xB8, 0xFF, 0xFF, 0xFF, 0xFF,  // mov eax, 0xFFFFFFFF (outside of loop to check if regs are preserved)
+//     0xFC,                          // cld
+//     0xBF, 0x00, 0x80, 0x0B, 0x00,  // mov edi, 0xB8000
+//     0xB9, 0xE8, 0x03, 0x00, 0x00,  // mov ecx, 1000        (1000 dwords = 4000 bytes = 80x25x2)
+//     0xF3, 0xAB,                    // rep stosd
+//     0xEB, 0xF1                     // jmp -15 (back to cld, clears forever)
+// };
+//
+// static const uint8_t color_vga[] = {
+//     0xB8, 0x11, 0x11, 0x11, 0x11,  // mov eax, 0x11111111
+//     0xFC,                          // cld
+//     0xBF, 0x00, 0x80, 0x0B, 0x00,  // mov edi, 0xB8000
+//     0xB9, 0xE8, 0x03, 0x00, 0x00,  // mov ecx, 1000        (1000 dwords = 4000 bytes = 80x25x2)
+//     0xF3, 0xAB,                    // rep stosd
+//     0xEB, 0xF1                     // jmp -15 (back to cld, clears forever)
+// };
+// // 20 bytes, position independent, no stack use
+//
+// static const uint8_t clear_vga[] = {
+//     0xB8, 0x20, 0x07, 0x20, 0x07,  // mov eax, 0x07200720  (two cells: ' ' + attribute 0x07)
+//     0xFC,                          // cld
+//     0xBF, 0x00, 0x80, 0x0B, 0x00,  // mov edi, 0xB8000
+//     0xB9, 0xE8, 0x03, 0x00, 0x00,  // mov ecx, 1000        (1000 dwords = 4000 bytes = 80x25x2)
+//     0xF3, 0xAB,                    // rep stosd
+//     0xEB, 0xF1                     // jmp -15 (back to cld, clears forever)
+// };
+
+static const uint8_t clear_vga[] = {
+    0xB8, 0x20, 0x07, 0x00, 0x00,  // mov eax, 0x0720      (one cell: ' ' + attribute 0x07)
     0xFC,                          // cld
-    0xBF, 0x00, 0x80, 0x0B, 0x00,  // mov edi, 0xB8000
-    0xB9, 0xE8, 0x03, 0x00, 0x00,  // mov ecx, 1000        (1000 dwords = 4000 bytes = 80x25x2)
-    0xF3, 0xAB,                    // rep stosd
-    0xEB, 0xF1                     // jmp -15 (back to cld, clears forever)
+    0xBF, 0x00, 0x80, 0x0B, 0x00,  // mov edi, 0xB8000     (top-left cell)
+    0x66, 0xAB,                    // stosw                (store AX, one 16-bit cell, no rep)
+    0xEB, 0xF6                     // jmp -10 (back to cld, repeats forever)
+};
+
+static const uint8_t fill_vga[] = {
+    0xB8,  0xFF, 0xFF, 0xFF, 0xFF,  // mov eax, 0x0720      (one cell: ' ' + attribute 0x07)
+    0xFC,                          // cld
+    0xBF, 0x00, 0x80, 0x0B, 0x00,  // mov edi, 0xB8000     (top-left cell)
+    0x66, 0xAB,                    // stosw                (store AX, one 16-bit cell, no rep)
+    0xEB, 0xF6                     // jmp -10 (back to cld, repeats forever)
 };
 
 static const uint8_t color_vga[] = {
-    0xB8, 0x11, 0x11, 0x11, 0x11,  // mov eax, 0x11111111
+    0xB8, 0x11, 0x11, 0x11, 0x11,  // mov eax, 0x0720      (one cell: ' ' + attribute 0x07)
     0xFC,                          // cld
-    0xBF, 0x00, 0x80, 0x0B, 0x00,  // mov edi, 0xB8000
-    0xB9, 0xE8, 0x03, 0x00, 0x00,  // mov ecx, 1000        (1000 dwords = 4000 bytes = 80x25x2)
-    0xF3, 0xAB,                    // rep stosd
-    0xEB, 0xF1                     // jmp -15 (back to cld, clears forever)
-};
-// 20 bytes, position independent, no stack use
-
-static const uint8_t clear_vga[] = {
-    0xB8, 0x20, 0x07, 0x20, 0x07,  // mov eax, 0x07200720  (two cells: ' ' + attribute 0x07)
-    0xFC,                          // cld
-    0xBF, 0x00, 0x80, 0x0B, 0x00,  // mov edi, 0xB8000
-    0xB9, 0xE8, 0x03, 0x00, 0x00,  // mov ecx, 1000        (1000 dwords = 4000 bytes = 80x25x2)
-    0xF3, 0xAB,                    // rep stosd
-    0xEB, 0xF1                     // jmp -15 (back to cld, clears forever)
+    0xBF, 0x00, 0x80, 0x0B, 0x00,  // mov edi, 0xB8000     (top-left cell)
+    0x66, 0xAB,                    // stosw                (store AX, one 16-bit cell, no rep)
+    0xEB, 0xF6                     // jmp -10 (back to cld, repeats forever)
 };
 
 static const uint8_t loop[] = {
@@ -115,9 +139,9 @@ void kmain(uint32_t magic, struct multiboot_info *mboot) {
     create_initial_process(
         0,
         true,
-        11,
+        10,
         0x0000048000000000,
-        loop,
+        fill_vga,
         sizeof(fill_vga),
         DEFAULT_PAGE_SIZE * 4
         );
@@ -125,9 +149,9 @@ void kmain(uint32_t magic, struct multiboot_info *mboot) {
     create_process(
     0,
     true,
-    15,
+    11,
     0x0000048000000000,
-    loop,
+    clear_vga,
     sizeof(clear_vga),
     DEFAULT_PAGE_SIZE * 4
     );
@@ -135,21 +159,19 @@ void kmain(uint32_t magic, struct multiboot_info *mboot) {
     create_process(
     0,
     true,
-    9,
+    12,
     0x0000048000000000,
-    loop,
+    color_vga,
     sizeof(color_vga),
     DEFAULT_PAGE_SIZE * 4
     );
 
-
-    Iprintf("::::::::::::::::::::RAHHHHHHHHHHHHHHHHHHHH::::::::::::::::::::::::\n");
     __asm__ volatile ("sti");
     keyboard_ps2_init();
 
     lapic_write(LAPIC_TIMER_INITCNT, 0x0);
     lapic_write(LAPIC_LVT_TIMER, 32 | LAPIC_TIMER_PERIODIC);
-    lapic_write(LAPIC_TIMER_INITCNT, LAPIC_TICKS_PER_MS * 1020);
+    lapic_write(LAPIC_TIMER_INITCNT, LAPIC_TICKS_PER_MS * 1500);
 
     //TODO: build a table to hold all important subtables and system_statistics
     while (1)

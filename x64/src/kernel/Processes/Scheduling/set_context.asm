@@ -1,4 +1,5 @@
 global _switch_threads
+page_table_offset equ 184
 
 _switch_threads:
 
@@ -20,6 +21,13 @@ _switch_threads:
     ;   uint64_t ss
     ;   : 160 bytes
     ;
+    ; : 184 bytes
+    ; uint64_t page_table (phys addr)
+
+    ; switch the page-table this means iretq is being built on the returning stack
+
+    mov r15, qword [rdi + 184]
+    mov cr3, r15
 
     push qword [rdi + 152]       ; ss
     push qword [rdi + 144]       ; rsp

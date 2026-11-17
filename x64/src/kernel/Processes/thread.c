@@ -12,6 +12,8 @@
 #include "kernel/Memory/memory_mapping.h"
 #include "kernel/Memory/paging.h"
 #include <string.h>
+
+#include "kernel/util/shellio.h"
 // TID 0 is kernel
 static TID_t TID_GEN = 1;
 
@@ -60,18 +62,24 @@ tcb_t * create_thread(PID_t owner_id, bool is_priviledged, uint16_t priority, ui
  * @return 0 on success -1 if paging failed
  */
 int thread_supply_mem_region(tcb_t *thread, virt_addr_t virt_addr, ADDR_SUB_SPACE sub_space, struct_page_t * info_page, uint64_t permissions) {
+    Iprintf("pages: %x\n", virt_addr + (info_page->page_count - 1) * info_page->page_size);
+    Iprintf("pages: %x-%x-%x\n", virt_addr, info_page->page_count, (info_page->page_size));
+
+
     for (uint64_t i = 0; i < info_page->page_count; i++) {
         if (page_in(
             (void *) KERNEL_PHYS_TO_VIRT(thread->page_table),
-            (void *) SUB_SPACE_TO_ADDR(sub_space, virt_addr) + info_page->page_size * i,
+            // (void *) SUB_SPACE_TO_ADDR(sub_space, virt_addr) + info_page->page_size * i,
+            (void *) virt_addr + info_page->page_size * i,
             (void *) info_page->page_addr[i],
             info_page->page_size,
-            permissions ^ ((-!thread->privileged ^ permissions) & (1 << PT_USER_ACCESS))
+            permissions ^ ((-!thread->privileged ^ permissions) & (1 << PT_USER_ACCESS_SHIFT))
         ) != 0)
             return -1;
         thread->mem_info.fields[sub_space] += info_page->page_size;
         thread->mem_info.total_size += info_page->page_size;
     }
+
     return 0;
 }
 
@@ -121,7 +129,7 @@ struct_page_t * thread_map(tcb_t * thread, virt_addr_t virt_addr, uint64_t pages
     );
 }
 
-struct_page_t * thread_map_stack(tcb_t * thread, uint64_t pages, PAGE_TYPE p_size, uint64_t permissions)
+struct_page_t * thread_map_mapping(tcb_t * thread, uint64_t pages, PAGE_TYPE p_size, uint64_t permissions)
 {
     return thread_supply_new_mem_region
 (
@@ -135,12 +143,12 @@ struct_page_t * thread_map_stack(tcb_t * thread, uint64_t pages, PAGE_TYPE p_siz
 }
 
 
-struct_page_t * thread_map_mapping(tcb_t * thread, uint64_t pages, PAGE_TYPE p_size, uint64_t permissions)
+struct_page_t * thread_map_stack(tcb_t * thread, uint64_t pages, PAGE_TYPE p_size, uint64_t permissions)
 {
     return thread_supply_new_mem_region
 (
     thread,
-    THREAD_STACK_VIRT_ADDR,
+    ALIGN_UP(THREAD_STACK_VIRT_ADDR, PAGE_TYPE_TO_SIZE(p_size)) - pages * PAGE_TYPE_TO_SIZE(p_size),     // size of stack
     SUBSPACE_STACK,
     pages,
     p_size,

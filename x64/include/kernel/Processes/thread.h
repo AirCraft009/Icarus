@@ -24,8 +24,8 @@ typedef enum THREAD_STATE {
 /**
  * in virt addr space every tasks code segment starts at the same position
  */
-#define THREAD_MAPPINGS_VIRT_ADDR 0x00006FFFFFFFFFFF
-#define THREAD_STACK_VIRT_ADDR 0x00007FFFFFFFFFFF
+#define THREAD_MAPPINGS_VIRT_ADDR 0x00006FFFFFFFFFF0
+#define THREAD_STACK_VIRT_ADDR 0x00007FFFFFFFFFF0
 
 typedef enum {
     SUBSPACE_CODE,         // encompasses .text, .bss ... + heap
@@ -33,7 +33,14 @@ typedef enum {
     SUBSPACE_STACK,        // stack addr and down
 }ADDR_SUB_SPACE;
 
-#define SUB_SPACE_TO_ADDR(sub_space, code_start) ((sub_space == SUBSPACE_CODE)? code_start : (sub_space == SUBSPACE_MAPPING)? THREAD_MAPPINGS_VIRT_ADDR : THREAD_STACK_VIRT_ADDR)
+/**
+ * coverts a subspace to a virtual addr
+ *
+ *
+ * @param sub_space the subspace of type ADDR_SUB_SPACE
+ * @param virt this is either the addr if the subspace is equal to code or the size of the stack
+ */
+#define SUB_SPACE_TO_ADDR(sub_space, virt) ((sub_space == SUBSPACE_CODE)? virt : (sub_space == SUBSPACE_MAPPING)? THREAD_MAPPINGS_VIRT_ADDR : THREAD_STACK_VIRT_ADDR - virt)
 
 typedef struct THREAD_MEM_ENTRY {
     void * start;

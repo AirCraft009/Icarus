@@ -259,6 +259,7 @@ int enable_io_apics() {
     ioapic_info * info = ioapic_infos->apics;
     for (int i = 0; i < APIC_INFO->ioapic_count; ++i) {
         uint32_t info_size = enable_io_apic(MMIO_PHYS_TO_VIRT(APIC_INFO->ioapics[i].addr), info);
+        reserve_mem(APIC_INFO->ioapics[i].addr, DEFAULT_PAGE_SIZE);
         info = (ioapic_info *)((uint8_t *) info + info_size);
     }
     return 0;

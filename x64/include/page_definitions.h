@@ -85,7 +85,7 @@ typedef enum {
 } PAGE_TYPE;
 
 #define PAGE_TYPE_TO_SIZE(type) ((type == SUPER_PAGE) ? SUPER_PS : (type == HUGE_PAGE) ? HUGE_PS : PAGE_S)
-#define MEM_SIZE_TO_PAGE_COUNT(mem, page_type) (ALIGN_UP(mem, PAGE_TYPE_TO_SIZE(page_type) / PAGE_TYPE_TO_SIZE(page_type)))
+#define MEM_SIZE_TO_PAGE_COUNT(mem, page_type) (ALIGN_UP(mem, PAGE_TYPE_TO_SIZE(page_type)) / PAGE_TYPE_TO_SIZE(page_type))
 
 
 #endif //ICARUS_PAGE_DEFINITIONS_H

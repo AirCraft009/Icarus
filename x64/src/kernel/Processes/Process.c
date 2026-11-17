@@ -48,7 +48,7 @@ pcb_t * init_process
         thread,
         MEM_SIZE_TO_PAGE_COUNT(stack_size, DEFAULT_PAGE),
         DEFAULT_PAGE ,
-        PT_EXECUTION_DISABLED | PT_WRITEABLE
+        PT_WRITEABLE
     );
 
     struct_page_t * code_p = thread_map
