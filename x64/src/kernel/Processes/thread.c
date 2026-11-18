@@ -62,9 +62,6 @@ tcb_t * create_thread(PID_t owner_id, bool is_priviledged, uint16_t priority, ui
  * @return 0 on success -1 if paging failed
  */
 int thread_supply_mem_region(tcb_t *thread, virt_addr_t virt_addr, ADDR_SUB_SPACE sub_space, struct_page_t * info_page, uint64_t permissions) {
-    Iprintf("pages: %x\n", virt_addr + (info_page->page_count - 1) * info_page->page_size);
-    Iprintf("pages: %x-%x-%x\n", virt_addr, info_page->page_count, (info_page->page_size));
-
 
     for (uint64_t i = 0; i < info_page->page_count; i++) {
         if (page_in(
@@ -148,7 +145,7 @@ struct_page_t * thread_map_stack(tcb_t * thread, uint64_t pages, PAGE_TYPE p_siz
     return thread_supply_new_mem_region
 (
     thread,
-    ALIGN_UP(THREAD_STACK_VIRT_ADDR, PAGE_TYPE_TO_SIZE(p_size)) - pages * PAGE_TYPE_TO_SIZE(p_size),     // size of stack
+    ALIGN_UP(THREAD_STACK_VIRT_ADDR, DEFAULT_PAGE_SIZE) - (pages * PAGE_TYPE_TO_SIZE(p_size) + thread->mem_info.stack_size),     // stack bottom
     SUBSPACE_STACK,
     pages,
     p_size,

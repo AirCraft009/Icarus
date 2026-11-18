@@ -15,17 +15,19 @@
 
 static PID_t PID_GEN = 1;
 
-//find a process via it's PID
+//TODO: find a process via it's PID
+//TODO: fix logic issues when stopping the head-thread
+//          - possible issue with use after free
+//          - possible problem with general decommissioning
+
 
 pcb_t * init_process
 (
     PID_t parent_pid,
     bool is_priviledged,
     uint16_t priority,
-    uint64_t code_virt,
-    const void * src_code,
-    uint64_t code_size,
-    uint64_t stack_size
+    uint64_t stack_size,
+    virt_addr_t code_virt
 ) {
     //TODO: implement unified mapping layer and replace mappings w/ a better struct
 
@@ -51,18 +53,6 @@ pcb_t * init_process
         PT_WRITEABLE
     );
 
-    struct_page_t * code_p = thread_map
-    (
-        thread,
-        code_virt,
-        MEM_SIZE_TO_PAGE_COUNT(code_size, DEFAULT_PAGE),
-        DEFAULT_PAGE,
-        0
-    );
-
-    // TODO: add mappings
-
-
     pcb_t * pcb = Imalloc(sizeof(pcb_t));
     if (!pcb) {
         free(thread);
@@ -82,9 +72,6 @@ pcb_t * init_process
     pcb->process_threads = thread_ptr;
     pcb->head_thread = thread;
 
-    // struct page is overridden here and no longer contains freeing info
-    memcpy((void *) KERNEL_PHYS_TO_VIRT(code_p->page_addr[0]),(void *) src_code, code_size);
-
     return pcb;
 }
 
@@ -95,8 +82,7 @@ pcb_t * init_process
  *
  * @param is_priviledged is the process kernel or userspace
  * @param priority initial priority of the process
- * @param src_code location of copy to execute in mem TODO: expand / replace w/ disk access
- * @param code_size size of code in bytes
+ * @param exec_start start of execution (virt addr)
  * @return NULL on failure (if any allocation fails all is freed and the thread is never dispatched)
  */
 pcb_t * create_process
@@ -104,19 +90,15 @@ pcb_t * create_process
     PID_t parent_pid,
     bool is_priviledged,
     uint16_t priority,
-    uint64_t code_location,
-    const void * src_code,
-    uint64_t code_size,
-    uint64_t stack_size
+    uint64_t stack_size,
+    virt_addr_t exec_start
 ) {
     pcb_t * pcb = init_process(
         parent_pid,
         is_priviledged,
         priority,
-        code_location,
-        src_code,
-        code_size,
-        stack_size
+        stack_size,
+        exec_start
         );
 
     if (!pcb) return NULL;
@@ -135,8 +117,7 @@ pcb_t * create_process
  *
  * @param is_priviledged is the process kernel or userspace
  * @param priority initial priority of the process
- * @param code_location location of copy to execute in mem TODO: expand / replace w/ disk access
- * @param code_size size of code in bytes
+ * @param exec_start virt addr of the execution start
  * @return NULL on failure (if any allocation fails all is freed and the thread is never dispatched)
  */
 pcb_t * create_initial_process
@@ -144,19 +125,15 @@ pcb_t * create_initial_process
     PID_t parent_pid,
     bool is_priviledged,
     uint16_t priority,
-    uint64_t code_location,
-    const void * code_src,
-    uint64_t code_size,
-    uint64_t stack_size
+    uint64_t stack_size,
+    virt_addr_t exec_start
 ) {
     pcb_t * pcb = init_process(
     parent_pid,
     is_priviledged,
     priority,
-    code_location,
-    code_src,
-    code_size,
-    stack_size
+    stack_size,
+    exec_start
     );
 
     if (!pcb) return NULL;
@@ -175,4 +152,70 @@ void process_exit(pcb_t * pcb) {
         thread_ptr = thread_ptr->next_tcb;
     }
 
+}
+
+
+/**
+ *
+ * maps new frames into code space
+ *
+ * @param process process to map into
+ * @param virt_addr start virtual addr
+ * @param pages number of pages
+ * @param p_size size per page
+ * @param permissions the page perms
+ * @return FRAME_ALLOC_FAILED or the struct_page of the alloc mem
+ */
+struct_page_t * process_map
+(
+    pcb_t * process,
+    virt_addr_t virt_addr,
+    uint64_t pages,
+    PAGE_TYPE p_size,
+    uint64_t permissions
+)
+{
+    struct_page_t * sp = thread_map(process->head_thread, virt_addr, pages, p_size, permissions);
+    if ((virt_addr_t) sp == FRAME_ALLOC_FAILED) {
+        return sp;
+    };
+
+    // head_thread is the last thread in this linked list
+    thread_descriptor_t * thread_ptr = process->process_threads;
+    while (&thread_ptr->tcb != &process->head_thread) {
+        thread_ptr->tcb->mem_info.code_size += pages * PAGE_TYPE_TO_SIZE(p_size);
+    }
+    return sp;
+}
+
+
+/**
+ *
+ * maps new frames into the stack_space
+ *
+ * @param process process to map into
+ * @param pages number of pages
+ * @param p_size size per page
+ * @param permissions the page perms
+ * @return -1 on failed alloc or map 0 on success
+ */
+struct_page_t * process_map_stack
+(
+    pcb_t * process,
+    uint64_t pages,
+    PAGE_TYPE p_size,
+    uint64_t permissions
+)
+{
+    struct_page_t * sp =thread_map_stack(process->head_thread, pages, p_size, permissions);
+    if ((virt_addr_t) sp == FRAME_ALLOC_FAILED) {
+        return sp;
+    };
+
+    // head_thread is the last thread in this linked list
+    thread_descriptor_t * thread_ptr = process->process_threads;
+    while (&thread_ptr->tcb != &process->head_thread) {
+        thread_ptr->tcb->mem_info.stack_size += pages * PAGE_TYPE_TO_SIZE(p_size);
+    }
+    return sp;
 }
