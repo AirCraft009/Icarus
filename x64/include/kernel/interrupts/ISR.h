@@ -27,4 +27,7 @@ struct interrupt_frame {
 }__attribute__((packed));
 _Static_assert(sizeof(struct interrupt_frame) == 200, "asm/C frame mismatch");
 
+
+#define TIMER_INT 0x20
+
 #endif //ICARUS_ISR_H

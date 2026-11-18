@@ -132,7 +132,7 @@ build_user() {
     echo "building user programs for initramfs"
     while IFS= read -r -d '' source_file; do
         local relative_path="${source_file#"$USER_DIR"/}"
-        local binary_file="$INIT_RAM_FS/bin/${relative_path}.o"
+        local binary_file="$INIT_RAM_FS/bin/${relative_path}"
         mkdir -p "$(dirname "$binary_file")"
 
         echo "CC  $relative_path"

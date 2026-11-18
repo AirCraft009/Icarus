@@ -50,6 +50,7 @@ unsigned int tar_parse(virt_addr_t address)
 {
 
     unsigned int i;
+    unsigned int file_c = 0;
 
     for (i = 0; ; i++)
     {
@@ -63,7 +64,7 @@ unsigned int tar_parse(virt_addr_t address)
 
 
         if (header->typeflag[0] == '0' || header->typeflag[0] == '\0')
-            files[i] = header;
+            files[file_c++] = header;
 
         // Move to the next 512-byte-aligned header
         address += ((size / 512) + 1) * 512;
@@ -72,7 +73,7 @@ unsigned int tar_parse(virt_addr_t address)
             address += 512;
     }
 
-    return i;
+    return file_c;
 }
 
 static uint64_t parse_octal(const char *text, uint64_t length) {
@@ -116,8 +117,8 @@ int tar_mb2_init(struct multiboot_tag_module * mb2_module) {
     Iprintf("tar_mb2_init %i\n", count);
     files = (struct tar_header **) Imalloc(sizeof (struct tar_header *) * count);
     int check_count = tar_parse(KERNEL_PHYS_TO_VIRT(mb2_module->mod_start));
-    char * data = (void *) files[3] + 512;
-    Iprintf("%s, %c%c%c\n",files[3]->filename, data[1], data[2], data[3]);
+    char * data = (void *) files[0] + 512;
+    Iprintf("%s, %c%c%c\n",files[0]->filename, data[1], data[2], data[3]);
     if (check_count != count) {return -1;}
     return check_count;
 }

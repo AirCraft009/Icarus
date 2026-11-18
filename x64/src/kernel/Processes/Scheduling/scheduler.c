@@ -183,6 +183,15 @@ void scheduler_init(tcb_t * tcb) {
     ++thread_count;
 }
 
+/**
+ * starts running the Scheduler with a 'ms_tick' length interval
+ */
+void scheduler_start(uint64_t ms_tick) {
+    lapic_write(LAPIC_TIMER_INITCNT, 0x0);
+    lapic_write(LAPIC_LVT_TIMER, TIMER_INT | LAPIC_TIMER_PERIODIC);
+    lapic_write(LAPIC_TIMER_INITCNT, LAPIC_TICKS_PER_MS * ms_tick);
+}
+
 
 /**
  * adds a thread to the scheduler and disables ints

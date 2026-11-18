@@ -6,6 +6,8 @@
 #define ICARUS_ELF_PARSE_H
 #include <stdint.h>
 
+#include "kernel/Processes/Process.h"
+
 #define EI_NIDENT 16
 //access for e_ident
 #define EI_MAG0 0x0
@@ -104,5 +106,7 @@ typedef struct ELF_FILE_HEADERS {
     elf_header_t header;
     elf_program_header_t program_headers[];
 }elf_file_t;
+
+int load_elf(elf_header_t * elf_file, PID_t current_pid, bool is_privileged, uint16_t priority);
 
 #endif //ICARUS_ELF_PARSE_H

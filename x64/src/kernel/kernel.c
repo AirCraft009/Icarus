@@ -20,6 +20,8 @@
 #include "kernel/Processes/Process.h"
 #include "kernel/Processes/thread.h"
 #include "kernel/Processes/Scheduling/scheduler.h"
+#include "kernel/util/Files/elf.h"
+#include "kernel/util/Files/tar.h"
 #include "syscall/syscall.h"
 
 extern uint64_t *gdt_descriptor;
@@ -134,44 +136,22 @@ void kmain(uint32_t magic, struct multiboot_info *mboot) {
     Iprintf("Ticks per Ms: (%i)", LAPIC_TICKS_PER_MS);
     page_in(Kernel_PML4_TABLE, (void *)0xB8000, (void *)0xB8000, DEFAULT_PAGE_SIZE, PT_WRITEABLE | 1 <<PT_USER_ACCESS_SHIFT);
 
-
-    Iprintf("::::::::::::::::::::SCHEDULING::::::::::::::::::::::::\n");
-    create_initial_process(
+    pcb_t * init = create_initial_process
+    (
         0,
         true,
-        10,
-        0x0000048000000000,
-        fill_vga,
-        sizeof(fill_vga),
-        DEFAULT_PAGE_SIZE * 4
-        );
-
-    create_process(
-    0,
-    true,
-    11,
-    0x0000048000000000,
-    clear_vga,
-    sizeof(clear_vga),
-    DEFAULT_PAGE_SIZE * 4
+        200,
+        DEFAULT_PAGE_SIZE,
+        0x40000
     );
 
-    create_process(
-    0,
-    true,
-    12,
-    0x0000048000000000,
-    color_vga,
-    sizeof(color_vga),
-    DEFAULT_PAGE_SIZE * 4
-    );
-
+    struct_page_t * ps = process_map(init, 0x40000, 1, DEFAULT_PAGE, PT_WRITEABLE);
+    memcpy((void *) KERNEL_PHYS_TO_VIRT(ps->page_addr[0]), loop, sizeof(loop));
+    load_elf((elf_header_t *) files[0], 0, true, 100);
     __asm__ volatile ("sti");
     keyboard_ps2_init();
+    scheduler_start(1000);
 
-    lapic_write(LAPIC_TIMER_INITCNT, 0x0);
-    lapic_write(LAPIC_LVT_TIMER, 32 | LAPIC_TIMER_PERIODIC);
-    lapic_write(LAPIC_TIMER_INITCNT, LAPIC_TICKS_PER_MS * 1500);
 
     //TODO: build a table to hold all important subtables and system_statistics
     while (1)

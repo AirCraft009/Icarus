@@ -111,7 +111,7 @@ void c_isr(
             page_fault_handler(frame);
             break;
 
-        case 32:
+        case TIMER_INT:
             // Timer IRQ
             timer_interrupt_handler(frame);
             break;
