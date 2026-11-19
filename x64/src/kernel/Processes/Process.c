@@ -44,7 +44,6 @@ pcb_t * init_process
     page_map_l4_entry * cur_pml4 = (page_map_l4_entry *) read_cr3();
     memcpy( (void *) KERNEL_PHYS_TO_VIRT(proc_pml4), (void *) KERNEL_PHYS_TO_VIRT(cur_pml4), sizeof(page_map_l4_entry) * 512);
     thread->page_table = proc_pml4;
-
     thread_map_stack
     (
         thread,
@@ -138,7 +137,7 @@ pcb_t * create_initial_process
 
     if (!pcb) return NULL;
 
-    tcb_t * tcb = pcb->process_threads->tcb;
+    tcb_t * tcb = pcb->head_thread;
     if (!tcb) return NULL;
     scheduler_init(tcb);
     tcb->state = THREAD_READY;
@@ -181,9 +180,12 @@ struct_page_t * process_map
     };
 
     // head_thread is the last thread in this linked list
+    Iprintf("ON LIST\n");
     thread_descriptor_t * thread_ptr = process->process_threads;
-    while (&thread_ptr->tcb != &process->head_thread) {
+    while (thread_ptr->tcb != process->head_thread && thread_ptr->tcb != NULL) {
+        Iprintf("ON LIST 1 %x == %x\n", &process->head_thread, &thread_ptr->tcb);
         thread_ptr->tcb->mem_info.code_size += pages * PAGE_TYPE_TO_SIZE(p_size);
+        thread_ptr = thread_ptr->next_tcb;
     }
     return sp;
 }

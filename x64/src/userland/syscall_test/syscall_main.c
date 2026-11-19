@@ -1,10 +1,10 @@
 #include <string.h>
 #include <stdlib.h>
 
+uint8_t * videoMemStart = (uint8_t *)  0xB8000UL;
 int main(){
-    char buf[12] = "hello world";
-    buf[11] = '\0';
-    char buf2[12] = "";
-    memcpy(buf, buf2, 12);
-    return strlen(buf);
+    while (1) {
+        videoMemStart[0] = 0xFF;
+        videoMemStart[1] = 0xFF;
+    }
 }

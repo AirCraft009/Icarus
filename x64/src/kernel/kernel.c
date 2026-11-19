@@ -113,7 +113,6 @@ void kmain(uint32_t magic, struct multiboot_info *mboot) {
 
     allocator = alloc_init(DEFAULT_PAGE_SIZE * 510, (void *) KERNEL_HEAP_ADDR);
     handle_ACPI();
-    Iprintf("HERE\n");
     parse_tar_module();
 
     init_cpuid(&CPUID_TABLE);
@@ -133,24 +132,26 @@ void kmain(uint32_t magic, struct multiboot_info *mboot) {
     if (ps2_controller_init() != 0)
         Iprintf("The PS2 Controller doesn't work\n");
 
-    Iprintf("Ticks per Ms: (%i)", LAPIC_TICKS_PER_MS);
+    Iprintf("Ticks per Ms: (%i)\n", LAPIC_TICKS_PER_MS);
     page_in(Kernel_PML4_TABLE, (void *)0xB8000, (void *)0xB8000, DEFAULT_PAGE_SIZE, PT_WRITEABLE | 1 <<PT_USER_ACCESS_SHIFT);
 
     pcb_t * init = create_initial_process
     (
         0,
         true,
-        200,
+        1100,
         DEFAULT_PAGE_SIZE,
         0x40000
     );
-
     struct_page_t * ps = process_map(init, 0x40000, 1, DEFAULT_PAGE, PT_WRITEABLE);
-    memcpy((void *) KERNEL_PHYS_TO_VIRT(ps->page_addr[0]), loop, sizeof(loop));
-    load_elf((elf_header_t *) files[0], 0, true, 100);
+    memcpy((void *) KERNEL_PHYS_TO_VIRT(ps->page_addr[0]), color_vga, sizeof(color_vga));
+
+    char * data = (void *) files[0] + 512;
+    if (load_elf((elf_header_t *) data, 0, true, 100) != 0)
+        __asm__ volatile ("cli; hlt");
     __asm__ volatile ("sti");
     keyboard_ps2_init();
-    scheduler_start(1000);
+    scheduler_start(10000);
 
 
     //TODO: build a table to hold all important subtables and system_statistics

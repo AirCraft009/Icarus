@@ -158,7 +158,7 @@ build_tar(){
   stage_iso
   build_user
   echo "$INIT_RAM_FS"
-  tar --format=ustar --owner=0 --group=0 --numeric-owner -cvf "$INIT_RAM_FS/initramfs.tar" -C "$INIT_RAM_FS/src" .
+  tar --format=ustar --owner=0 --group=0 --numeric-owner -cvf "$INIT_RAM_FS/initramfs.tar" -C "$INIT_RAM_FS/bin" .
   echo "TAR $TAR_FILE"
   cp "$BUILT_TAR_FILE" "$TAR_FILE"
 }

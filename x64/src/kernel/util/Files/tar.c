@@ -112,13 +112,9 @@ uint64_t tar_count_files(const void *archive) {
 }
 
 int tar_mb2_init(struct multiboot_tag_module * mb2_module) {
-    Iprintf("tar_mb2_init\n");
     uint64_t count = tar_count_files((void *) KERNEL_PHYS_TO_VIRT(mb2_module->mod_start));
-    Iprintf("tar_mb2_init %i\n", count);
     files = (struct tar_header **) Imalloc(sizeof (struct tar_header *) * count);
     int check_count = tar_parse(KERNEL_PHYS_TO_VIRT(mb2_module->mod_start));
-    char * data = (void *) files[0] + 512;
-    Iprintf("%s, %c%c%c\n",files[0]->filename, data[1], data[2], data[3]);
     if (check_count != count) {return -1;}
     return check_count;
 }
