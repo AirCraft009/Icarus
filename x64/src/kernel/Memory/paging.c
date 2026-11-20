@@ -314,7 +314,7 @@ static int walk_page_directory(const pd_entry_t *page_directory, uint64_t base,
             if (region_list_add(list, entry_base, HUGE_PS, perms) != 0) return -1;
         } else {
             const PageTableEntry *page_table =
-                (const PageTableEntry *)PHYS_TO_VIRT((uint64_t)entry->page_ppn << 12);
+                (const PageTableEntry *)PHYS_TO_PTR((uint64_t)entry->page_ppn << 12);
             if (walk_page_table(page_table, entry_base, perms, list) != 0) return -1;
         }
     }
@@ -337,7 +337,7 @@ static int walk_pdpt(const pdpt_entry_t *pdpt, uint64_t base,
             if (region_list_add(list, entry_base, SUPER_PS, perms) != 0) return -1;
         } else {
             const pd_entry_t *page_directory =
-                (const pd_entry_t *)PHYS_TO_VIRT((uint64_t)entry->page_ppn << 12);
+                (const pd_entry_t *)PHYS_TO_PTR((uint64_t)entry->page_ppn << 12);
             if (walk_page_directory(page_directory, entry_base, perms, list) != 0) return -1;
         }
     }
@@ -366,7 +366,7 @@ mapped_region_t *page_table_get_regions(const page_map_l4_entry *table){
                                        entry->execution_disabled);
 
         const pdpt_entry_t *pdpt =
-            (const pdpt_entry_t *)PHYS_TO_VIRT((uint64_t)entry->page_ppn << 12);
+            (const pdpt_entry_t *)PHYS_TO_PTR((uint64_t)entry->page_ppn << 12);
 
         if (walk_pdpt(pdpt, base, perms, &list) != 0) {
             page_regions_free(list.head);

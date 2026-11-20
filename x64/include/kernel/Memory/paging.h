@@ -12,7 +12,7 @@
 
 
 #define ENTRIES_PER_TABLE 512
-#define PHYS_TO_VIRT(phys)  ((void *)(uintptr_t)(phys))
+#define PHYS_TO_PTR(phys)  ((void *)(uintptr_t)(phys))
 #define REGION_ALLOC(size)  Imalloc(size)
 #define REGION_FREE(ptr)    free(ptr)
 

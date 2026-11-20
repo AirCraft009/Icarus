@@ -149,9 +149,11 @@ void kmain(uint32_t magic, struct multiboot_info *mboot) {
     char * data = (void *) files[0] + 512;
     if (load_elf((elf_header_t *) data, 0, true, 100) != 0)
         __asm__ volatile ("cli; hlt");
+
+    Iprintf("_____________--------------------------------\n");
     __asm__ volatile ("sti");
     keyboard_ps2_init();
-    scheduler_start(10000);
+    scheduler_start(1000);
 
 
     //TODO: build a table to hold all important subtables and system_statistics
