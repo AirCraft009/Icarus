@@ -65,29 +65,23 @@ int load_elf(elf_header_t * elf_file, PID_t current_pid, bool is_privileged, uin
     elf_program_header_t * p_headers = (elf_program_header_t *) ((void *) elf_file + elf_file->e_phoff);
     pcb_t * pcb = create_process(current_pid, is_privileged, priority, STANDARD_STACK_PAGES * DEFAULT_PAGE_SIZE, elf_file->e_entry);
 
-    Iprintf("LOADING ELF %x\n", elf_file->e_entry);
     for (int i = 0; i < elf_file->e_phnum; i++) {
-        Iprintf("program: %x \n", p_headers[i].p_type);
         // only handle the static LOAD types
         //TODO: expand to dynamic
         if (p_headers[i].p_type != PT_LOAD)
             continue;
 
-        Iprintf("program1 \n");
         // load section into mem
         uint64_t offset_in_page   = p_headers[i].p_vaddr & (DEFAULT_PAGE_SIZE - 1);
         uint64_t segment_base     = p_headers[i].p_vaddr - offset_in_page;
         uint64_t segment_pages    = ALIGN_UP(offset_in_page + p_headers[i].p_memsz, DEFAULT_PAGE_SIZE) / DEFAULT_PAGE_SIZE;
 
         struct_page_t * sp = ialloc_frames(segment_pages, DEFAULT_PAGE);
-        Iprintf("program2 \n");
         if (sp == (void *) FRAME_ALLOC_FAILED)
             return -1;
 
         // TODO: replace with mapping functions from Process.h
-        Iprintf("program \n");
         for (uint64_t j = 0; j < sp->page_count; j ++) {
-            Iprintf("AAA program AAA\n");
             if (page_in
             (
                 (void *) KERNEL_PHYS_TO_VIRT(pcb->head_thread->page_table),
@@ -97,10 +91,8 @@ int load_elf(elf_header_t * elf_file, PID_t current_pid, bool is_privileged, uin
                 PT_USER_ACCESS | PT_WRITEABLE
             )!= 0)
                 return -1;
-            Iprintf("aaaa");
         }
 
-        Iprintf("Program header: %x -> %x\n", p_headers[i].p_vaddr, p_headers[i].p_memsz);
         uint8_t * frame_start = (uint8_t *) KERNEL_PHYS_TO_VIRT(sp->page_addr[0]);
         memset(frame_start, 0, segment_pages * DEFAULT_PAGE_SIZE);
         memcpy(frame_start + offset_in_page,
