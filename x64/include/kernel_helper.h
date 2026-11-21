@@ -96,6 +96,13 @@ static __inline void wrmsr(uint32_t msr, uint64_t val) {
     cpuSetMSR(msr, (uint32_t) val, val >> 0x20);
 }
 
+static __inline uint64_t rmsr(uint32_t msr) {
+    uint32_t eax, edx;
+    cpuGetMSR(msr, &eax, &edx);
+    return ((uint64_t) (edx ) << 32) | eax;
+}
+
+
 
 
 // outb and inb from https://www.osdev.org/howtos/2/

@@ -173,7 +173,7 @@ case "${1:-kernel}" in
     full_iso)     build_kernel; build_tar; build_iso;;
     clean)        clean ;;
     *)
-        echo "usage: $0 [kernel|iso|clean]" >&2
+        echo "usage: $0 [kernel|iso|full_iso|clean]" >&2
         exit 1
         ;;
 esac

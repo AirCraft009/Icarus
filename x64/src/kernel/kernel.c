@@ -136,22 +136,44 @@ void kmain(uint32_t magic, struct multiboot_info *mboot) {
     (
         0,
         true,
-        1,
+        10,
         DEFAULT_PAGE_SIZE,
         0x40000
     );
     struct_page_t * ps = process_map(init, 0x40000, 1, DEFAULT_PAGE, PT_WRITEABLE);
     memcpy((void *) KERNEL_PHYS_TO_VIRT(ps->page_addr[0]), color_vga, sizeof(color_vga));
 
-    char * data = (void *) files[0] + 512;
-    char * data1 = (void *) files[1] + 512;
-    if (load_elf((elf_header_t *) data, 0, false, 100) != 0)
-    if (load_elf((elf_header_t *) data1, 0, false, 100) != 0)
-        __asm__ volatile ("cli; hlt");
+    pcb_t * p2 = create_process
+(
+    0,
+    true,
+    15,
+    DEFAULT_PAGE_SIZE,
+    0x40000
+);
+    struct_page_t * ps2 = process_map(p2, 0x40000, 1, DEFAULT_PAGE, PT_WRITEABLE);
+    memcpy((void *) KERNEL_PHYS_TO_VIRT(ps2->page_addr[0]), fill_vga, sizeof(color_vga));
+
+    pcb_t * p3 = create_process
+(
+0,
+true,
+20,
+DEFAULT_PAGE_SIZE,
+0x40000
+);
+    struct_page_t * ps4 = process_map(p3, 0x40000, 1, DEFAULT_PAGE, PT_WRITEABLE);
+    memcpy((void *) KERNEL_PHYS_TO_VIRT(ps4->page_addr[0]), clear_vga, sizeof(color_vga));
+
+    // char * data = (void *) files[0] + 512;
+    // char * data1 = (void *) files[1] + 512;
+    // if (load_elf((elf_header_t *) data, 0, false, 100) != 0)
+    // if (load_elf((elf_header_t *) data1, 0, false, 100) != 0)
+        // __asm__ volatile ("cli; hlt");
 
     __asm__ volatile ("sti");
     keyboard_ps2_init();
-    scheduler_start(1000);
+    scheduler_start(5000);
 
 
     //TODO: build a table to hold all important subtables and system_statistics

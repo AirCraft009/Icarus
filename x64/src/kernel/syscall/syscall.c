@@ -19,7 +19,12 @@ extern void syscall_entry(void);
  */
 int syscall_init() {
     uint8_t * kernel_stack = Imalloc(SYSCALL_STACK_SIZE);
-    cpuSetMSR(MSR_EFER, 0x1, 0x0 );     // set bit 0 (syscall enable) I hope you get why
+
+    //read and patch instead of directly writing EFER.SCE as it can lead to an invalid 
+    uint64_t efer = rmsr(MSR_EFER);
+    efer |= 1ULL;                  // EFER.SCE
+    wrmsr(MSR_EFER, efer);
+
     // [47:32] AND 0xFFFC is the cs selector for kernel space
     // [47:32] + 0x8 is the cs selector for kernel space
     // ([63:48] + 0x8) or 3 is ss user space

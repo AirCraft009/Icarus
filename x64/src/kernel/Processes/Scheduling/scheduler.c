@@ -49,6 +49,7 @@ tcb_t * scheduler_pick_next_thread(INTERRUPT_SRC src) {
     uint16_t max_priority = UINT16_MAX;
 
     while (active_tcb) {
+        Iprintf("considering: %x (%x)\n", active_tcb->tid, active_tcb);
         if (active_tcb->state != THREAD_READY ) {
             active_tcb = active_tcb->next;
             continue;
@@ -60,6 +61,7 @@ tcb_t * scheduler_pick_next_thread(INTERRUPT_SRC src) {
             continue;
         }
 
+        Iprintf("picking: %x", active_tcb->tid);
         best_tcb = active_tcb;
         active_tcb->active_priority = saturating_dec16(active_tcb->active_priority);        // still decrease priority bc
         max_priority = active_tcb->active_priority;
