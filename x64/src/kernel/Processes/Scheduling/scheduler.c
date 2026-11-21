@@ -36,8 +36,6 @@ tcb_t *last_tcb = NULL;
 // the currently switched to pcb
 tcb_t *running_tcb = NULL;
 
-tcb_t dummy_tcb = {0};
-
 uint64_t thread_count = 0;
 /**
  * returns the next thread in the queue.
@@ -135,18 +133,17 @@ void context_switch(tcb_t *next_tcb, struct interrupt_frame *frame, INTERRUPT_SR
         &frame->cpu_regs,
         sizeof(cpu_push_frame)
         );
-    if (running_tcb != &dummy_tcb) {        // don't change state of dummy bc it has NULL val
 
-        //TODO: expand for other sources
-        switch (src) {
-            case INT_TMR: {
-                running_tcb->state = THREAD_READY;
-            }
-            default: {
-                running_tcb->state = THREAD_READY;
-            };
+    //TODO: expand for other sources
+    switch (src) {
+        case INT_TMR: {
+            running_tcb->state = THREAD_READY;
         }
+        default: {
+            running_tcb->state = THREAD_READY;
+        };
     }
+
     // test_walk_table((page_map_l4_entry *) KERNEL_PHYS_TO_VIRT(next_tcb->page_table), next_tcb->code_start);
 
     next_tcb->state = THREAD_RUNNING;
@@ -159,6 +156,7 @@ void context_switch(tcb_t *next_tcb, struct interrupt_frame *frame, INTERRUPT_SR
 
 void schedule(struct interrupt_frame *frame, INTERRUPT_SRC src) {
     tcb_t * next = scheduler_pick_next_thread(src);
+    Iprintf("next: %x\n", next->tid);
     context_switch(next, frame, src);
 }
 
@@ -166,18 +164,15 @@ void schedule(struct interrupt_frame *frame, INTERRUPT_SRC src) {
  * initializes the scheduler and adds the kernel as the first task
  */
 void scheduler_init(tcb_t * tcb) {
-    //minimal init for the dummy thread
-    dummy_tcb.state = THREAD_DENIED;     // make sure process doesn't get scheduled
-    dummy_tcb.priority = 0;
 
-    running_tcb = &dummy_tcb;
-    last_tcb = &dummy_tcb;
+    running_tcb = tcb;
+    last_tcb = tcb;
     last_tcb->next = NULL;
-    last_tcb->prev = tcb;
+    last_tcb->prev = NULL;
 
     top_tcb = tcb;
     //test_walk_table((void *)KERNEL_PHYS_TO_VIRT(tcb->page_table), (void *)KERNEL_PHYS_TO_VIRT(2 * HUGE_PS));
-    top_tcb->next = last_tcb;
+    top_tcb->next = NULL;
     top_tcb->prev = NULL;
     tcb->state = THREAD_READY;
     ++thread_count;
@@ -205,12 +200,6 @@ void scheduler_add_thread(tcb_t *tcb) {
     ++thread_count;
 }
 
-/**
- * removes a thread and disables ints
- */
-void stop_thread(tcb_t * tcb) {
-    __asm volatile ("cli");
-}
 
 
 /**
@@ -260,7 +249,12 @@ tcb_t * spawn_thread(pcb_t * parent, virt_addr_t p_virt) {
     return tcb;
 }
 int scheduler_stop_thread(tcb_t * thread) {
+    __asm__ volatile ("cli");
     thread->next->prev = thread->prev;
     thread->prev->next = thread->next;
     return thread_exit(thread);
+}
+
+int scheduler_kill_current_thread() {
+    return scheduler_stop_thread(running_tcb);
 }

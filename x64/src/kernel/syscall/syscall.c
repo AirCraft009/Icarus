@@ -5,22 +5,27 @@
 #include "syscall.h"
 
 #include "kernel_helper.h"
-#include "syscall_definition.h"
+#include "icarus-libc/syscall_definition.h"
 #include "kernel/Memory/alloc.h"
+#include "kernel/Processes/Scheduling/scheduler.h"
 #include "kernel/syscall/core_information_table.h"
 #include "kernel/util/shellio.h"
+
+#define SYSCALL_STACK_SIZE (4 * DEFAULT_PAGE_SIZE)
+extern void syscall_entry(void);
 
 /**
  * initialises syscalls and the nec MSR regs for one core
  */
 int syscall_init() {
+    uint8_t * kernel_stack = Imalloc(SYSCALL_STACK_SIZE);
     cpuSetMSR(MSR_EFER, 0x1, 0x0 );     // set bit 0 (syscall enable) I hope you get why
     // [47:32] AND 0xFFFC is the cs selector for kernel space
     // [47:32] + 0x8 is the cs selector for kernel space
     // ([63:48] + 0x8) or 3 is ss user space
     // ([63:48] + 0x10) or 3 is cs user space
     wrmsr(MSR_STAR, (0x10ULL << 48) | (0x08ULL << 32));     // cs selector = 0x8; ss = 0x10;
-    wrmsr(MSR_LSTAR, 0x0);                                  // entry point for the syscall
+    wrmsr(MSR_LSTAR, (uint64_t) syscall_entry);                                  // entry point for the syscall
     wrmsr(MSR_FMASK, 0x2);                                  // disable IF flags so that syscall isn't interrupted
     wrmsr(MSR_GSBASE, 0x0);                                 // GSBASE for the usr can be 0 on init per core
     wrmsr(MSR_FSBASE, 0x0);                                 // TODO: IMPLEMENT PER THREAD LEAVE EMPTY FOR NOW
@@ -29,6 +34,7 @@ int syscall_init() {
     // has scratch space & holds kernel rsp and usr rsp on syscall
     lcore_ktable_t * ktable = Imalloc(sizeof(lcore_ktable_t));
     ktable->selfPointer = (uint64_t)ktable;
+    ktable->kernelStackTop = ((uint64_t) kernel_stack + SYSCALL_STACK_SIZE) & ~0xFULL;
     wrmsr(MSR_KernelGSBase, ktable->selfPointer);
     return 0;
 }
@@ -47,7 +53,8 @@ long syscall_exit_thread() {
 }
 
 long syscall_exit_process() {
-    Iprintf("exit process");
+    Iprintf("exit process\n");
+    scheduler_kill_current_thread();
     return 0;
 }
 

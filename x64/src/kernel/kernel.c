@@ -41,14 +41,14 @@ static cpuid_info CPUID_TABLE = {0};
 //     0xEB, 0xF1                     // jmp -15 (back to cld, clears forever)
 // };
 //
-// static const uint8_t color_vga[] = {
-//     0xB8, 0x11, 0x11, 0x11, 0x11,  // mov eax, 0x11111111
-//     0xFC,                          // cld
-//     0xBF, 0x00, 0x80, 0x0B, 0x00,  // mov edi, 0xB8000
-//     0xB9, 0xE8, 0x03, 0x00, 0x00,  // mov ecx, 1000        (1000 dwords = 4000 bytes = 80x25x2)
-//     0xF3, 0xAB,                    // rep stosd
-//     0xEB, 0xF1                     // jmp -15 (back to cld, clears forever)
-// };
+static const uint8_t color_vga[] = {
+    0xB8, 0x11, 0x11, 0x11, 0x11,  // mov eax, 0x11111111
+    0xFC,                          // cld
+    0xBF, 0x00, 0x80, 0x0B, 0x00,  // mov edi, 0xB8000
+    0xB9, 0xE8, 0x03, 0x00, 0x00,  // mov ecx, 1000        (1000 dwords = 4000 bytes = 80x25x2)
+    0xF3, 0xAB,                    // rep stosd
+    0xEB, 0xF1                     // jmp -15 (back to cld, clears forever)
+};
 // // 20 bytes, position independent, no stack use
 //
 // static const uint8_t clear_vga[] = {
@@ -76,13 +76,13 @@ static const uint8_t fill_vga[] = {
     0xEB, 0xF6                     // jmp -10 (back to cld, repeats forever)
 };
 
-static const uint8_t color_vga[] = {
-    0xB8, 0x11, 0x11, 0x11, 0x11,  // mov eax, 0x0720      (one cell: ' ' + attribute 0x07)
-    0xFC,                          // cld
-    0xBF, 0x00, 0x80, 0x0B, 0x00,  // mov edi, 0xB8000     (top-left cell)
-    0x66, 0xAB,                    // stosw                (store AX, one 16-bit cell, no rep)
-    0xEB, 0xF6                     // jmp -10 (back to cld, repeats forever)
-};
+// static const uint8_t color_vga[] = {
+//     0xB8, 0x11, 0x11, 0x11, 0x11,  // mov eax, 0x0720      (one cell: ' ' + attribute 0x07)
+//     0xFC,                          // cld
+//     0xBF, 0x00, 0x80, 0x0B, 0x00,  // mov edi, 0xB8000     (top-left cell)
+//     0x66, 0xAB,                    // stosw                (store AX, one 16-bit cell, no rep)
+//     0xEB, 0xF6                     // jmp -10 (back to cld, repeats forever)
+// };
 
 static const uint8_t loop[] = {
     0xEB, 0xFE
@@ -104,13 +104,10 @@ void kmain(uint32_t magic, struct multiboot_info *mboot) {
         Iprintf("init_multiboot2 failed, error while parsing mulitboot2 struct\n");
         __asm__ volatile ("cli; hlt"); // Completely hangs the computer
     };
-
     // call lgdt from high addr again (addr: 0x1088FD)
     gdt_init();
 
-
     write_cr3((uint64_t) KERNEL_VIRT_TO_PHYS(&Kernel_PML4_TABLE[0]));
-
     allocator = alloc_init(DEFAULT_PAGE_SIZE * 510, (void *) KERNEL_HEAP_ADDR);
     handle_ACPI();
     parse_tar_module();
@@ -122,10 +119,10 @@ void kmain(uint32_t magic, struct multiboot_info *mboot) {
     }
 
 
-    // if (syscall_init() != 0) {
-    //     Iprintf("Syscalls can't be executed! !!!halting!!!\n");
-    //     __asm__ volatile ("cli; hlt"); // Completely hangs the computer
-    // }
+    if (syscall_init() != 0) {
+        Iprintf("Syscalls can't be executed! !!!halting!!!\n");
+        __asm__ volatile ("cli; hlt"); // Completely hangs the computer
+    }
     enable_apic();
     enable_io_apics();
 
@@ -139,7 +136,7 @@ void kmain(uint32_t magic, struct multiboot_info *mboot) {
     (
         0,
         true,
-        1100,
+        1,
         DEFAULT_PAGE_SIZE,
         0x40000
     );
@@ -147,7 +144,9 @@ void kmain(uint32_t magic, struct multiboot_info *mboot) {
     memcpy((void *) KERNEL_PHYS_TO_VIRT(ps->page_addr[0]), color_vga, sizeof(color_vga));
 
     char * data = (void *) files[0] + 512;
-    if (load_elf((elf_header_t *) data, 0, true, 100) != 0)
+    char * data1 = (void *) files[1] + 512;
+    if (load_elf((elf_header_t *) data, 0, false, 100) != 0)
+    if (load_elf((elf_header_t *) data1, 0, false, 100) != 0)
         __asm__ volatile ("cli; hlt");
 
     __asm__ volatile ("sti");

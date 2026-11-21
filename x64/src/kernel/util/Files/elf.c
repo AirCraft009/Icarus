@@ -71,6 +71,8 @@ int load_elf(elf_header_t * elf_file, PID_t current_pid, bool is_privileged, uin
         if (p_headers[i].p_type != PT_LOAD)
             continue;
 
+        //Iprintf("p_header(%x)\n", p_headers[i].p_vaddr);
+
         // load section into mem
         uint64_t offset_in_page   = p_headers[i].p_vaddr & (DEFAULT_PAGE_SIZE - 1);
         uint64_t segment_base     = p_headers[i].p_vaddr - offset_in_page;
