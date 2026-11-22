@@ -136,10 +136,10 @@ tcb_t * scheduler_pick_next_thread(INTERRUPT_SRC src) {
 
     best_tcb->active_priority = best_tcb->priority + 1;
 
-    if (best_tcb->next == NULL) {  // is last
+    if (best_tcb->next == last_tcb) {  // is last
         return best_tcb;                // correct position alr
     }
-    else if (best_tcb->prev == NULL) {       // is top
+    else if (best_tcb == top_tcb) {       // is top
         top_tcb = best_tcb->next;
         top_tcb->prev = NULL;
     }
