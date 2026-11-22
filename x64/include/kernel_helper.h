@@ -16,7 +16,7 @@
 
 #define INVALID_PHYS_ADDR UINT64_MAX
 // page size for each bitmap entry
-#define DEFAULT_PAGE_SIZE 4096
+#define DEFAULT_PAGE_SIZE 4096ULL
 
 #define ALIGN_UP(addr, align)   (((addr) + (align) - 1) & ~((align) - 1))
 #define ALIGN_DOWN(addr, align) ((addr) & ~((align) - 1))

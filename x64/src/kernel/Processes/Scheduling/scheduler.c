@@ -58,6 +58,8 @@ void context_switch(tcb_t *next_tcb, struct interrupt_frame *frame, INTERRUPT_SR
         sizeof(cpu_push_frame)
         );
 
+
+    execute_switch:
     //TODO: expand for other sources
     switch (src) {
         case INT_TMR: {
@@ -67,8 +69,6 @@ void context_switch(tcb_t *next_tcb, struct interrupt_frame *frame, INTERRUPT_SR
             running_tcb->state = THREAD_READY;
         };
     }
-
-    execute_switch:
 
     next_tcb->state = THREAD_RUNNING;
     running_tcb = next_tcb;
@@ -91,6 +91,7 @@ tcb_t * scheduler_pick_next_thread(INTERRUPT_SRC src) {
     uint16_t max_priority = UINT16_MAX;
 
     while (active_tcb) {
+        Iprintf("picking: %x in state %x\n", active_tcb->tid, active_tcb->state);
         if (active_tcb->state != THREAD_READY && active_tcb->state != THREAD_NEW) {
             active_tcb = active_tcb->next;
             continue;
@@ -102,7 +103,6 @@ tcb_t * scheduler_pick_next_thread(INTERRUPT_SRC src) {
             continue;
         }
 
-        Iprintf("picking: %x\n", active_tcb->tid);
         best_tcb = active_tcb;
         active_tcb->active_priority = saturating_dec16(active_tcb->active_priority);        // still decrease priority bc
         max_priority = active_tcb->active_priority;

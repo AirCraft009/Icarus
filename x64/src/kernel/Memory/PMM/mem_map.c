@@ -55,6 +55,10 @@ void memmap_register_region(mem_map *mmap, uint64_t start, uint64_t end) {
 
     // pad to 64 bits
     mmap->bitmap.size += mmap->regions[mmap->region_count].qword_count * 64;
+
+    uint64_t real_end = mmap->regions[mmap->region_count].bitmap_start_addr + real_frames;
+    uint64_t padding = ALIGN_UP(real_frames, 64) - real_frames;
+    bitmap_set_len(&mmap->bitmap, real_end, padding);
     mmap->region_count++;
 }
 
@@ -142,6 +146,102 @@ void show_mem_map(mem_map *mmap, bool verbose) {
 phys_addr_t map_alloc_frame(mem_map * mmap, PAGE_TYPE page_size) {
     uint8_t smallest_unit = PAGE_TYPE_TO_SIZE(page_size) / DEFAULT_PAGE_SIZE;           // how many blocsk need to be contiguous
     return map_alloc_frame_contiguous(mmap,smallest_unit);
+}
+
+struct_page_t * map_alloc_frames(mem_map * mmap, uint32_t pages, PAGE_TYPE page_size) {
+    uint64_t smallest_unit = PAGE_TYPE_TO_SIZE(page_size) / DEFAULT_PAGE_SIZE;
+    struct_page_t * info = NULL;
+    uint32_t curr_count = 0;
+    /*
+     *  I know micro-optimizations aren't a priority but this was js such a good. idea..
+     *  I've updated the contiguous frame generator to use trailing and leading zeros
+     *  as well as an optimized (I tried my best) way to find holes of size n in uint64
+     *
+     *  That coupled w/ padding the bitmap to be 64 bit aligned
+     *  so that I can use 64 bit ints to get better cache utilization (mb/hopefully) should be pretty good yk?
+     */
+
+    //Iprintf("allocating %i pages from (%s)\n", page_count, calling);
+
+    for (uint32_t i = 0; i < mmap->region_count; i++) {
+        mem_region * region = &mmap->regions[i];
+        if (region->free_frames < smallest_unit) {
+            continue;
+        }
+
+        uint32_t carried_run = 0;
+        uint32_t run_start = 0;
+        for (uint32_t qword_index = 0; qword_index < region->qword_count; ++qword_index) {
+            if (curr_count == pages)
+                return info;
+
+            uint64_t qword = *(uint64_t *) &mmap->bitmap.data[region->bitmap_start_addr / 8 + qword_index * 8];
+            //Iprintf("wording: ind(%x); (%x)=(%x)\n", i, qword_index, qword);
+
+            if (qword == 0) {                                  // fully free handle separately bc it's ub for trailing 0's
+                //("zero'd out ig?");
+                if (carried_run == 0)
+                    run_start = qword_index * 64;
+                carried_run += 64;
+                if (carried_run >= smallest_unit) {
+                    phys_addr_t start = region->start_addr + run_start * DEFAULT_PAGE_SIZE;
+                    //Iprintf("region[%i] frames = %x\n", i, region->free_frames);
+                    //Iprintf("allocatedd1: (%x - %x)\n", start, start + page_count * DEFAULT_PAGE_SIZE);
+                    set_mem_region(mmap, start, start + smallest_unit * DEFAULT_PAGE_SIZE);
+                    if (info)
+                        info->page_addr[curr_count] = start;
+                    else
+                        info = (struct_page_t *) start;
+                    ++curr_count;
+                    carried_run = 0;
+                    run_start = 0;
+                }
+                continue;
+            }
+
+            unsigned leading_free = __builtin_ctzll(qword);
+            if (carried_run + leading_free >= smallest_unit) {     // free frames at the start
+                if (carried_run == 0)
+                    run_start = qword_index * 64;
+                phys_addr_t start = region->start_addr + run_start * DEFAULT_PAGE_SIZE;
+                //Iprintf("region[%i] frames = %x\n", i, region->free_frames);
+                //Iprintf("allocatedd2: (%x - %x)\n", start, start + page_count * DEFAULT_PAGE_SIZE);
+                set_mem_region(mmap, start, start + smallest_unit * DEFAULT_PAGE_SIZE);
+                if (info)
+                    info->page_addr[curr_count] = start;
+                else
+                    info = (struct_page_t *) start;
+                ++curr_count;
+                carried_run = 0;
+                run_start = 0;
+                continue;
+            }
+
+            if (smallest_unit <= 64) {                        // hole fully inside this word
+                int bit_index = find_run_in_word(qword, smallest_unit);
+                //Iprintf("word: %x - %i)\n", qword, bit_index);
+                if (bit_index >= 0) {
+                    phys_addr_t start = region->start_addr + (qword_index * 64 + bit_index) * DEFAULT_PAGE_SIZE;
+                    set_mem_region(mmap, start, start + smallest_unit * DEFAULT_PAGE_SIZE);
+                    //Iprintf("region[%i] frames = %x\n", i, region->free_frames);
+                    //Iprintf("allocatedd3: (%x - %x)\n", start, start + page_count * DEFAULT_PAGE_SIZE);
+                    if (info)
+                        info->page_addr[curr_count] = start;
+                    else
+                        info = (struct_page_t *) start;
+                    ++curr_count;
+                    carried_run = 0;
+                    run_start = 0;
+                    continue;
+                }
+            }
+
+            unsigned trailing_free = __builtin_clzll(qword);   // free frames at the top, carried on
+            carried_run = trailing_free;
+            run_start = qword_index * 64 + 64 - trailing_free;
+        }
+    }
+    return (struct_page_t *) FRAME_ALLOC_FAILED;
 }
 
 // 0x18000 / 0x1b3000

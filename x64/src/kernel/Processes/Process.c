@@ -42,7 +42,8 @@ pcb_t * init_process
     page_map_l4_entry * proc_pml4 = (page_map_l4_entry *) KERNEL_VIRT_TO_PHYS(ialloc_frames(1, DEFAULT_PAGE));      // get physical addr struct page is mapped into k_space
     // current pml4 js has the higher mapped kernel, by copying its zeroing lower and higher mapping the kernel
     page_map_l4_entry * cur_pml4 = (page_map_l4_entry *) read_cr3();
-    memcpy( (void *) KERNEL_PHYS_TO_VIRT(proc_pml4), (void *) KERNEL_PHYS_TO_VIRT(cur_pml4), sizeof(page_map_l4_entry) * 512);
+    memcpy(&((page_map_l4_entry *) KERNEL_PHYS_TO_VIRT(proc_pml4))[256], &((page_map_l4_entry *) KERNEL_PHYS_TO_VIRT(cur_pml4))[256], sizeof(page_map_l4_entry) * 256);
+    memset((void *) KERNEL_PHYS_TO_VIRT(proc_pml4), 0, sizeof(page_map_l4_entry) * 256);
     thread->page_table = proc_pml4;
     thread_map_stack
     (

@@ -107,7 +107,7 @@ typedef struct ELF_FILE_HEADERS {
     elf_program_header_t program_headers[];
 }elf_file_t;
 
-int load_elf(elf_header_t * elf_file, PID_t current_pid, bool is_privileged, uint16_t priority);
-int load_init_elf(elf_header_t * elf_file, PID_t current_pid, bool is_privileged, uint16_t priority);
+pcb_t * load_elf(elf_header_t * elf_file, PID_t current_pid, bool is_privileged, uint16_t priority);
+pcb_t * load_init_elf(elf_header_t * elf_file, PID_t current_pid, bool is_privileged, uint16_t priority);
 
 #endif //ICARUS_ELF_PARSE_H

@@ -21,28 +21,28 @@
  * @param header The ELF in memory
  * @return 0 (OK), -1(FAIL)
  */
-int elf_validate_headers(elf_header_t * header) {
+uint32_t elf_validate_headers(elf_header_t * header) {
     if (strncmp(&header->e_ident_c[EI_MAG0], ELF_MAGIC, 4) != 0)
-        return -1;
+        return 1;
 
     // only allow statically linked exec
     //TODO: expand to dynamic
     if (header->e_type != ET_EXEC)
-        return -2;
+        return 2;
 
     if (header->e_version == 0)
-        return -3;
+        return 3;
 
     if (header->e_machine != EM_X86_64)
-        return -4;
+        return 4;
 
     if (header->e_ehsize != 64)
-        return -5;
+        return 5;
 
     return 0;
 }
 
-int elf_base(elf_header_t *elf_file, pcb_t *pcb) {
+pcb_t * elf_base(elf_header_t *elf_file, pcb_t *pcb) {
     elf_program_header_t * p_headers = (elf_program_header_t *) ((void *) elf_file + elf_file->e_phoff);
 
     for (int i = 0; i < elf_file->e_phnum; i++) {
@@ -59,9 +59,9 @@ int elf_base(elf_header_t *elf_file, pcb_t *pcb) {
         uint64_t segment_pages    = ALIGN_UP(offset_in_page + p_headers[i].p_memsz, DEFAULT_PAGE_SIZE) / DEFAULT_PAGE_SIZE;
 
         struct_page_t * sp = ialloc_frames(segment_pages, DEFAULT_PAGE);
-        Iprintf("sp: %x", sp->page_addr[0]);
+
         if (sp == (void *) FRAME_ALLOC_FAILED)
-            return -1;
+            return NULL;
 
         // TODO: replace with mapping functions from Process.h
         for (uint64_t j = 0; j < sp->page_count; j ++) {
@@ -73,16 +73,18 @@ int elf_base(elf_header_t *elf_file, pcb_t *pcb) {
                     DEFAULT_PAGE_SIZE,
                     PT_USER_ACCESS | PT_WRITEABLE
                 )!= 0)
-                return -1;
+                return NULL;
         }
 
+        //TODO: fix the memcpy wrongfully polluting mem after the frame_start.
+        // fix= copy each frame separately or map the process bindings into kernel page_table and then map contig.
         uint8_t * frame_start = (uint8_t *) KERNEL_PHYS_TO_VIRT(sp->page_addr[0]);
         memset(frame_start, 0, segment_pages * DEFAULT_PAGE_SIZE);
         memcpy(frame_start + offset_in_page,
                (uint8_t *) elf_file + p_headers[i].p_offset,
                p_headers[i].p_filesz);
     }
-    return 0;
+    return pcb;
 }
 
 /**
@@ -98,11 +100,11 @@ int elf_base(elf_header_t *elf_file, pcb_t *pcb) {
  * @param priority the scheduling priority (floor(parent_prio))
  * @return 0 on sucess -1 on fail (invalid header, allocation failure, etc...)
  */
-int load_elf(elf_header_t * elf_file, PID_t current_pid, bool is_privileged, uint16_t priority) {
-    int validate = elf_validate_headers(elf_file);
+pcb_t * load_elf(elf_header_t * elf_file, PID_t current_pid, bool is_privileged, uint16_t priority) {
+    uint32_t validate = elf_validate_headers(elf_file);
     if (validate != 0) {
         Iprintf("ELF validation failed: %i\n", validate);
-        return validate;
+        return NULL;
     }
 
     pcb_t * pcb = create_process(current_pid, is_privileged, priority, STANDARD_STACK_PAGES * DEFAULT_PAGE_SIZE, elf_file->e_entry);
@@ -123,11 +125,11 @@ int load_elf(elf_header_t * elf_file, PID_t current_pid, bool is_privileged, uin
  * @param priority the scheduling priority (floor(parent_prio))
  * @return 0 on sucess -1 on fail (invalid header, allocation failure, etc...)
  */
-int load_init_elf(elf_header_t * elf_file, PID_t current_pid, bool is_privileged, uint16_t priority) {
-    int validate = elf_validate_headers(elf_file);
+pcb_t * load_init_elf(elf_header_t * elf_file, PID_t current_pid, bool is_privileged, uint16_t priority) {
+    uint32_t validate = elf_validate_headers(elf_file);
     if (validate != 0) {
         Iprintf("ELF validation failed: %i\n", validate);
-        return validate;
+        return NULL;
     }
 
     pcb_t * pcb = create_initial_process(current_pid, is_privileged, priority, STANDARD_STACK_PAGES * DEFAULT_PAGE_SIZE, elf_file->e_entry);
