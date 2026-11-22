@@ -146,7 +146,7 @@ pcb_t * create_initial_process
 void process_exit(pcb_t * pcb) {
     thread_descriptor_t * thread_ptr = pcb->process_threads;
     while (thread_ptr) {
-        scheduler_stop_thread(thread_ptr->tcb);
+        scheduler_kill_thread(thread_ptr->tcb);
         thread_ptr = thread_ptr->next_tcb;
     }
 

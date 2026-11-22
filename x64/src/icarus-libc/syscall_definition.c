@@ -1,7 +1,7 @@
 //
 // Created by Mxsxll on 6.11.2026.
 //
-#include "icarus-libc/syscall_definition.h"
+#include "syscall_definition.h"
 #include "icarus-libc/stdlib.h"
 #include <stdint.h>
 

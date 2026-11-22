@@ -248,13 +248,25 @@ tcb_t * spawn_thread(pcb_t * parent, virt_addr_t p_virt) {
     //TODO: find a way to cleanly handle return from thread_supply_mem
     return tcb;
 }
-int scheduler_stop_thread(tcb_t * thread) {
+int scheduler_kill_thread(tcb_t * thread) {
     __asm__ volatile ("cli");
+    if (thread == top_tcb) {
+        top_tcb = thread->next;
+        goto end;
+    }
+    if (thread == last_tcb) {
+        thread->prev->next = NULL;
+        last_tcb = thread->prev;
+        goto end;
+    }
+
     thread->next->prev = thread->prev;
     thread->prev->next = thread->next;
+
+    end:
     return thread_exit(thread);
 }
 
 int scheduler_kill_current_thread() {
-    return scheduler_stop_thread(running_tcb);
+    return scheduler_kill_thread(last_tcb);
 }

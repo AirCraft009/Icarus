@@ -96,7 +96,7 @@ void kmain(uint32_t magic, struct multiboot_info *mboot) {
 
     __asm__ volatile ("sti");
     keyboard_ps2_init();
-    scheduler_start(200);
+    scheduler_start(2000);
 
 
     //TODO: build a table to hold all important subtables and system_statistics
