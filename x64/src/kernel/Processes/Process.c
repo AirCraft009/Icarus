@@ -105,7 +105,6 @@ pcb_t * create_process
     tcb_t * tcb = pcb->process_threads->tcb;
     if (!tcb) return NULL;
     scheduler_add_thread(tcb);
-    tcb->state = THREAD_READY;
     return pcb;
 }
 
@@ -140,7 +139,6 @@ pcb_t * create_initial_process
     tcb_t * tcb = pcb->head_thread;
     if (!tcb) return NULL;
     scheduler_init(tcb);
-    tcb->state = THREAD_READY;
     return pcb;
 }
 

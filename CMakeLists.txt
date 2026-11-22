@@ -83,7 +83,7 @@ add_executable(Icarus_kernel
         x64/src/kernel/util/Hashmap.h
         x64/src/kernel/Memory/PMM/phys_alloc.c
         x64/include/kernel/Memory/PMM/phys_alloc.h
-        x64/src/userland/screen_test/screen_main.c
+        x64/src/userland/memory_t/main.c
 )
 
 target_include_directories(Icarus_kernel PRIVATE x64/include

@@ -1,9 +1,13 @@
 #include <stdlib.h>
 
-volatile uint8_t * videoMemStart = (uint8_t *)  0xB8000UL;
+#define VIDEO_MEM ((volatile uint8_t *)0xB8000UL)
 int main(){
     while (1) {
-        videoMemStart[0] = 0xFF;
-        videoMemStart[1] = 0xFF;
+        VIDEO_MEM[0] = 'C';
+        VIDEO_MEM[1] = 0xF0;
+        // // for (int i = 1; i < 80 * 25 * 2; i+=2) {
+        // //     VIDEO_MEM[i-1] = 'B';
+        // //     VIDEO_MEM[i] = 0xF0;
+        // // }
     }
 }

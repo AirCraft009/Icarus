@@ -155,6 +155,7 @@ build_iso() {
 }
 
 build_tar(){
+  rm -rf "$INIT_RAM_FS"
   stage_iso
   build_user
   echo "$INIT_RAM_FS"
