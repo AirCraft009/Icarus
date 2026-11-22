@@ -50,3 +50,12 @@
     - mappings are passed to each thread
   - work in interrupts for IO-APIC devs 
 
+
+## IO & Datasources
+
+- implement the datasource abstraction for:
+  - memory access
+  - ram-fs
+  - frame-buffer
+  - hard_disk files
+  - io-devices
