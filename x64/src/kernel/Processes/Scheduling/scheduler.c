@@ -141,6 +141,7 @@ tcb_t * scheduler_pick_next_thread(INTERRUPT_SRC src) {
     }
     else if (best_tcb->prev == NULL) {       // is top
         top_tcb = best_tcb->next;
+        top_tcb->prev = NULL;
     }
     else {
         // swap ptrs
