@@ -75,7 +75,6 @@ void context_switch(tcb_t *next_tcb, struct interrupt_frame *frame, INTERRUPT_SR
     // send the EOI as late as possible
     lapic_write(LAPIC_EOI, 0);
     //TODO: restore stack ptr to frame and add 16.
-    Iprintf("start: %x\n", next_tcb->registers.psp.rip);
     _switch_threads(&next_tcb->registers);
 }
 
@@ -91,7 +90,6 @@ tcb_t * scheduler_pick_next_thread(INTERRUPT_SRC src) {
     uint16_t max_priority = UINT16_MAX;
 
     while (active_tcb) {
-        Iprintf("picking: %x in state %x\n", active_tcb->tid, active_tcb->state);
         if (active_tcb->state != THREAD_READY && active_tcb->state != THREAD_NEW) {
             active_tcb = active_tcb->next;
             continue;
@@ -109,15 +107,11 @@ tcb_t * scheduler_pick_next_thread(INTERRUPT_SRC src) {
         active_tcb = active_tcb->next;
     }
 
-    Iprintf("running\n");
-
     if (max_priority == UINT16_MAX){       // last has next ptr to NULL (no task is ready)
-        Iprintf("none found\n");
         switch (src) {
             // no ready task at all so check if the currently running task can be ran again.
             //TODO: expand for more interrupts
             case INT_TMR: {
-                Iprintf("considering: %x (%x)\n", last_tcb->registers.psp.rip, last_tcb);
                 best_tcb = last_tcb;
                 // is already in the correct position js update the priority
                 best_tcb->active_priority = best_tcb->priority + 1;
@@ -136,7 +130,7 @@ tcb_t * scheduler_pick_next_thread(INTERRUPT_SRC src) {
 
     best_tcb->active_priority = best_tcb->priority + 1;
 
-    if (best_tcb->next == last_tcb) {  // is last
+    if (best_tcb == last_tcb) {  // is last
         return best_tcb;                // correct position alr
     }
     else if (best_tcb == top_tcb) {       // is top
@@ -155,15 +149,11 @@ tcb_t * scheduler_pick_next_thread(INTERRUPT_SRC src) {
     best_tcb->prev = last_tcb;
     best_tcb->next = NULL;
     last_tcb = best_tcb;
-    Iprintf("-----------DONE (%x)----------------\n", best_tcb);
-    Iprintf("Page tables (%x)\n", best_tcb->page_table );
-    Iprintf("ADDR(%x)", walk_table((void *)KERNEL_PHYS_TO_VIRT(best_tcb->page_table), 0x400000));
     return best_tcb;
 }
 
 void schedule(struct interrupt_frame *frame, INTERRUPT_SRC src) {
     tcb_t * next = scheduler_pick_next_thread(src);
-    Iprintf("next: %x\n", next->registers.psp.rip);
     context_switch(next, frame, src);
 }
 
