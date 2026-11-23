@@ -1,4 +1,4 @@
-#include "hash_table.h"
+#include "kernel/util/hash_table.h"
 #include <stdlib.h>
 
 #include "kernel/Memory/alloc.h"
