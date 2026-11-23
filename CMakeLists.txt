@@ -80,11 +80,11 @@ add_executable(Icarus_kernel
         process_management.c
         process_management.h
         x64/src/kernel/util/hash_table.c
-        x64/src/kernel/util/hash_table.h
+        x64/include/kernel/util/hash_table.h
         x64/src/kernel/Datapoints/Datapoint.c
         x64/include/kernel/Datapoints/Datapoint.h
         x64/include/kernel/Datapoints/Datapoint.h
-        x64/src/kernel/util/hash_table.h
+        x64/include/kernel/util/hash_table.h
 )
 
 target_include_directories(Icarus_kernel PRIVATE x64/include
