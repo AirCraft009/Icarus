@@ -14,7 +14,7 @@
 #include "kernel/util/shellio.h"
 
 static PID_t PID_GEN = 1;
-
+//TODO: be careful with privileged processes and syscalls (THEY CAN'T USE THEM)
 //TODO: find a process via it's PID
 //TODO: fix logic issues when stopping the head-thread
 //          - possible issue with use after free

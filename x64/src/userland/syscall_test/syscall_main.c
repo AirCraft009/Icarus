@@ -2,7 +2,7 @@
 
 #define VIDEO_MEM ((volatile uint8_t *)0xB8000UL)
 int main(){
-    VIDEO_MEM[0] = 'C';
-    VIDEO_MEM[1] = 0xF0;
+    while (1)
+        write(0, "HELLO WORLD", 12, 0);
     return 0;
 }

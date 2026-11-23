@@ -42,3 +42,10 @@ GS is js a ptr to core local data.\
 W/ swapgs it js switches between the user gs and the kernel gs.\
 These structs contain the important things for e.g rsp.\
 And by swapping I can keep the rsp from usermode alive and restore it again.
+
+
+### RING 0
+
+- When ring 0 threads run they cannot use the syscall interface.
+- o64 sysret forces a CPL change from 0 -> 3
+  - this crashes privileged threads bc they access data mapped for ring 0

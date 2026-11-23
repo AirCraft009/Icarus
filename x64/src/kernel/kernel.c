@@ -88,8 +88,8 @@ void kmain(uint32_t magic, struct multiboot_info *mboot) {
     char * data = (void *) files[0] + 512;
     char * data1 = (void *) files[1] + 512;
     Iprintf("%s\n", files[0]->filename);
-    pcb_t * a = load_init_elf((elf_header_t *) data1, 0, true, 10);
-    pcb_t * b =  load_elf((elf_header_t *) data, 0, true, 109);
+    pcb_t * a = load_init_elf((elf_header_t *) data1, 0, false, 10);
+    pcb_t * b =  load_elf((elf_header_t *) data, 0, false, 109);
 
     page_in((void *)KERNEL_PHYS_TO_VIRT(a->head_thread->page_table), (void *)0xB8000, (void *)0xB8000, DEFAULT_PAGE_SIZE, PT_WRITEABLE | 1 <<PT_USER_ACCESS_SHIFT);
     page_in((void *)KERNEL_PHYS_TO_VIRT(b->head_thread->page_table), (void *)0xB8000, (void *)0xB8000, DEFAULT_PAGE_SIZE, PT_WRITEABLE | 1 <<PT_USER_ACCESS_SHIFT);

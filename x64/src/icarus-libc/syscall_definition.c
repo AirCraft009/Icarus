@@ -9,7 +9,6 @@
 
 static inline long icarus_syscall3(uint64_t number, uint64_t first, uint64_t second, uint64_t third)
 {
-    __asm__ volatile ("cli");
     long result;
     __asm__ volatile ("syscall"
                       : "=a"(result)
@@ -24,8 +23,7 @@ void exit(int status)
     for (;;) { }
 }
 
-long write(int descriptor, const void *buffer, unsigned long length)
+long write(uint64_t descriptor, const void *buffer, unsigned long length, uint64_t offset)
 {
-    Iprintf("---------fine-here----------\n");
     return icarus_syscall3(SYS_WRITE, descriptor, (long)buffer, (long)length);
 }

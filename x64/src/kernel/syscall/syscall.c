@@ -32,7 +32,7 @@ int syscall_init() {
     wrmsr(MSR_STAR, (0x10ULL << 48) | (0x08ULL << 32));     // cs selector = 0x8; ss = 0x10;
     wrmsr(MSR_LSTAR, (uint64_t) syscall_entry);                                  // entry point for the syscall
     wrmsr(MSR_FMASK, 0x2);                                  // disable IF flags so that syscall isn't interrupted
-    wrmsr(MSR_GSBASE, 0x0);                                 // GSBASE for the usr can be 0 on init per core
+    wrmsr(MSR_GSBASE, 0x10);                                 // GSBASE for the usr can be 0 on init per core
     wrmsr(MSR_FSBASE, 0x0);                                 // TODO: IMPLEMENT PER THREAD LEAVE EMPTY FOR NOW
 
     //KERNEL GSBASE
@@ -47,9 +47,10 @@ int syscall_init() {
 /**
  * writes data at 'buf' with length 'len' to a data_consumer 'output_id'
  */
-long syscall_write(uint64_t output_id, uint8_t *buf, uint64_t len, uint64_t offset) {
+long syscall_write(uint64_t data_id, uint8_t *buf, uint64_t len, uint64_t offset) {
     // for now js write to console and ignore the output_id
-    write_str_len(buf, offset, len);
+
+    write_str_len(buf, 0, len);
     return 0;
 }
 long syscall_exit_thread() {
@@ -64,6 +65,7 @@ long syscall_exit_process() {
 }
 
 long syscall_handler(uint64_t number, uint64_t first, uint64_t second,uint64_t third, uint64_t fourth, uint64_t fifth) {
+    Iprintf("sys\n");
     switch (number) {
         case SYS_WRITE:
              return syscall_write(first, (uint8_t *) second, third, fourth);

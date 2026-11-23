@@ -68,8 +68,6 @@ add_executable(Icarus_kernel
         x64/src/kernel/util/MasterRecordTable.h
         x64/src/kernel/Processes/Process.c
         x64/include/kernel/Processes/Process.h
-        x64/src/userland/syscall/ABI.c
-        x64/src/userland/syscall/ABI.h
         x64/src/kernel/syscall/syscall.c
         x64/src/kernel/syscall/syscall.h
         x64/src/kernel/syscall/syscall_entry.asm
@@ -89,8 +87,6 @@ add_executable(Icarus_kernel
         x64/include/kernel/util/hash_table.h
         x64/src/kernel/Datapoints/datafunctions.c
         x64/include/kernel/Datapoints/datapoint_registry.h
-        x64/src/kernel/util/Hashmap.c
-        x64/src/kernel/util/Hashmap.h
         x64/src/kernel/Memory/PMM/phys_alloc.c
         x64/include/kernel/Memory/PMM/phys_alloc.h
         x64/src/userland/memory_t/main.c
