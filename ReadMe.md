@@ -18,8 +18,10 @@ A binutils and a GCC repo are available to build it.
 - clone icarus-cc
 - clone icarus-binutils
 - setup a folder to house the icarus cross-compiler
-  - mkdir -r ~/opt/icarus-cross
+  - mkdir -p ~/opt/icarus-cross
 - //TODO: add explanation of how to build gcc and binutils
+- execute in the Icarus-cc src ``./contrib/download_prerequisites --disable-werror``
+- install extra dependencies ``sudo apt install build-essential bison flex texinfo m4 libgmp-dev libmpfr-dev libmpc-dev libisl-dev``
 - add this as a script
 
 ``icarus-shell.env``
