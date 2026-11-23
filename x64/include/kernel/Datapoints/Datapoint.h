@@ -37,7 +37,11 @@ typedef struct DATAPOINT_REGISTRY_ENTRY {
 
 uint64_t datapoint_register(data_functions *funcs, void * data_pointer);
 bool datapoint_remove(uint64_t data_id);
-datapoint_reg_entry_t * datapoint_reg(uint64_t data_id);
 int Datapoint_init();
+datapoint_reg_entry_t * datapoint_get(uint64_t data_id);
+exit_code_t datapoint_close(uint64_t data_id, uint8_t * buffer, uint64_t buffer_size);
+exit_code_t datapoint_read(uint64_t data_id, uint8_t * buffer, uint64_t buffer_size, uint64_t offset);
+exit_code_t datapoint_write(uint64_t data_id, uint8_t * buffer, uint64_t buffer_size, uint64_t offset);
+exit_code_t datapoint_close(uint64_t data_id, uint8_t * buffer, uint64_t buffer_size);
 
 #endif //ICARUS_DATAPOINT_H
