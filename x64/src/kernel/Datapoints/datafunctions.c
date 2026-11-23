@@ -5,7 +5,7 @@
 
 #include "string.h"
 #include "kernel/Datapoints/Datapoint.h"
-#include "kernel/Memory/alloc.h"
+#include "kernel/Datapoints/datapoint_registry.h"
 
 exit_code_t mem_write (void * writeable, uint8_t * data, uint64_t length, uint64_t offset);
 exit_code_t mem_read (void * readable, uint8_t * data, uint64_t length, uint64_t offset);
@@ -30,6 +30,7 @@ exit_code_t mem_read (void * readable, uint8_t * data, uint64_t length, uint64_t
 
 exit_code_t mem_close (void * closeable, uint8_t * data, uint64_t length) {
     // don't free this is for general memory access
+    return 0;
 }
 
 uint64_t create_mem_point(void * mem) {

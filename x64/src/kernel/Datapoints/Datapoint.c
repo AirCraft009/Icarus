@@ -51,6 +51,27 @@ exit_code_t datapoint_read(uint64_t data_id, uint8_t * buffer, uint64_t buffer_s
     );
 }
 
+exit_code_t datapoint_write(uint64_t data_id, uint8_t * buffer, uint64_t buffer_size, uint64_t offset) {
+    datapoint_reg_entry_t * entry = datapoint_get(data_id);
+    return entry->io_functions->write
+    (
+        entry->data_point,
+        buffer,
+        buffer_size,
+        offset
+    );
+}
+
+exit_code_t datapoint_close(uint64_t data_id, uint8_t * buffer, uint64_t buffer_size) {
+    datapoint_reg_entry_t * entry = datapoint_get(data_id);
+    return entry->io_functions->close
+    (
+        entry->data_point,
+        buffer,
+        buffer_size
+    );
+}
+
 
 
 
