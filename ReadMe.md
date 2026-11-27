@@ -36,7 +36,7 @@ then
 
 ### Building libc
 
-- run ``make && make all``
+- run ``make && make install``
 
 
 ## dependencies
