@@ -27,3 +27,7 @@ long write(uint64_t descriptor, const void *buffer, unsigned long length, uint64
 {
     return icarus_syscall3(SYS_WRITE, descriptor, (long)buffer, (long)length);
 }
+
+void empty_call () {
+    icarus_syscall3(10, 0,0,0);
+}

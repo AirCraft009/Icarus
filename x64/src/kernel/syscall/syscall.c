@@ -7,19 +7,22 @@
 #include "kernel_helper.h"
 #include "../../../include/syscall_definition.h"
 #include "kernel/Memory/alloc.h"
+#include "kernel/Memory/memory_mapping.h"
+#include "kernel/Memory/paging.h"
 #include "kernel/Processes/Scheduling/scheduler.h"
 #include "kernel/syscall/core_information_table.h"
 #include "kernel/util/shellio.h"
 
-#define SYSCALL_STACK_SIZE (4 * DEFAULT_PAGE_SIZE)
 extern void syscall_entry(void);
+static lcore_ktable_t * ktable;
 
 /**
  * initialises syscalls and the nec MSR regs for one core
  */
 int syscall_init() {
-    uint8_t * kernel_stack = Imalloc(SYSCALL_STACK_SIZE);
-
+    // temporary syscall initstack
+    // shared between all process so first syscall can load
+    void * sys_init_stack = Imalloc(DEFAULT_PAGE_SIZE);
     //read and patch instead of directly writing EFER.SCE as it can lead to an invalid 
     uint64_t efer = rmsr(MSR_EFER);
     efer |= 1ULL;                  // EFER.SCE
@@ -32,14 +35,14 @@ int syscall_init() {
     wrmsr(MSR_STAR, (0x10ULL << 48) | (0x08ULL << 32));     // cs selector = 0x8; ss = 0x10;
     wrmsr(MSR_LSTAR, (uint64_t) syscall_entry);                                  // entry point for the syscall
     wrmsr(MSR_FMASK, 0x2);                                  // disable IF flags so that syscall isn't interrupted
-    wrmsr(MSR_GSBASE, 0x10);                                 // GSBASE for the usr can be 0 on init per core
+    wrmsr(MSR_GSBASE, 0x0);                                 // GSBASE for the usr can be 0 on init per core
     wrmsr(MSR_FSBASE, 0x0);                                 // TODO: IMPLEMENT PER THREAD LEAVE EMPTY FOR NOW
 
     //KERNEL GSBASE
     // has scratch space & holds kernel rsp and usr rsp on syscall
-    lcore_ktable_t * ktable = Imalloc(sizeof(lcore_ktable_t));
+    ktable = Imalloc(sizeof(lcore_ktable_t));
     ktable->selfPointer = (uint64_t)ktable;
-    ktable->kernelStackTop = ((uint64_t) kernel_stack + SYSCALL_STACK_SIZE) & ~0xFULL;
+    ktable->kernelStackTop = ((uint64_t) sys_init_stack) & ~0xFULL;
     wrmsr(MSR_KernelGSBase, ktable->selfPointer);
     return 0;
 }
@@ -54,18 +57,40 @@ long syscall_write(uint64_t data_id, uint8_t *buf, uint64_t len, uint64_t offset
     return 0;
 }
 long syscall_exit_thread() {
-    Iprintf("exit");
     return 0;
 }
 
 long syscall_exit_process() {
-    Iprintf("exit process\n");
     scheduler_kill_current_thread();
     return 0;
 }
 
 long syscall_handler(uint64_t number, uint64_t first, uint64_t second,uint64_t third, uint64_t fourth, uint64_t fifth) {
-    Iprintf("sys\n");
+    page_map_l4_entry * pml4 = (page_map_l4_entry *) KERNEL_PHYS_TO_VIRT(read_cr3());
+    if
+    (
+        !is_mapped
+        (
+            pml4,
+            SYSCALL_STACK_BOTTOM       // check if the syscall stack unique to each process is set up.
+        )
+    ){
+        struct_page_t * pt = ialloc_frames(SYSCALL_STACK_PAGE_COUNT, SYSCALL_STACK_PAGE_SIZE);
+        if (pt == (void *) FRAME_ALLOC_FAILED)
+            return -1;
+
+        for (int i = 0; i < pt->page_count; i++) {
+            page_in
+            (
+                pml4,
+                (void *) SYSCALL_STACK_BOTTOM + i * PAGE_TYPE_TO_SIZE(SYSCALL_STACK_PAGE_SIZE),
+                 (void *) pt->page_addr[i],
+                PAGE_TYPE_TO_SIZE(SYSCALL_STACK_PAGE_SIZE),
+                PT_WRITEABLE
+            );
+        }
+        ktable->kernelStackTop = ((uint64_t) SYSCALL_STACK) & ~0xFULL;
+    }
     switch (number) {
         case SYS_WRITE:
              return syscall_write(first, (uint8_t *) second, third, fourth);

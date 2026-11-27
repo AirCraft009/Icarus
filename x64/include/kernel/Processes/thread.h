@@ -27,6 +27,7 @@ typedef enum THREAD_STATE {
 #define THREAD_MAPPINGS_VIRT_ADDR 0x00006FFFFFFFFFF0
 #define THREAD_STACK_VIRT_ADDR 0x00007FFFFFFFFFF0
 
+
 typedef enum {
     SUBSPACE_CODE,         // encompasses .text, .bss ... + heap
     SUBSPACE_MAPPING,      // common mappings of libraries io buffers etc.
