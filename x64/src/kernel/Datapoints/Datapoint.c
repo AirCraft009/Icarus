@@ -7,6 +7,7 @@
 #include "string.h"
 #include "kernel/Memory/alloc.h"
 #include "kernel/util/hash_table.h"
+#include "kernel/util/shellio.h"
 
 hash_table_t * map_table;
 uint64_t DATA_ID = 1;
@@ -34,10 +35,10 @@ bool datapoint_remove(uint64_t data_id) {
 }
 
 datapoint_reg_entry_t * datapoint_get(uint64_t data_id) {
-    datapoint_reg_entry_t * entry = NULL;
-    if (!hash_table_get(map_table, data_id,(uint64_t *) entry))
+    uint64_t entry = 0;
+    if (!hash_table_get(map_table, data_id, &entry))
         return NULL;
-    return entry;
+    return (datapoint_reg_entry_t *) entry;
 }
 
 exit_code_t datapoint_read(uint64_t data_id, uint8_t * buffer, uint64_t buffer_size, uint64_t offset) {
