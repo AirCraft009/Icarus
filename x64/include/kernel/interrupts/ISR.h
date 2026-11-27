@@ -25,7 +25,7 @@ struct interrupt_frame {
     // pushed by the CPU
     cpu_push_frame cpu_regs;
 }__attribute__((packed));
-_Static_assert(sizeof(struct interrupt_frame) == 200, "asm/C frame mismatch");
+_Static_assert(sizeof(struct interrupt_frame) == 200, "asm/C frame mismatch; change set_context.asm to remove the entire frame");
 
 
 #define TIMER_INT 0x20

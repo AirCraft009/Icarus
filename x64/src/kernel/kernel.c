@@ -9,6 +9,8 @@
 #include <string.h>
 #include "kernel/util/shellio.h"
 #include "../../include/kernel/Memory/memory_mapping.h"
+#include "kernel/Datapoints/Datapoint.h"
+#include "kernel/Datapoints/datapoint_registry.h"
 #include "kernel/Drivers/PS2/PS2_Controller.h"
 #include "kernel/Drivers/PS2/PS2_Keyboard.h"
 #include "kernel/util/multiboot2.h"
@@ -78,6 +80,7 @@ void kmain(uint32_t magic, struct multiboot_info *mboot) {
     enable_apic();
     enable_io_apics();
 
+    Datapoint_init();
     if (ps2_controller_init() != 0)
         Iprintf("The PS2 Controller doesn't work\n");
 
@@ -89,14 +92,14 @@ void kmain(uint32_t magic, struct multiboot_info *mboot) {
     char * data1 = (void *) files[1] + 512;
     Iprintf("%s\n", files[0]->filename);
     pcb_t * a = load_init_elf((elf_header_t *) data1, 0, false, 10);
-    pcb_t * b =  load_elf((elf_header_t *) data, 0, false, 109);
+    // pcb_t * b =  load_elf((elf_header_t *) data, 0, false, 109);
 
     page_in((void *)KERNEL_PHYS_TO_VIRT(a->head_thread->page_table), (void *)0xB8000, (void *)0xB8000, DEFAULT_PAGE_SIZE, PT_WRITEABLE | 1 <<PT_USER_ACCESS_SHIFT);
-    page_in((void *)KERNEL_PHYS_TO_VIRT(b->head_thread->page_table), (void *)0xB8000, (void *)0xB8000, DEFAULT_PAGE_SIZE, PT_WRITEABLE | 1 <<PT_USER_ACCESS_SHIFT);
+    //page_in((void *)KERNEL_PHYS_TO_VIRT(b->head_thread->page_table), (void *)0xB8000, (void *)0xB8000, DEFAULT_PAGE_SIZE, PT_WRITEABLE | 1 <<PT_USER_ACCESS_SHIFT);
 
     __asm__ volatile ("sti");
     keyboard_ps2_init();
-    scheduler_start(2000);
+    scheduler_start(500);
 
 
     //TODO: build a table to hold all important subtables and system_statistics

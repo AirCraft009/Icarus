@@ -21,8 +21,8 @@
 
 const uint16_t COLS = 80;
 const uint16_t ROWS= 25;
-const uint64_t videoMemStart =  KERNEL_PHYS_TO_VIRT(0xB8000);
-const uint64_t videoMemEnd =  KERNEL_PHYS_TO_VIRT(0xB8000 + (COLS * ROWS) * 2) ;
+#define videoMemStart KERNEL_PHYS_TO_VIRT(0xB8000)
+#define videoMemEnd  KERNEL_PHYS_TO_VIRT(0xB8000 + (COLS * ROWS) * 2)
 static cursor curs;
 
 
@@ -71,9 +71,14 @@ void write_str(char *str, cursor *cur) {
 }
 
 void write_str_len(uint8_t *str, uint64_t offset, uint64_t len) {
+    *((char *) videoMemStart) = 'c';
+    // str = NULL;
+}
+void write_strasdf_len(uint8_t *str, uint64_t offset, uint64_t len) {
     cursor cur = {offset % COLS, offset / COLS};
     for (uint64_t i = 0; i < len; i++) {
-        write_c(*str++, &cur);
+        //volatile char * volatile vidptr = (volatile char *) videoMemStart + (cur.x + cur.y * COLS) * 2;
+        *((char *) videoMemStart) = 'c';
     }
 }
 
