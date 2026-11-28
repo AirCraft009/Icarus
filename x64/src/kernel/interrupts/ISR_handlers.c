@@ -65,7 +65,6 @@ void undefined_instruction_handler(struct interrupt_frame *frame) {
 
 
 void timer_interrupt_handler(struct interrupt_frame *frame) {
-    Iprintf("scheduling\n");
     schedule(frame, INT_TMR);
 }
 
@@ -85,7 +84,7 @@ void c_isr(
     struct interrupt_frame *frame
 )
 {
-    Iprintf("Registered w/ fault handler: %x\n", frame->vector);
+    //Iprintf("Registered w/ fault handler: %x\n", frame->vector);
     switch (frame->vector) {
         case 0:
             // Divide error

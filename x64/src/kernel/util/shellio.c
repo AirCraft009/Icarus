@@ -71,14 +71,9 @@ void write_str(char *str, cursor *cur) {
 }
 
 void write_str_len(uint8_t *str, uint64_t offset, uint64_t len) {
-    *((char *) videoMemStart) = 'c';
-    // str = NULL;
-}
-void write_strasdf_len(uint8_t *str, uint64_t offset, uint64_t len) {
     cursor cur = {offset % COLS, offset / COLS};
     for (uint64_t i = 0; i < len; i++) {
-        //volatile char * volatile vidptr = (volatile char *) videoMemStart + (cur.x + cur.y * COLS) * 2;
-        *((char *) videoMemStart) = 'c';
+        write_c(*str++, &cur);
     }
 }
 

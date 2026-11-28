@@ -4,6 +4,6 @@
 int main(){
     while (1)
         // empty_call();
-        write(0, "HELLO WORLD", 12, 0);
+        write(0, "HELLO WOAAAAA", 12, 0);
     return 0;
 }

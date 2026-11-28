@@ -17,7 +17,7 @@ typedef enum {
 
 struct interrupt_frame {
     // pushed by isr_common
-    uint64_t cr4, cr3, cr2;                       // faulting address (valid on #PF)
+    uint64_t cr4, cr3, cr2;                       // CR2 = faulting address (valid on #PF)
     cpu_reg_frame gpo_regs;
     // pushed by the stub
     uint64_t vector;

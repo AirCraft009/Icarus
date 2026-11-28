@@ -11,7 +11,8 @@ typedef struct LOCAL_CORE_KERNEL_INFORMATION_TABLE {
      uint64_t selfPointer;        // offset 0: address of this structure itself
      uint64_t kernelStackTop;     // offset 8
      uint64_t savedUserStack;     // offset 16
-     uint64_t scratchSpace;       // offset 24
+     uint64_t savedUserStackBottom;     // offset 24
+     uint64_t scratchSpace;       // offset 32
 }lcore_ktable_t;
 
 

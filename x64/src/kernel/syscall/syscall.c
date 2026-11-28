@@ -65,7 +65,7 @@ long syscall_exit_process() {
     return 0;
 }
 
-long syscall_handler(uint64_t number, uint64_t first, uint64_t second,uint64_t third, uint64_t fourth, uint64_t fifth) {
+int syscall_check_init() {
     page_map_l4_entry * pml4 = (page_map_l4_entry *) KERNEL_PHYS_TO_VIRT(read_cr3());
     if
     (
@@ -91,6 +91,15 @@ long syscall_handler(uint64_t number, uint64_t first, uint64_t second,uint64_t t
         }
         ktable->kernelStackTop = ((uint64_t) SYSCALL_STACK) & ~0xFULL;
     }
+    return 0;
+}
+
+long syscall_handler(uint64_t number, uint64_t first, uint64_t second,uint64_t third, uint64_t fourth, uint64_t fifth) {
+
+    if (syscall_check_init() != 0)
+        return 0x100;
+
+    __asm__ volatile ("sti");
     switch (number) {
         case SYS_WRITE:
              return syscall_write(first, (uint8_t *) second, third, fourth);
@@ -99,7 +108,7 @@ long syscall_handler(uint64_t number, uint64_t first, uint64_t second,uint64_t t
         case SYS_EXIT_PROCESS:
             return syscall_exit_process();
         default:
-            return -1;
+            return 0x900;
     }
 }
 

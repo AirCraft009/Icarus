@@ -6,7 +6,7 @@ kernel_rsp       equ 0x8
 
 syscall_entry:
     ; stop interrupts during critical section
-    cli
+
     swapgs
     mov [gs:user_rsp_scratch], rsp
     mov rsp, [gs:kernel_rsp]
@@ -25,13 +25,7 @@ syscall_entry:
     mov rsi, rdi
     mov rdi, rax
 
-    mov byte [0xb8000], 0xFF
-    mov byte [0xb8001], 0xFF
-    sti
     call syscall_handler                ; result in rax
-    cli
-    mov byte [0xb8000], 0xFF
-    mov byte [0xb8001], 0x00
 
     add rsp, 8                          ; drop padding
     pop r11                             ; user RFLAGS
