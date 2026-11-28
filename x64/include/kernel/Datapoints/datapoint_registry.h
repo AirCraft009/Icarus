@@ -7,5 +7,6 @@
 #include <stdint.h>
 
 uint64_t create_mem_point(void * mem);
+uint64_t create_vga_point();
 
 #endif //ICARUS_DATAPOINT_REGISTRY_H
