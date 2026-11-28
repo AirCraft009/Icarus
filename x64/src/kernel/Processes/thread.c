@@ -36,19 +36,29 @@ tcb_t * create_thread(PID_t owner_id, bool is_priviledged, uint16_t priority, ui
     tcb->tid = TID_GEN ++;
     tcb->pid = owner_id;
 
-    // set the cpu registers
-    tcb->registers.psp.rflags = 0x202;              // default value bit 1 reserved always(1); bit 9 allow interrupts
-    tcb->registers.psp.rip = code_start;
     tcb->code_start = code_start;
-    tcb->registers.psp.rsp = THREAD_STACK_VIRT_ADDR;
-    tcb->registers.psp.cs = is_priviledged? 0x08 : 0x23;
-    tcb->registers.psp.ss = is_priviledged? 0x10 : 0x1b;
+    thread_new_init(tcb);
 
     atomic_store(&tcb->state, THREAD_NEW);
     tcb->privileged = is_priviledged;
     tcb->priority = priority;
     tcb->active_priority = priority;
     return tcb;
+}
+
+/**
+ * any thread that may have had there reg values overridden can activate them again here
+ * - ip
+ * - cs / ss
+ * - rsp
+ * - rflags
+ */
+void thread_new_init(tcb_t * thread) {
+    thread->registers.psp.rflags = 0x202;              // default value bit 1 reserved always(1); bit 9 allow interrupts
+    thread->registers.psp.rip = thread->code_start;
+    thread->registers.psp.rsp = THREAD_STACK_VIRT_ADDR;
+    thread->registers.psp.cs = thread->privileged? 0x08 : 0x23;
+    thread->registers.psp.ss = thread->privileged? 0x10 : 0x1b;
 }
 
 

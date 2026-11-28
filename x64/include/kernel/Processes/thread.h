@@ -100,6 +100,7 @@ typedef struct THREAD_CONTROL_BLOCK {
 } tcb_t;
 
 tcb_t * create_thread(PID_t owner_id, bool is_priviledged, uint16_t priority, uint64_t code_start);
+void thread_new_init(tcb_t * thread);
 int thread_supply_mem_region(tcb_t *thread, virt_addr_t virt_addr, ADDR_SUB_SPACE sub_space, struct_page_t * info_page, uint64_t permissions);
 struct_page_t * thread_supply_new_mem_region(tcb_t *thread, virt_addr_t virt_addr, ADDR_SUB_SPACE sub_space, uint64_t pages, PAGE_TYPE p_size, uint64_t permissions);
 struct_page_t * thread_map(tcb_t * thread, virt_addr_t virt_addr, uint64_t pages, PAGE_TYPE p_size, uint64_t permissions);
