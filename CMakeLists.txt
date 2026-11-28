@@ -85,11 +85,12 @@ add_executable(Icarus_kernel
         x64/include/kernel/Datapoints/Datapoint.h
         x64/include/kernel/Datapoints/Datapoint.h
         x64/include/kernel/util/hash_table.h
-        x64/src/kernel/Datapoints/datafunctions.c
+        x64/src/kernel/Datapoints/datapoint_registry/datapoint_mem.c
         x64/include/kernel/Datapoints/datapoint_registry.h
         x64/src/kernel/Memory/PMM/phys_alloc.c
         x64/include/kernel/Memory/PMM/phys_alloc.h
         x64/src/userland/memory_t/main.c
+        x64/src/kernel/Datapoints/datapoint_registry/datapoint_VGA.c
 )
 
 target_include_directories(Icarus_kernel PRIVATE x64/include

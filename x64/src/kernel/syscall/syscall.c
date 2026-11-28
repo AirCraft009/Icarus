@@ -6,6 +6,7 @@
 
 #include "kernel_helper.h"
 #include "../../../include/syscall_definition.h"
+#include "kernel/Datapoints/Datapoint.h"
 #include "kernel/Memory/alloc.h"
 #include "kernel/Memory/memory_mapping.h"
 #include "kernel/Memory/paging.h"
@@ -52,8 +53,7 @@ int syscall_init() {
  */
 long syscall_write(uint64_t data_id, uint8_t *buf, uint64_t len, uint64_t offset) {
     // for now js write to console and ignore the output_id
-
-    write_str_len(buf, 0, len);
+    datapoint_write(data_id, buf, len, offset);
     return 0;
 }
 long syscall_exit_thread() {
@@ -105,8 +105,10 @@ long syscall_handler(uint64_t number, uint64_t first, uint64_t second,uint64_t t
              return syscall_write(first, (uint8_t *) second, third, fourth);
         case SYS_EXIT_THREAD:
             return syscall_exit_thread();
-        case SYS_EXIT_PROCESS:
+         case SYS_EXIT_PROCESS:
             return syscall_exit_process();
+        case SYS_EMPTY:
+            return 0;
         default:
             return 0x900;
     }

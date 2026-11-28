@@ -9,5 +9,6 @@
 #define SYS_EXIT_PROCESS 2
 #define SYS_WRITE 3
 #define SYS_READ 4
+#define SYS_EMPTY 0xFF
 
 #endif
